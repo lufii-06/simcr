@@ -1,0 +1,32 @@
+<?php
+
+namespace Database\Factories;
+
+use Illuminate\Database\Eloquent\Factories\Factory;
+
+/**
+ * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Specialization>
+ */
+class SpecializationFactory extends Factory
+{
+    /**
+     * Define the model's default state.
+     *
+     * @return array<string, mixed>
+     */
+    public function definition(): array
+    {
+        return [
+            'name' => fake()->unique()->randomElement([
+                'Frontend Developer', 
+                'Backend Developer', 
+                'Fullstack Engineer', 
+                'UI/UX Designer', 
+                'QA Tester',
+                'DevOps Engineer',
+                'Mobile Developer',
+                'Data Scientist'
+            ]),
+        ];
+    }
+}
