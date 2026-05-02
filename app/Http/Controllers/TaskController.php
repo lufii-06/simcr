@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskChecklist;
+use App\Models\TaskLog;
 use App\Models\TaskStatus;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -35,6 +36,51 @@ class TaskController extends Controller
         $tasks = $query->latest()->get();
 
         return view('pages.task.index', compact('tasks', 'type'));
+    }
+
+    public function log(Request $request)
+    {
+        $user = auth()->user();
+        $projectId = $request->get('project_id');
+        $userId = $request->get('user_id');
+        $action = $request->get('action');
+
+        $query = TaskLog::with(['task.project', 'user']);
+
+        // Filter by project involvement (security)
+        $query->whereHas('task.project', function ($q) use ($user) {
+            $q->where('user_id', $user->id)
+              ->orWhere('client_id', $user->client->id ?? 0)
+              ->orWhereHas('developers', function ($sq) use ($user) {
+                  $sq->where('user_id', $user->id);
+              });
+        });
+
+        if ($projectId) {
+            $query->whereHas('task', function ($q) use ($projectId) {
+                $q->where('project_id', $projectId);
+            });
+        }
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        if ($action) {
+            $query->where('action', $action);
+        }
+
+        $logs = $query->latest()->paginate(20);
+        
+        // Data for filters
+        $projects = Project::where('user_id', $user->id)
+            ->orWhereHas('developers', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->get();
+            
+        $users = User::where('role', '!=', 'client')->get();
+
+        return view('pages.task.log', compact('logs', 'projects', 'users', 'projectId', 'userId', 'action'));
     }
 
     public function create()
@@ -97,6 +143,13 @@ class TaskController extends Controller
                 }
             }
 
+            TaskLog::create([
+                'task_id' => $task->id,
+                'user_id' => auth()->id(),
+                'action' => 'created',
+                'details' => "Task '{$task->title}' created.",
+            ]);
+
             DB::commit();
             return redirect()->route('task.index')->with('success', 'Task created successfully.');
         } catch (\Exception $e) {
@@ -123,6 +176,13 @@ class TaskController extends Controller
             'is_completed' => !$checklist->is_completed
         ]);
 
+        TaskLog::create([
+            'task_id' => $checklist->task_id,
+            'user_id' => auth()->id(),
+            'action' => 'checklist_toggled',
+            'details' => ($checklist->is_completed ? 'Checked' : 'Unchecked') . " item: {$checklist->item_text}",
+        ]);
+
         $task = $checklist->task;
 
         return response()->json([
@@ -137,7 +197,16 @@ class TaskController extends Controller
     {
         $request->validate(['task_status_id' => 'required|exists:task_statuses,id']);
         
+        $oldStatus = $task->status->name ?? 'Unknown';
         $task->update(['task_status_id' => $request->task_status_id]);
+        $newStatus = TaskStatus::find($request->task_status_id)->name ?? 'Unknown';
+
+        TaskLog::create([
+            'task_id' => $task->id,
+            'user_id' => auth()->id(),
+            'action' => 'status_changed',
+            'details' => "Changed status from '{$oldStatus}' to '{$newStatus}'",
+        ]);
         
         return response()->json(['success' => true]);
     }

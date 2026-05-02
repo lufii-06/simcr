@@ -13,6 +13,16 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="repo-status-filter">Filter by Status:</label>
+                            <select id="repo-status-filter" class="form-control">
+                                <option value="">All Status</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table id="repository-datatables" class="display table table-striped table-hover">
                             <thead>
@@ -73,7 +83,12 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            $('#repository-datatables').DataTable({});
+            var table = $('#repository-datatables').DataTable({});
+
+            $('#repo-status-filter').on('change', function() {
+                var val = $(this).val();
+                table.column(3).search(val ? '^' + val + '$' : '', true, false).draw();
+            });
         });
     </script>
 @endpush

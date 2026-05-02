@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('repositories', function (Blueprint $table) {
             $table->id();
+            $table->string('code')->unique()->nullable();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->string('url')->nullable();

@@ -10,6 +10,7 @@ class Project extends Model
     use SoftDeletes, \App\Traits\EncryptsRouteKey;
 
     protected $fillable = [
+        'code',
         'client_id',
         'project_status_id',
         'user_id',
@@ -18,6 +19,14 @@ class Project extends Model
         'start_date',
         'end_date',
     ];
+
+    protected static function booted()
+    {
+        static::created(function ($project) {
+            $project->code = 'PRJ-' . str_pad($project->id, 4, '0', STR_PAD_LEFT);
+            $project->save();
+        });
+    }
 
     public function client()
     {

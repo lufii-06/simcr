@@ -9,13 +9,22 @@ class Task extends Model
     use \App\Traits\EncryptsRouteKey;
 
     protected $fillable = [
+        'code',
         'project_id',
-        'task_status_id',
         'created_by',
         'assigned_to',
+        'task_status_id',
         'title',
         'description',
     ];
+
+    protected static function booted()
+    {
+        static::created(function ($task) {
+            $task->code = 'T-' . str_pad($task->id, 4, '0', STR_PAD_LEFT);
+            $task->save();
+        });
+    }
 
     public function project()
     {

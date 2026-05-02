@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
+            $table->string('code')->unique()->nullable();
             $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete();
             $table->foreignId('project_status_id')->constrained('project_statuses')->cascadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete(); // owner

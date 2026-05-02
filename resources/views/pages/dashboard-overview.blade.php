@@ -14,7 +14,7 @@
                         </div>
                         <div class="flex-1">
                             <h2 class="text-white fw-bold mb-1">Selamat Datang Kembali, {{ auth()->user()->name }}!</h2>
-                            <p class="text-white op-7">Senang melihat Anda lagi. Berikut adalah ringkasan aktivitas proyek Anda hari ini.</p>
+                            <p class="text-white op-7">Ringkasan aktivitas proyek Anda untuk hari ini.</p>
                         </div>
                         <div class="ml-auto text-right">
                             <span class="badge badge-secondary px-3 py-2">
@@ -45,7 +45,7 @@
                         <div class="col col-stats ml-3 ml-sm-0">
                             <div class="numbers">
                                 <p class="card-category">Active Projects</p>
-                                <h4 class="card-title">12</h4>
+                                <h4 class="card-title">{{ $totalProjects }}</h4>
                             </div>
                         </div>
                     </div>
@@ -58,13 +58,13 @@
                     <div class="row align-items-center">
                         <div class="col-icon">
                             <div class="icon-big text-center icon-info bubble-shadow-small">
-                                <i class="fas fa-users"></i>
+                                <i class="fas fa-tasks"></i>
                             </div>
                         </div>
                         <div class="col col-stats ml-3 ml-sm-0">
                             <div class="numbers">
-                                <p class="card-category">Total Clients</p>
-                                <h4 class="card-title">25</h4>
+                                <p class="card-category">Tasks Today</p>
+                                <h4 class="card-title">{{ $tasksToday }}</h4>
                             </div>
                         </div>
                     </div>
@@ -83,7 +83,7 @@
                         <div class="col col-stats ml-3 ml-sm-0">
                             <div class="numbers">
                                 <p class="card-category">Completed Tasks</p>
-                                <h4 class="card-title">150</h4>
+                                <h4 class="card-title">{{ $completedTasks }}</h4>
                             </div>
                         </div>
                     </div>
@@ -96,13 +96,13 @@
                     <div class="row align-items-center">
                         <div class="col-icon">
                             <div class="icon-big text-center icon-secondary bubble-shadow-small">
-                                <i class="fas fa-tasks"></i>
+                                <i class="fas fa-hourglass-half"></i>
                             </div>
                         </div>
                         <div class="col col-stats ml-3 ml-sm-0">
                             <div class="numbers">
-                                <p class="card-category">Pending Reviews</p>
-                                <h4 class="card-title">8</h4>
+                                <p class="card-category">Pending Tasks</p>
+                                <h4 class="card-title">{{ $pendingTasks }}</h4>
                             </div>
                         </div>
                     </div>
@@ -111,18 +111,57 @@
         </div>
     </div>
 
-    <!-- Info Row -->
     <div class="row">
-        <div class="col-md-12">
+        <!-- Task Status Chart -->
+        <div class="col-md-4">
             <div class="card card-round">
                 <div class="card-header">
-                    <div class="card-title">Informasi Sistem</div>
+                    <div class="card-title">Task Distribution</div>
                 </div>
                 <div class="card-body">
-                    <div class="alert alert-info border-left-info shadow" role="alert">
-                        <strong>Tips:</strong> Anda dapat mengakses pengaturan profil dan ganti foto melalui menu di pojok kanan atas atau melalui Sidebar "My Profile".
+                    <div class="chart-container" style="min-height: 300px">
+                        <canvas id="taskStatusChart"></canvas>
                     </div>
-                    <p>Halaman dashboard ini sedang dalam tahap pengembangan. Segera akan hadir grafik statistik real-time untuk pemantauan proyek yang lebih detail.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities / Tasks -->
+        <div class="col-md-8">
+            <div class="card card-round">
+                <div class="card-header">
+                    <div class="d-flex align-items-center">
+                        <h4 class="card-title">Recent Tasks</h4>
+                        <a href="{{ route('task.index') }}" class="btn btn-primary btn-round btn-sm ms-auto">View All</a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table align-items-center mb-0">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Task</th>
+                                    <th>Project</th>
+                                    <th>Assignee</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($recentTasks as $task)
+                                    <tr>
+                                        <td><strong>{{ Str::limit($task->title, 25) }}</strong></td>
+                                        <td>{{ $task->project->name }}</td>
+                                        <td>{{ $task->assignee->name }}</td>
+                                        <td><span class="badge badge-info">{{ $task->status->name }}</span></td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4">No recent tasks.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -139,3 +178,43 @@
         }
     </style>
 @endsection
+
+@push('scripts')
+<script src="{{ asset('assets/js/plugin/chart.js/chart.min.js') }}"></script>
+<script>
+    $(document).ready(function() {
+        // Task Status Doughnut Chart
+        var ctx = document.getElementById('taskStatusChart').getContext('2d');
+        var taskStatusChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [
+                        @foreach($statusChart as $status)
+                            {{ $status->tasks_count }},
+                        @endforeach
+                    ],
+                    backgroundColor: ['#1d7af3', '#f3545d', '#fdaf4b', '#59d05d', '#177dff'],
+                }],
+                labels: [
+                    @foreach($statusChart as $status)
+                        '{{ $status->name }}',
+                    @endforeach
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                legend: {
+                    position: 'bottom'
+                },
+                layout: {
+                    padding: {
+                        top: 20
+                    }
+                }
+            }
+        });
+    });
+</script>
+@endpush

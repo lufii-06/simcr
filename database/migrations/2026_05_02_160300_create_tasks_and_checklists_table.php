@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('tasks', function (Blueprint $table) {
             $table->id();
+            $table->string('code')->unique()->nullable();
             $table->foreignId('project_id')->constrained()->onDelete('cascade');
             $table->foreignId('task_status_id')->constrained()->onDelete('cascade');
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade');
@@ -24,6 +25,7 @@ return new class extends Migration
 
         Schema::create('task_checklists', function (Blueprint $table) {
             $table->id();
+            $table->string('code')->unique()->nullable();
             $table->foreignId('task_id')->constrained()->onDelete('cascade');
             $table->string('item_text');
             $table->boolean('is_completed')->default(false);

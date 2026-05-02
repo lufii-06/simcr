@@ -88,6 +88,11 @@
                                     <span class="sub-item">Repository</span>
                                 </a>
                             </li>
+                            <li class="{{ Request::routeIs('project.analytics') ? 'active' : '' }}">
+                                <a href="{{ route('project.index') }}?view=analytics">
+                                    <span class="sub-item">Project Analytics</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>
@@ -108,6 +113,11 @@
                             <li class="{{ Request::get('type') == 'my' ? 'active' : '' }}">
                                 <a href="{{ route('task.index', ['type' => 'my']) }}">
                                     <span class="sub-item">My Task</span>
+                                </a>
+                            </li>
+                            <li class="{{ Request::is('task/log') ? 'active' : '' }}">
+                                <a href="{{ route('task.log') }}">
+                                    <span class="sub-item">Task Log</span>
                                 </a>
                             </li>
                         </ul>

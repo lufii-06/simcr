@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeveloperController;
 use App\Http\Controllers\DeveloperStatusController;
 use App\Http\Controllers\NotificationController;
@@ -30,9 +31,7 @@ Route::middleware('auth')->group(function () {
 
     Route::redirect('/', '/dashboard');
 
-    Route::get('/dashboard', function () {
-        return view('pages.dashboard-overview');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Master Data & Settings (PM only)
     Route::middleware('role:pm')->group(function () {
@@ -55,6 +54,7 @@ Route::middleware('auth')->group(function () {
 
     // Projects
     Route::get('project/search', [ProjectController::class, 'search'])->name('project.search');
+    Route::get('project/{project}/analytics', [ProjectController::class, 'analytics'])->name('project.analytics');
     
     // Restriction for Project Creation (PM & Leader only)
     Route::middleware('role:pm,leader')->group(function () {
@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function () {
 
     // Tasks
     Route::get('task', [TaskController::class, 'index'])->name('task.index');
+    Route::get('task/log', [TaskController::class, 'log'])->name('task.log');
     Route::get('task/create', [TaskController::class, 'create'])->name('task.create');
     Route::post('task', [TaskController::class, 'store'])->name('task.store');
     Route::get('task/{task}', [TaskController::class, 'show'])->name('task.show');

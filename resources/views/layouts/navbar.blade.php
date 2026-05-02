@@ -175,60 +175,91 @@
                          <span class="title mb-1">Quick Actions</span>
                          <span class="subtitle op-7">Shortcuts</span>
                      </div>
-                     <div class="quick-actions-scroll scrollbar-outer">
-                         <div class="quick-actions-items">
-                             <div class="row m-0">
-                                 <a class="col-6 col-md-4 p-0" href="{{ route('project.create') }}">
-                                     <div class="quick-actions-item">
-                                         <div class="avatar-item bg-primary rounded-circle">
-                                             <i class="fas fa-project-diagram"></i>
-                                         </div>
-                                         <span class="text">New Project</span>
-                                     </div>
-                                 </a>
-                                 <a class="col-6 col-md-4 p-0" href="{{ route('client.create') }}">
-                                     <div class="quick-actions-item">
-                                         <div class="avatar-item bg-success rounded-circle">
-                                             <i class="fas fa-user-plus"></i>
-                                         </div>
-                                         <span class="text">New Client</span>
-                                     </div>
-                                 </a>
-                                 <a class="col-6 col-md-4 p-0" href="{{ route('developer.create') }}">
-                                     <div class="quick-actions-item">
-                                         <div class="avatar-item bg-warning rounded-circle">
-                                             <i class="fas fa-user-tag"></i>
-                                         </div>
-                                         <span class="text">New Developer</span>
-                                     </div>
-                                 </a>
-                                 <a class="col-6 col-md-4 p-0" href="{{ route('profile.index') }}">
-                                     <div class="quick-actions-item">
-                                         <div class="avatar-item bg-info rounded-circle">
-                                             <i class="fas fa-user-circle"></i>
-                                         </div>
-                                         <span class="text">My Profile</span>
-                                     </div>
-                                 </a>
-                                 <a class="col-6 col-md-4 p-0" href="{{ route('user.index') }}">
-                                     <div class="quick-actions-item">
-                                         <div class="avatar-item bg-danger rounded-circle">
-                                             <i class="fas fa-users"></i>
-                                         </div>
-                                         <span class="text">Manage Users</span>
-                                     </div>
-                                 </a>
-                                 <a class="col-6 col-md-4 p-0" href="{{ route('developer-status.index') }}">
-                                     <div class="quick-actions-item">
-                                         <div class="avatar-item bg-secondary rounded-circle">
-                                             <i class="fas fa-cog"></i>
-                                         </div>
-                                         <span class="text">Settings</span>
-                                     </div>
-                                 </a>
-                             </div>
-                         </div>
-                     </div>
+                      <div class="quick-actions-scroll scrollbar-outer">
+                        <div class="quick-actions-items">
+                            <div class="row m-0">
+                                @if(auth()->user()->role == 'pm' || auth()->user()->role == 'leader')
+                                    <a class="col-6 col-md-4 p-0" href="{{ route('project.create') }}">
+                                        <div class="quick-actions-item">
+                                            <div class="avatar-item bg-primary rounded-circle">
+                                                <i class="fas fa-plus-circle"></i>
+                                            </div>
+                                            <span class="text">New Project</span>
+                                        </div>
+                                    </a>
+                                @endif
+
+                                @if(auth()->user()->role != 'client')
+                                    <a class="col-6 col-md-4 p-0" href="{{ route('task.create') }}">
+                                        <div class="quick-actions-item">
+                                            <div class="avatar-item bg-info rounded-circle">
+                                                <i class="fas fa-tasks"></i>
+                                            </div>
+                                            <span class="text">Create Task</span>
+                                        </div>
+                                    </a>
+                                @endif
+
+                                @if(auth()->user()->role == 'pm')
+                                    <a class="col-6 col-md-4 p-0" href="{{ route('client.create') }}">
+                                        <div class="quick-actions-item">
+                                            <div class="avatar-item bg-success rounded-circle">
+                                                <i class="fas fa-user-plus"></i>
+                                            </div>
+                                            <span class="text">New Client</span>
+                                        </div>
+                                    </a>
+                                    <a class="col-6 col-md-4 p-0" href="{{ route('report.index') }}">
+                                        <div class="quick-actions-item">
+                                            <div class="avatar-item bg-secondary rounded-circle">
+                                                <i class="fas fa-file-invoice"></i>
+                                            </div>
+                                            <span class="text">Reports</span>
+                                        </div>
+                                    </a>
+                                    <a class="col-6 col-md-4 p-0" href="{{ route('user.index') }}">
+                                        <div class="quick-actions-item">
+                                            <div class="avatar-item bg-danger rounded-circle">
+                                                <i class="fas fa-users-cog"></i>
+                                            </div>
+                                            <span class="text">Users Management</span>
+                                        </div>
+                                    </a>
+                                @endif
+
+                                <a class="col-6 col-md-4 p-0" href="{{ route('profile.index') }}">
+                                    <div class="quick-actions-item">
+                                        <div class="avatar-item bg-warning rounded-circle">
+                                            <i class="fas fa-user-circle"></i>
+                                        </div>
+                                        <span class="text">My Profile</span>
+                                    </div>
+                                </a>
+
+                                @if(auth()->user()->role == 'client' || auth()->user()->role == 'developer')
+                                    <a class="col-6 col-md-4 p-0" href="{{ route('project.index') }}">
+                                        <div class="quick-actions-item">
+                                            <div class="avatar-item bg-primary rounded-circle">
+                                                <i class="fas fa-project-diagram"></i>
+                                            </div>
+                                            <span class="text">My Projects</span>
+                                        </div>
+                                    </a>
+                                @endif
+                                
+                                @if(auth()->user()->role == 'pm')
+                                    <a class="col-6 col-md-4 p-0" href="{{ route('task-status.index') }}">
+                                        <div class="quick-actions-item">
+                                            <div class="avatar-item bg-dark rounded-circle">
+                                                <i class="fas fa-cogs"></i>
+                                            </div>
+                                            <span class="text">Settings</span>
+                                        </div>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
                  </div>
              </li>
 

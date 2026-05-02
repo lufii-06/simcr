@@ -9,6 +9,8 @@ use App\Models\ProjectDeveloper;
 use App\Models\ProjectStatus;
 use App\Models\Repository;
 use App\Models\User;
+use App\Models\Task;
+use App\Models\TaskLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +19,7 @@ use Illuminate\Support\Str;
 
 class ProjectController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
         $query = Project::with(['client.user', 'status', 'owner']);
@@ -30,7 +32,11 @@ class ProjectController extends Controller
             $query->where('client_id', $user->client->id ?? 0);
         }
 
-        $projects = $query->get();
+        $projects = $query->latest()->get();
+
+        if ($request->get('view') == 'analytics') {
+            return view('pages.project.analytics_list', compact('projects'));
+        }
 
         return view('pages.project.index', compact('projects'));
     }
@@ -67,7 +73,7 @@ class ProjectController extends Controller
         $clients = Client::with('user')->get();
         $projectStatuses = ProjectStatus::all();
         $developerStatuses = DeveloperStatus::all();
-        $users = User::all();
+        $users = User::where('id', '!=', auth()->id())->get();
 
         return view('pages.project.form', compact('clients', 'projectStatuses', 'developerStatuses', 'users'));
     }
@@ -130,7 +136,7 @@ class ProjectController extends Controller
         $clients = Client::with('user')->get();
         $projectStatuses = ProjectStatus::all();
         $developerStatuses = DeveloperStatus::all();
-        $users = User::all();
+        $users = User::where('id', '!=', auth()->id())->get();
         $project->load('developers');
 
         return view('pages.project.form', compact('project', 'clients', 'projectStatuses', 'developerStatuses', 'users'));
@@ -224,8 +230,9 @@ class ProjectController extends Controller
     private function generateRepoName(Project $project, ?string $customName = null): string
     {
         $name = $customName ?: $project->name;
+        $prefix = $project->code ?? ('PRJ-' . str_pad($project->id, 4, '0', STR_PAD_LEFT));
 
-        return $project->id.'-'.Str::slug($name);
+        return $prefix . '-' . Str::slug($name);
     }
 
     private function createBlankRepository(Project $project): void
@@ -314,5 +321,37 @@ class ProjectController extends Controller
 
         // Delete database record
         $repository->delete();
+    }
+    public function analytics(Project $project)
+    {
+        $project->load(['developers.user', 'developers.role', 'owner', 'tasks.status', 'tasks.checklists']);
+        
+        $teamStats = $project->developers->map(function ($dev) use ($project) {
+            $userTasks = $project->tasks->where('assigned_to', $dev->user_id);
+            $totalTasks = $userTasks->count();
+            $completedTasks = $userTasks->filter(fn($t) => $t->status && strtolower($t->status->name) === 'done')->count();
+            
+            $progress = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
+            
+            // Get logs for this user in this project
+            $logs = TaskLog::where('user_id', $dev->user_id)
+                ->whereHas('task', function($q) use ($project) {
+                    $q->where('project_id', $project->id);
+                })
+                ->latest()
+                ->take(10)
+                ->get();
+
+            return [
+                'user' => $dev->user,
+                'role' => $dev->role,
+                'total_tasks' => $totalTasks,
+                'completed_tasks' => $completedTasks,
+                'progress' => $progress,
+                'logs' => $logs
+            ];
+        });
+
+        return view('pages.project.analytics', compact('project', 'teamStats'));
     }
 }

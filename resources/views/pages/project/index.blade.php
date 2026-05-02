@@ -16,6 +16,19 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="status-filter">Filter by Status:</label>
+                            <select id="status-filter" class="form-control">
+                                <option value="">All Status</option>
+                                @foreach($projects->pluck('status.name')->unique() as $statusName)
+                                    @if($statusName)
+                                        <option value="{{ $statusName }}">{{ $statusName }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table id="project-datatables" class="display table table-striped table-hover">
                             <thead>
@@ -140,7 +153,12 @@
         }
 
         $(document).ready(function() {
-            $('#project-datatables').DataTable({});
+            var table = $('#project-datatables').DataTable({});
+
+            $('#status-filter').on('change', function() {
+                var val = $(this).val();
+                table.column(3).search(val ? '^' + val + '$' : '', true, false).draw();
+            });
 
             $(document).on('click', '.btn-detail', function() {
                 var id = $(this).data('id');

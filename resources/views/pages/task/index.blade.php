@@ -16,6 +16,19 @@
                     </div>
                 </div>
                 <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="task-status-filter">Filter by Status:</label>
+                            <select id="task-status-filter" class="form-control">
+                                <option value="">All Status</option>
+                                @foreach($tasks->pluck('status.name')->unique() as $statusName)
+                                    @if($statusName)
+                                        <option value="{{ $statusName }}">{{ $statusName }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table id="task-datatables" class="display table table-striped table-hover">
                             <thead>
@@ -103,7 +116,12 @@
 @push('scripts')
     <script>
         $(document).ready(function() {
-            $('#task-datatables').DataTable({});
+            var table = $('#task-datatables').DataTable({});
+
+            $('#task-status-filter').on('change', function() {
+                var val = $(this).val();
+                table.column(3).search(val ? '^' + val + '$' : '', true, false).draw();
+            });
 
             // Toggle Checklist Item
             $(document).on('change', '.checklist-item-checkbox', function() {
