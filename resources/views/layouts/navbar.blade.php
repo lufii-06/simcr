@@ -75,15 +75,20 @@
                          <div class="notif-scroll scrollbar-outer">
                              <div class="notif-center" id="notif-list-container">
                                  @if (auth()->check())
-                                     @forelse(auth()->user()->unreadNotifications as $notification)
-                                         <a href="{{ $notification->data['url'] ?? '#' }}" class="notif-item">
+                                     @forelse(auth()->user()->notifications()->latest()->take(7)->get() as $notification)
+                                         <a href="{{ $notification->data['url'] ?? '#' }}"
+                                             class="notif-item {{ $notification->unread() ? 'unread-bg' : '' }}">
                                              <div
                                                  class="notif-icon {{ $notification->data['color'] ?? 'notif-primary' }}">
                                                  <i class="{{ $notification->data['icon'] ?? 'fa fa-bell' }}"></i>
                                              </div>
                                              <div class="notif-content">
                                                  <span class="block">
-                                                     {{ $notification->data['message'] ?? 'New Notification' }} </span>
+                                                     {{ $notification->data['message'] ?? 'New Notification' }}
+                                                     @if ($notification->unread())
+                                                         <span class="badge badge-xs badge-primary ms-1">New</span>
+                                                     @endif
+                                                 </span>
                                                  <span
                                                      class="time">{{ $notification->created_at->diffForHumans() }}</span>
                                              </div>
@@ -91,7 +96,7 @@
                                      @empty
                                          <a href="#">
                                              <div class="notif-content text-center py-3 w-100">
-                                                 <span class="block text-muted">No new notifications</span>
+                                                 <span class="block text-muted">No notifications found</span>
                                              </div>
                                          </a>
                                      @endforelse

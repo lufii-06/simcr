@@ -12,6 +12,8 @@ class Repository extends Model
     protected $fillable = [
         'project_id',
         'name',
+        'is_public',
+        'access_token',
         'url',
         'default_branch',
         'status',
@@ -20,5 +22,10 @@ class Repository extends Model
     public function project()
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'name';
     }
 }

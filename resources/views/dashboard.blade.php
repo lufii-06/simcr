@@ -79,11 +79,38 @@
         </div>
     </div>
 
+    @stack('modals')
     @include('layouts.js')
     <style>
         .required::after {
             content: " *";
             color: red;
+        }
+
+        /* Force 100% width for all form elements */
+        .form-group .form-control,
+        .form-group .form-select,
+        .form-group textarea,
+        .form-group .bs-select-drop {
+            width: 100% !important;
+            display: block;
+        }
+
+        /* Ensure columns in forms are properly aligned */
+        .card-body .row [class*="col-"] {
+            margin-bottom: 5px;
+        }
+
+        /* Fix for KaiAdmin specific form layouts */
+        .form-group {
+            padding: 10px 0 !important;
+            margin-bottom: 0 !important;
+        }
+
+        /* Notification Highlight */
+        .unread-bg {
+            background-color: #f1f4ff !important;
+            border-left: 3px solid #5c72ff;
         }
     </style>
 </body>

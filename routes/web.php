@@ -45,6 +45,11 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::resource('repository', RepositoryController::class)->only(['index', 'show']);
+    Route::post('repository/{repository}/toggle-visibility', [RepositoryController::class, 'toggleVisibility'])->name('repository.toggle-visibility');
+    Route::post('repository/{repository}/toggle-status', [RepositoryController::class, 'toggleStatus'])->name('repository.toggle-status');
+    Route::post('repository/{repository}/generate-token', [RepositoryController::class, 'generateToken'])->name('repository.generate-token');
+    Route::get('repository/{repository}/view-file', [RepositoryController::class, 'viewFile'])->name('repository.view-file');
+    Route::get('repository/{repository}/download-file', [RepositoryController::class, 'downloadFile'])->name('repository.download-file');
 
     Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');

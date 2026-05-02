@@ -22,6 +22,7 @@
                                     <th>Default Branch</th>
                                     <th>Status</th>
                                     <th>Clone URL</th>
+                                    <th style="width: 10%">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -44,6 +45,15 @@
                                             @else
                                                 -
                                             @endif
+                                        </td>
+                                        <td>
+                                            <div class="form-button-action">
+                                                <a href="{{ route('repository.show', $repo) }}"
+                                                    class="btn btn-link btn-info btn-lg" data-bs-toggle="tooltip"
+                                                    title="View Detail">
+                                                    <i class="fa fa-eye"></i>
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach

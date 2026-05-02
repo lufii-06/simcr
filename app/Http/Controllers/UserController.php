@@ -139,6 +139,9 @@ class UserController extends Controller
             'password' => Hash::make($newPassword),
         ]);
 
-        return redirect()->route('user.index')->with('success', "Password for {$user->name} has been reset to: {$newPassword}. Please note it down as it won't be shown again.");
+        return redirect()->route('user.index')
+            ->with('success', "Password for {$user->name} has been reset successfully.")
+            ->with('new_password', $newPassword)
+            ->with('reset_user', $user->name);
     }
 }

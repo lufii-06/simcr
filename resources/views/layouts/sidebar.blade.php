@@ -88,6 +88,20 @@
                         </ul>
                     </div>
                 </li>
+
+                <li class="nav-section">
+                    <span class="sidebar-mini-icon">
+                        <i class="fa fa-ellipsis-h"></i>
+                    </span>
+                    <h4 class="text-section">Reports</h4>
+                </li>
+                <li class="nav-item">
+                    <a href="#">
+                        <i class="fas fa-file-contract"></i>
+                        <p>Laporan</p>
+                    </a>
+                </li>
+
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>

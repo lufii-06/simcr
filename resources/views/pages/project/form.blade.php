@@ -48,22 +48,6 @@
                                         @enderror
                                     </div>
 
-                                    <div class="form-group @error('user_id') has-error @enderror">
-                                        <label for="user_id" class="required">Project Owner (User)</label>
-                                        <select class="form-select w-100" data-bs-toggle="select" id="user_id"
-                                            name="user_id" required>
-
-                                            @foreach ($users as $user)
-                                                <option value="{{ $user->id }}"
-                                                    {{ old('user_id', $project->user_id ?? '') == $user->id ? 'selected' : '' }}>
-                                                    {{ $user->name }} ({{ $user->email }})
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('user_id')
-                                            <small class="text-danger">{{ $message }}</small>
-                                        @enderror
-                                    </div>
 
                                     <div class="form-group @error('project_status_id') has-error @enderror">
                                         <label for="project_status_id" class="required">Project Status</label>
@@ -136,9 +120,11 @@
                                                 <select class="form-select user-select selectpicker" data-live-search="true"
                                                     name="developer_ids[]" required disabled>
                                                     @foreach ($users as $user)
-                                                        <option value="{{ $user->id }}">{{ $user->name }}
-                                                            ({{ $user->role }})
-                                                        </option>
+                                                        @if ($user->role !== 'client')
+                                                            <option value="{{ $user->id }}">{{ $user->name }}
+                                                                ({{ $user->role }})
+                                                            </option>
+                                                        @endif
                                                     @endforeach
                                                 </select>
                                             </div>

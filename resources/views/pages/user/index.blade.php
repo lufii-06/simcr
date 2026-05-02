@@ -56,8 +56,7 @@
                                                     <i class="fa fa-edit"></i>
                                                 </a>
                                                 <form action="{{ route('user.reset-password', $user) }}" method="POST"
-                                                    class="d-inline"
-                                                    onsubmit="return confirm('Are you sure you want to reset password to a random string?')">
+                                                    class="d-inline form-reset-password">
                                                     @csrf
                                                     <button type="submit" class="btn btn-link btn-warning btn-lg"
                                                         data-bs-toggle="tooltip" title="Reset Password">
@@ -65,8 +64,7 @@
                                                     </button>
                                                 </form>
                                                 <form action="{{ route('user.destroy', $user) }}" method="POST"
-                                                    class="d-inline"
-                                                    onsubmit="return confirm('Are you sure you want to delete this user?')">
+                                                    class="d-inline form-delete">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-link btn-danger"
@@ -92,12 +90,13 @@
         $(document).ready(function() {
             $('#user-datatables').DataTable({});
 
+            // Detail Modal Logic
             $('.btn-detail').on('click', function() {
                 var id = $(this).data('id');
                 var modal = $('#detailModal');
                 $('#detailModalBody').html(
                     '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>'
-                    );
+                );
                 modal.modal('show');
 
                 $.get("{{ url('user') }}/" + id, function(data) {
@@ -120,6 +119,86 @@
                     $('#detailModalBody').html(html);
                 });
             });
+
+            // Delete Confirmation
+            $('.form-delete').on('submit', function(e) {
+                e.preventDefault();
+                var form = this;
+                swal({
+                    title: "Are you sure?",
+                    text: "Once deleted, you will not be able to recover this user!",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) {
+                        form.submit();
+                    }
+                });
+            });
+
+            // Reset Password Confirmation
+            $('.form-reset-password').on('submit', function(e) {
+                e.preventDefault();
+                var form = this;
+                swal({
+                    title: "Reset Password?",
+                    text: "This will generate a new random password for this user.",
+                    icon: "info",
+                    buttons: {
+                        cancel: "Cancel",
+                        confirm: {
+                            text: "Yes, Reset it!",
+                            className: "btn btn-warning"
+                        }
+                    },
+                }).then((willReset) => {
+                    if (willReset) {
+                        form.submit();
+                    }
+                });
+            });
+
+            // Show New Password Modal if exists in session
+            @if (session('new_password'))
+                swal({
+                    title: "Password Reset Success!",
+                    content: {
+                        element: "div",
+                        attributes: {
+                            innerHTML: `
+                                <p>New password for <b>{{ session('reset_user') }}</b>:</p>
+                                <div class="bg-light p-3 border rounded mb-3">
+                                    <h3 class="text-primary fw-bold mb-0" id="new-pwd-text">{{ session('new_password') }}</h3>
+                                </div>
+                                <p class="text-muted small">Please copy and give this to the user immediately.</p>
+                                <button class="btn btn-sm btn-primary" onclick="copyToClipboard('{{ session('new_password') }}')">
+                                    <i class="fa fa-copy"></i> Copy to Clipboard
+                                </button>
+                            `
+                        },
+                    },
+                    icon: "success",
+                    button: "Done",
+                });
+            @endif
         });
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                $.notify({
+                    icon: 'fa fa-check',
+                    title: 'Copied!',
+                    message: 'Password copied to clipboard',
+                }, {
+                    type: 'success',
+                    placement: {
+                        from: "top",
+                        align: "right"
+                    },
+                    time: 1000,
+                });
+            });
+        }
     </script>
 @endpush
