@@ -29,14 +29,14 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($projects as $project)
+                                @forelse ($projects as $project)
                                     <tr>
-                                        <td>{{ Str::limit($project->name, 30) }}</td>
+                                        <td>{{ Str::limit($project->name ?? 'Untitled Project', 30) }}</td>
                                         <td>{{ $project->client->user->name ?? 'N/A' }}</td>
                                         <td>{{ $project->owner->name ?? 'N/A' }}</td>
                                         <td><span class="badge badge-info">{{ $project->status->name ?? 'N/A' }}</span></td>
                                         <td>
-                                            @if ($project->start_date && $project->end_date)
+                                            @if (($project->start_date ?? false) && ($project->end_date ?? false))
                                                 {{ \Carbon\Carbon::parse($project->start_date)->format('d M y') }} -
                                                 {{ \Carbon\Carbon::parse($project->end_date)->format('d M y') }}
                                             @else
@@ -68,7 +68,11 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">No projects found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

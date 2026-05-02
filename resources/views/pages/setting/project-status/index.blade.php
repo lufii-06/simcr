@@ -32,9 +32,9 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($statuses as $status)
+                                @forelse ($statuses as $status)
                                     <tr>
-                                        <td>{{ $status->name }}</td>
+                                        <td>{{ $status->name ?? 'N/A' }}</td>
                                         <td>
                                             <div class="form-button-action">
                                                 <button type="button" class="btn btn-link btn-info btn-lg btn-detail"
@@ -60,7 +60,11 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="2" class="text-center py-4 text-muted">No statuses found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

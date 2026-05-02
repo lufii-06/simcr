@@ -17,36 +17,36 @@ class RepositoryController extends Controller
     {
         $repository->load(['project.owner', 'project.developers.user', 'project.developers.role']);
         
+        $selectedBranch = $request->get('branch', $repository->default_branch ?? 'main');
+        $error = null;
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath . '/' . $repository->name . '.git';
 
+        // Initialize default values for null safety
         $branches = [];
         $tags = [];
         $recentCommits = [];
-        $stats = [
-            'size' => '0 KB',
-            'files' => 0,
-            'objects' => 0,
-        ];
+        $files = [];
+        $readme = null;
+        $languages = [];
+        $stats = ['size' => '0', 'files' => '0', 'objects' => '0'];
         $contributionData = ['labels' => [], 'data' => []];
         $activityData = ['labels' => [], 'data' => []];
-        $error = null;
-        
-        // Get selected branch from request, fallback to default_branch
-        $selectedBranch = $request->get('branch', $repository->default_branch);
 
         if (file_exists($repoPath)) {
             // Get Branches
             exec("cd " . escapeshellarg($repoPath) . " && git branch", $branchesOutput);
-            $branches = array_map(function($item) {
-                return trim(str_replace('*', '', $item));
-            }, $branchesOutput);
+            $branches = array_map(fn($b) => trim(str_replace('*', '', $b)), $branchesOutput);
+
+            if (empty($branches)) {
+                $branches = [$repository->default_branch ?? 'main'];
+            }
 
             // Get Tags
             exec("cd " . escapeshellarg($repoPath) . " && git tag", $tags);
 
             // Get Recent Commits (Last 10) for selected branch
-            exec("cd " . escapeshellarg($repoPath) . " && git log " . escapeshellarg($selectedBranch) . " -n 10 --pretty=format:\"%h|%s|%an|%ad\" --date=short", $commitsOutput);
+            exec("cd " . escapeshellarg($repoPath) . " && git log " . escapeshellarg($selectedBranch) . " -n 10 --pretty=format:\"%h|%s|%an|%ad\" --date=short 2>/dev/null", $commitsOutput);
             foreach ($commitsOutput as $line) {
                 $parts = explode('|', $line);
                 if (count($parts) == 4) {
@@ -60,49 +60,41 @@ class RepositoryController extends Controller
             }
 
             // Get File List (Root level)
-            $files = [];
-            exec("cd " . escapeshellarg($repoPath) . " && git ls-tree -l " . escapeshellarg($selectedBranch), $filesOutput);
+            exec("cd " . escapeshellarg($repoPath) . " && git ls-tree -l " . escapeshellarg($selectedBranch) . " 2>/dev/null", $filesOutput);
             foreach ($filesOutput as $line) {
-                // Format: <mode> <type> <object> <size>    <file>
-                // Example: 100644 blob 3e5...    1024    README.md
                 if (preg_match('/^(\d+)\s+(\w+)\s+([0-9a-f]+)\s+(\d+|-)\s+(.*)$/', $line, $matches)) {
                     $files[] = [
-                        'type' => $matches[2], // blob or tree
+                        'type' => $matches[2], 
                         'size' => $matches[4] == '-' ? '-' : round($matches[4] / 1024, 2) . ' KB',
                         'name' => $matches[5],
                     ];
                 }
             }
-            // Sort: folders first, then files
-            usort($files, function($a, $b) {
+            usort($files, function ($a, $b) {
                 if ($a['type'] === $b['type']) return strcasecmp($a['name'], $b['name']);
                 return ($a['type'] === 'tree') ? -1 : 1;
             });
 
-            // Get README content if exists
-            $readme = null;
+            // Get README content
             exec("cd " . escapeshellarg($repoPath) . " && git show " . escapeshellarg($selectedBranch) . ":README.md 2>/dev/null", $readmeOutput);
             if (!empty($readmeOutput)) {
                 $readme = implode("\n", $readmeOutput);
             }
 
             // --- ADVANCED STATS ---
-            
-            // 1. Folder Size
+            // 1. Repo Size
             exec("du -sh " . escapeshellarg($repoPath), $sizeOutput);
-            $stats['size'] = explode("\t", $sizeOutput[0] ?? '0 KB')[0];
+            $stats['size'] = explode("\t", $sizeOutput[0] ?? '0')[0];
 
-            // 2. Total Files in selected branch
-            if (!empty($selectedBranch)) {
-                exec("cd " . escapeshellarg($repoPath) . " && git ls-tree -r --name-only " . escapeshellarg($selectedBranch) . " | wc -l", $filesOutput);
-                $stats['files'] = trim($filesOutput[0] ?? '0');
-            }
+            // 2. Total Files Count
+            exec("cd " . escapeshellarg($repoPath) . " && git ls-tree -r --name-only " . escapeshellarg($selectedBranch) . " | wc -l", $fileCountOutput);
+            $stats['files'] = trim($fileCountOutput[0] ?? '0');
 
             // 3. Git Objects Count
             exec("cd " . escapeshellarg($repoPath) . " && git count-objects", $objectsOutput);
             $stats['objects'] = explode(' ', $objectsOutput[0] ?? '0')[0];
 
-            // 4. Contribution Data (Commits by Author)
+            // 4. Contribution Data
             exec("cd " . escapeshellarg($repoPath) . " && git shortlog -sn --all", $shortlogOutput);
             $currentUserName = auth()->user()->name;
             $currentUserCommits = 0;
@@ -113,7 +105,6 @@ class RepositoryController extends Controller
                 if (preg_match('/(\d+)\t(.+)/', $line, $matches)) {
                     $count = (int)$matches[1];
                     $author = $matches[2];
-                    
                     if (stripos($author, $currentUserName) !== false) {
                         $currentUserCommits += $count;
                     } else {
@@ -126,19 +117,19 @@ class RepositoryController extends Controller
                 'data' => [$currentUserCommits, $othersCommits]
             ];
 
-            // 5. Activity Data (Last 30 days)
+            // 5. Activity Data
             exec("cd " . escapeshellarg($repoPath) . " && git log --all --since='30 days ago' --pretty=format:\"%ad\" --date=short", $historyOutput);
-            $historyCounts = array_count_values($historyOutput);
-            ksort($historyCounts); // Sort by date
-            
-            $activityData = [
-                'labels' => array_keys($historyCounts),
-                'data' => array_values($historyCounts)
-            ];
+            if (!empty($historyOutput)) {
+                $historyCounts = array_count_values($historyOutput);
+                ksort($historyCounts);
+                $activityData = [
+                    'labels' => array_keys($historyCounts),
+                    'data' => array_values($historyCounts)
+                ];
+            }
 
-            // Get Language Statistics
-            $languages = [];
-            exec("cd " . escapeshellarg($repoPath) . " && git ls-tree -r --name-only " . escapeshellarg($selectedBranch), $allFiles);
+            // 6. Language Statistics
+            exec("cd " . escapeshellarg($repoPath) . " && git ls-tree -r --name-only " . escapeshellarg($selectedBranch) . " 2>/dev/null", $allFiles);
             $langCounts = [];
             $totalCount = 0;
             $langMap = [
@@ -154,7 +145,6 @@ class RepositoryController extends Controller
             foreach ($allFiles as $file) {
                 $ext = pathinfo($file, PATHINFO_EXTENSION);
                 if (strpos($file, '.blade.php') !== false) $ext = 'blade.php';
-                
                 if (isset($langMap[$ext])) {
                     $langCounts[$ext] = ($langCounts[$ext] ?? 0) + 1;
                     $totalCount++;
@@ -171,9 +161,8 @@ class RepositoryController extends Controller
                 }
                 usort($languages, fn($a, $b) => $b['percent'] <=> $a['percent']);
             }
-
         } else {
-            $error = "Physical repository folder not found on server.";
+            $error = "Repository physical folder not found. Please ensure the repository has been created correctly on the server.";
         }
 
         return view('pages.repository.show', compact(

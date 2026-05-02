@@ -29,7 +29,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($users as $user)
+                                @forelse ($users as $user)
                                     <tr>
                                         <td>
                                             <div class="avatar">
@@ -37,12 +37,12 @@
                                                     class="avatar-img rounded-circle">
                                             </div>
                                         </td>
-                                        <td>{{ $user->name }}</td>
-                                        <td>{{ $user->email }}</td>
+                                        <td>{{ $user->name ?? 'N/A' }}</td>
+                                        <td>{{ $user->email ?? 'N/A' }}</td>
                                         <td>
-                                            <span class="badge badge-info">{{ ucfirst($user->role) }}</span>
+                                            <span class="badge badge-info">{{ ucfirst($user->role ?? 'user') }}</span>
                                         </td>
-                                        <td>{{ $user->created_at->format('d M Y') }}</td>
+                                        <td>{{ optional($user->created_at)->format('d M Y') ?? '-' }}</td>
                                         <td>
                                             <div class="form-button-action">
                                                 <button type="button" class="btn btn-link btn-info btn-lg btn-detail"
@@ -75,7 +75,11 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">No users found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

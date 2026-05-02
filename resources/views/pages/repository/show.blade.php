@@ -30,16 +30,16 @@
                                     </span>
                                 </div>
                                 <div>
-                                    <h4 class="fw-bold mb-1">{{ $repository->name }}</h4>
-                                    <div class="text-muted small">Project: {{ $repository->project->name ?? 'N/A' }}</div>
+                                    <h4 class="fw-bold mb-1">{{ $repository->name ?? 'Unknown Repository' }}</h4>
+                                    <div class="text-muted small">Project: {{ $repository->project->name ?? 'No Project' }}</div>
                                     <div class="mt-2">
-                                        @if ($repository->is_public)
+                                        @if ($repository->is_public ?? false)
                                             <span class="badge badge-primary"><i class="fas fa-globe"></i> Public</span>
                                         @else
                                             <span class="badge badge-warning"><i class="fas fa-lock"></i> Private</span>
                                         @endif
 
-                                        @if ($repository->status === 'active')
+                                        @if (($repository->status ?? '') === 'active')
                                             <span class="badge badge-success">Active</span>
                                         @else
                                             <span class="badge badge-danger">Inactive</span>
@@ -54,7 +54,7 @@
                                     <label class="small fw-bold text-muted mb-1">SSH Clone URL</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control form-control-sm bg-light" id="ssh-url"
-                                            value="{{ env('REPO_ROOT_URL', 'git@localhost') }}:repositories/{{ $repository->name }}.git"
+                                            value="{{ env('REPO_ROOT_URL', 'git@localhost') }}:repositories/{{ $repository->name ?? 'unknown' }}.git"
                                             readonly>
                                         <div class="input-group-append">
                                             <button class="btn btn-primary btn-sm" type="button"
@@ -70,12 +70,12 @@
                                         @php
                                             $httpRoot = request()->getSchemeAndHttpHost();
                                             $tokenPart =
-                                                !$repository->is_public && $repository->access_token
+                                                !($repository->is_public ?? true) && ($repository->access_token ?? false)
                                                     ? $repository->access_token . '@'
                                                     : '';
                                             $cleanHttpRoot = str_replace(['http://', 'https://'], '', $httpRoot);
                                             $protocol = request()->getScheme();
-                                            $httpUrl = "{$protocol}://{$tokenPart}{$cleanHttpRoot}/repositories/{$repository->name}.git";
+                                            $httpUrl = "{$protocol}://{$tokenPart}{$cleanHttpRoot}/repositories/" . ($repository->name ?? 'unknown') . ".git";
                                         @endphp
                                         <input type="text" class="form-control form-control-sm bg-light" id="http-url"
                                             value="{{ $httpUrl }}" readonly>
@@ -86,7 +86,7 @@
                                             </button>
                                         </div>
                                     </div>
-                                    @if (!$repository->is_public && !$repository->access_token)
+                                    @if (!($repository->is_public ?? true) && !($repository->access_token ?? false))
                                         <div class="small text-danger mt-1" style="font-size: 10px;">Token required for
                                             HTTP clone</div>
                                     @endif
@@ -119,15 +119,15 @@
                 <div class="card-footer">
                     <div class="row user-stats text-center">
                         <div class="col">
-                            <div class="number">{{ count($branches) }}</div>
+                            <div class="number">{{ count($branches ?? []) }}</div>
                             <div class="title">Branches</div>
                         </div>
                         <div class="col">
-                            <div class="number">{{ count($tags) }}</div>
+                            <div class="number">{{ count($tags ?? []) }}</div>
                             <div class="title">Tags</div>
                         </div>
                         <div class="col">
-                            <div class="number">{{ count($recentCommits) }}</div>
+                            <div class="number">{{ count($recentCommits ?? []) }}</div>
                             <div class="title">Commits</div>
                         </div>
                     </div>
@@ -505,7 +505,8 @@
 
                                         <div id="collapseOne" class="collapse show" aria-labelledby="headingOne">
                                             <div class="card-body">
-                                                <p>SSH is the most secure way to interact with Git.</p>
+                                                <p class="small text-muted">SSH is the most secure way to interact with Git without entering credentials every time.</p>
+                                                
                                                 <div class="position-relative">
                                                     <pre class="bg-dark text-light p-3 rounded" id="guide-ssh"><code>git clone {{ env('REPO_ROOT_URL', 'git@localhost') }}:repositories/{{ $repository->name }}.git</code></pre>
                                                     <button class="btn btn-xs btn-primary position-absolute"
@@ -514,8 +515,13 @@
                                                         <i class="fas fa-copy"></i>
                                                     </button>
                                                 </div>
-                                                <ol class="small mt-2">
-                                                    <li>Open terminal, copy command above, and paste.</li>
+
+                                                <h6 class="fw-bold small mt-3">Step-by-step:</h6>
+                                                <ol class="small ps-3">
+                                                    <li>Ensure you have an SSH Key on your computer. Check with <code>ls -al ~/.ssh</code>.</li>
+                                                    <li>If you don't have one, generate it using: <code>ssh-keygen -t ed25519 -C "your_email@example.com"</code>.</li>
+                                                    <li>Add your **Public Key** (<code>id_ed25519.pub</code>) to your SIMCR User Profile.</li>
+                                                    <li>Copy the clone command above and run it in your terminal.</li>
                                                 </ol>
                                             </div>
                                         </div>
@@ -536,12 +542,26 @@
                                             <div class="card-body">
                                                 @if ($repository->is_public)
                                                     <p class="text-success small"><i class="fas fa-check-circle"></i> This
-                                                        repository is <b>Public</b>.</p>
+                                                        repository is <b>Public</b>. Anyone with the URL can clone it.</p>
                                                 @else
                                                     <p class="text-warning small"><i
                                                             class="fas fa-exclamation-circle"></i> This repository is
                                                         <b>Private</b>.</p>
+                                                    
+                                                    @if($repository->access_token)
+                                                        <div class="alert alert-info py-2 small">
+                                                            <i class="fas fa-info-circle"></i> <b>Access Token:</b> We have embedded your token into the URL. You won't be asked for a password.
+                                                        </div>
+                                                    @else
+                                                        <div class="alert alert-danger py-2 small">
+                                                            <i class="fas fa-exclamation-triangle"></i> <b>Action Required!</b> This is a private repository. Please generate an Access Token in <b>Settings</b> first.
+                                                            <div class="mt-2 text-end">
+                                                                <button class="btn btn-xs btn-danger" onclick="showTab('pills-settings')">Generate Token Now</button>
+                                                            </div>
+                                                        </div>
+                                                    @endif
                                                 @endif
+
                                                 <div class="position-relative">
                                                     <pre class="bg-dark text-light p-3 rounded" id="guide-http"><code>git clone {{ $httpUrl }}</code></pre>
                                                     <button class="btn btn-xs btn-secondary position-absolute"
@@ -549,6 +569,20 @@
                                                         onclick="copyToClipboard('guide-http')">
                                                         <i class="fas fa-copy"></i>
                                                     </button>
+                                                </div>
+
+                                                <h6 class="fw-bold small mt-3">Step-by-step:</h6>
+                                                <ol class="small ps-3">
+                                                    <li>Copy the HTTP URL provided above.</li>
+                                                    @if(!$repository->is_public)
+                                                        <li>Ensure your Access Token is active (Check the Settings tab).</li>
+                                                    @endif
+                                                    <li>Paste the command in your terminal and press Enter.</li>
+                                                    <li>If prompted for a password, use your **Access Token** (or leave blank if it's already in the URL).</li>
+                                                </ol>
+
+                                                <div class="bg-light p-2 mt-3 rounded border">
+                                                    <p class="small mb-0 text-muted"><b>Note:</b> Access tokens are a more secure alternative to using your account password for Git operations.</p>
                                                 </div>
                                             </div>
                                         </div>

@@ -59,7 +59,7 @@
 
                                     <div class="separator-dashed"></div>
 
-                                    @if ($user->role == 'client')
+                                    @if (($user->role ?? '') == 'client')
                                         <div class="form-group @error('company_name') has-error @enderror">
                                             <label for="company_name" class="required">Company Name</label>
                                             <input type="text" class="form-control" id="company_name" name="company_name"
@@ -90,16 +90,16 @@
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
                                         </div>
-                                    @elseif ($user->role == 'developer')
+                                    @elseif (($user->role ?? '') == 'developer')
                                         <div class="form-group @error('specialization_id') has-error @enderror">
                                             <label for="specialization_id" class="required">Specialization</label>
                                             <select class="form-control" data-bs-toggle="select" id="specialization_id"
                                                 name="specialization_id" data-live-search="true" required>
 
-                                                @foreach ($specializations as $spec)
+                                                @foreach ($specializations ?? [] as $spec)
                                                     <option value="{{ $spec->id }}"
                                                         {{ old('specialization_id', $user->developer->specialization_id ?? '') == $spec->id ? 'selected' : '' }}>
-                                                        {{ $spec->name }}
+                                                        {{ $spec->name ?? 'Unknown' }}
                                                     </option>
                                                 @endforeach
                                             </select>

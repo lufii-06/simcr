@@ -26,11 +26,11 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($specializations as $item)
+                                @forelse ($specializations as $item)
                                     <tr>
-                                        <td>{{ $item->name }}</td>
+                                        <td>{{ $item->name ?? 'N/A' }}</td>
                                         <td class="text-white">
-                                            <span class="badge badge-count badge-primary">{{ $item->developers()->count() }} Developers</span>
+                                            <span class="badge badge-count badge-primary">{{ optional($item->developers())->count() ?? 0 }} Developers</span>
                                         </td>
                                         <td>
                                             <div class="form-button-action">
@@ -57,7 +57,11 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center py-4 text-muted">No specializations found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

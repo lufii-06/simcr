@@ -26,22 +26,22 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($repositories as $repo)
+                                @forelse ($repositories as $repo)
                                     <tr>
-                                        <td><strong>{{ $repo->name }}</strong></td>
-                                        <td>{{ $repo->project->name ?? 'N/A' }}</td>
-                                        <td><span class="badge badge-secondary">{{ $repo->default_branch }}</span></td>
+                                        <td><strong>{{ $repo->name ?? 'Unknown' }}</strong></td>
+                                        <td>{{ $repo->project->name ?? 'No Project' }}</td>
+                                        <td><span class="badge badge-secondary">{{ $repo->default_branch ?? 'main' }}</span></td>
                                         <td>
-                                            @if ($repo->status === 'active')
+                                            @if (($repo->status ?? '') === 'active')
                                                 <span class="badge badge-success">Active</span>
                                             @else
-                                                <span class="badge badge-danger">{{ ucfirst($repo->status) }}</span>
+                                                <span class="badge badge-danger">{{ ucfirst($repo->status ?? 'inactive') }}</span>
                                             @endif
                                         </td>
                                         <td>
-                                            @if ($repo->url)
+                                            @if ($repo->url ?? false)
                                                 <a href="{{ $repo->url }}" target="_blank" class="btn btn-sm btn-link"><i
-                                                        class="fas fa-external-link-alt"></i> Open URL</a>
+                                                         class="fas fa-external-link-alt"></i> Open URL</a>
                                             @else
                                                 -
                                             @endif
@@ -56,7 +56,11 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">No repositories found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

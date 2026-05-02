@@ -25,13 +25,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($clients as $client)
+                                @forelse ($clients as $client)
                                     <tr>
                                         <td>{{ $client->user->name ?? 'N/A' }}</td>
-                                        <td>{{ $client->company_name }}</td>
-                                        <td>{{ $client->main_contact }}</td>
-                                        <td>{{ $client->phone }}</td>
-                                        <td>{{ $client->address }}</td>
+                                        <td>{{ $client->company_name ?? '-' }}</td>
+                                        <td>{{ $client->main_contact ?? '-' }}</td>
+                                        <td>{{ $client->phone ?? '-' }}</td>
+                                        <td>{{ Str::limit($client->address ?? '-', 30) }}</td>
                                         <td>
                                             <div class="form-button-action">
                                                 <button type="button" class="btn btn-link btn-info btn-lg btn-detail"
@@ -57,7 +57,11 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">No clients found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>

@@ -25,14 +25,14 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($developers as $developer)
+                                @forelse ($developers as $developer)
                                     <tr>
                                         <td>{{ $developer->user->name ?? 'N/A' }}</td>
-                                        <td><span class="badge badge-primary">{{ $developer->specialization->name ?? 'N/A' }}</span></td>
-                                        <td>{{ $developer->phone }}</td>
-                                        <td>{{ Str::limit($developer->address, 30) }}</td>
+                                        <td><span class="badge badge-primary">{{ $developer->specialization->name ?? 'General' }}</span></td>
+                                        <td>{{ $developer->phone ?? '-' }}</td>
+                                        <td>{{ Str::limit($developer->address ?? '-', 30) }}</td>
                                         <td>
-                                            @if ($developer->portfolio_url)
+                                            @if ($developer->portfolio_url ?? false)
                                                 <a href="{{ $developer->portfolio_url }}" target="_blank"
                                                     class="btn btn-xs btn-outline-info">View Link</a>
                                             @else
@@ -64,7 +64,11 @@
                                             </div>
                                         </td>
                                     </tr>
-                                @endforeach
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">No developers found.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
