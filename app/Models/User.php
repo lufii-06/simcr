@@ -33,6 +33,16 @@ class User extends Authenticatable
         return $this->hasMany(ProjectDeveloper::class);
     }
 
+    public function createdTasks()
+    {
+        return $this->hasMany(Task::class, 'created_by');
+    }
+
+    public function assignedTasks()
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
+    }
+
     /**
      * The attributes that are mass assignable.
      *

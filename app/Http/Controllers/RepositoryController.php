@@ -9,13 +9,37 @@ class RepositoryController extends Controller
 {
     public function index()
     {
-        $repositories = Repository::with('project')->orderBy('created_at', 'desc')->get();
+        $user = auth()->user();
+        $query = Repository::with('project')->orderBy('created_at', 'desc');
+
+        if ($user->role === 'developer') {
+            $query->whereHas('project.developers', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        } elseif ($user->role === 'client') {
+            $query->whereHas('project', function ($q) use ($user) {
+                $q->where('client_id', $user->client->id ?? 0);
+            });
+        }
+
+        $repositories = $query->get();
         return view('pages.repository.index', compact('repositories'));
     }
 
     public function show(Request $request, Repository $repository)
     {
+        $user = auth()->user();
         $repository->load(['project.owner', 'project.developers.user', 'project.developers.role']);
+
+        // Manual Authorization Check
+        if ($user->role === 'developer') {
+            $isAssigned = $repository->project->developers()->where('user_id', $user->id)->exists();
+            if (!$isAssigned) abort(403, 'Unauthorized action.');
+        } elseif ($user->role === 'client') {
+            if ($repository->project->client_id !== ($user->client->id ?? 0)) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
         
         $selectedBranch = $request->get('branch', $repository->default_branch ?? 'main');
         $error = null;

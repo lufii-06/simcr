@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             SpecializationSeeder::class,
             DeveloperStatusSeeder::class,
             ProjectStatusSeeder::class,
+            TaskStatusSeeder::class,
         ]);
 
         // Create dummy data

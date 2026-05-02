@@ -19,18 +19,41 @@ class ProjectController extends Controller
 {
     public function index()
     {
-        $projects = Project::with(['client.user', 'status', 'owner'])->get();
+        $user = auth()->user();
+        $query = Project::with(['client.user', 'status', 'owner']);
+
+        if ($user->role === 'developer') {
+            $query->whereHas('developers', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        } elseif ($user->role === 'client') {
+            $query->where('client_id', $user->client->id ?? 0);
+        }
+
+        $projects = $query->get();
 
         return view('pages.project.index', compact('projects'));
     }
 
     public function search(Request $request)
     {
-        $query = $request->get('q');
-        if (! $query) {
+        $queryText = $request->get('q');
+        if (! $queryText) {
             return response()->json([]);
         }
-        $projects = Project::where('name', 'like', "%{$query}%")->limit(5)->get()->map(function ($p) {
+
+        $user = auth()->user();
+        $query = Project::where('name', 'like', "%{$queryText}%");
+
+        if ($user->role === 'developer') {
+            $query->whereHas('developers', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        } elseif ($user->role === 'client') {
+            $query->where('client_id', $user->client->id ?? 0);
+        }
+
+        $projects = $query->limit(5)->get()->map(function ($p) {
             $p->encrypted_id = $p->getRouteKey();
 
             return $p;

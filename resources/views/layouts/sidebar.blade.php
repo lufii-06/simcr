@@ -36,30 +36,33 @@
                         <p>Dashboard</p>
                     </a>
                 </li>
-                <li class="nav-section">
-                    <span class="sidebar-mini-icon">
-                        <i class="fa fa-ellipsis-h"></i>
-                    </span>
-                    <h4 class="text-section">Master Data</h4>
-                </li>
-                <li class="nav-item {{ Request::is('user*') ? 'active' : '' }}">
-                    <a href="{{ route('user.index') }}">
-                        <i class="fas fa-user"></i>
-                        <p>User</p>
-                    </a>
-                </li>
-                <li class="nav-item {{ Request::is('client*') ? 'active' : '' }}">
-                    <a href="{{ route('client.index') }}">
-                        <i class="fas fa-users"></i>
-                        <p>Client</p>
-                    </a>
-                </li>
-                <li class="nav-item {{ Request::is('developer*') ? 'active' : '' }}">
-                    <a href="{{ route('developer.index') }}">
-                        <i class="fas fa-user-tag"></i>
-                        <p>Developer</p>
-                    </a>
-                </li>
+                @if (auth()->user()->role == 'pm')
+                    <li class="nav-section">
+                        <span class="sidebar-mini-icon">
+                            <i class="fa fa-ellipsis-h"></i>
+                        </span>
+                        <h4 class="text-section">Master Data</h4>
+                    </li>
+                    <li class="nav-item {{ Request::is('user*') ? 'active' : '' }}">
+                        <a href="{{ route('user.index') }}">
+                            <i class="fas fa-user"></i>
+                            <p>User</p>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('client*') ? 'active' : '' }}">
+                        <a href="{{ route('client.index') }}">
+                            <i class="fas fa-users"></i>
+                            <p>Client</p>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ Request::is('developer*') ? 'active' : '' }}">
+                        <a href="{{ route('developer.index') }}">
+                            <i class="fas fa-user-tag"></i>
+                            <p>Developer</p>
+                        </a>
+                    </li>
+                @endif
+
                 <li class="nav-section">
                     <span class="sidebar-mini-icon">
                         <i class="fa fa-ellipsis-h"></i>
@@ -89,51 +92,80 @@
                     </div>
                 </li>
 
-                <li class="nav-section">
-                    <span class="sidebar-mini-icon">
-                        <i class="fa fa-ellipsis-h"></i>
-                    </span>
-                    <h4 class="text-section">Reports</h4>
-                </li>
-                <li class="nav-item">
-                    <a href="#">
-                        <i class="fas fa-file-contract"></i>
-                        <p>Laporan</p>
-                    </a>
-                </li>
-
-                <li class="nav-section">
-                    <span class="sidebar-mini-icon">
-                        <i class="fa fa-ellipsis-h"></i>
-                    </span>
-                    <h4 class="text-section">Others</h4>
-                </li>
-                <li class="nav-item {{ Request::is('setting*') ? 'active' : '' }}">
-                    <a data-bs-toggle="collapse" href="#base">
-                        <i class="fas fa-cog"></i>
-                        <p>Settings</p>
+                <li class="nav-item {{ Request::is('task*') ? 'active' : '' }}">
+                    <a data-bs-toggle="collapse" href="#taskNav">
+                        <i class="fas fa-tasks"></i>
+                        <p>Tasks</p>
                         <span class="caret"></span>
                     </a>
-                    <div class="collapse {{ Request::is('setting*') ? 'show' : '' }}" id="base">
+                    <div class="collapse {{ Request::is('task*') ? 'show' : '' }}" id="taskNav">
                         <ul class="nav nav-collapse">
-                            <li class="{{ Request::routeIs('developer-status.*') ? 'active' : '' }}">
-                                <a href="{{ route('developer-status.index') }}">
-                                    <span class="sub-item">Developer Status</span>
+                            <li class="{{ Request::is('task') && Request::get('type') != 'my' ? 'active' : '' }}">
+                                <a href="{{ route('task.index') }}">
+                                    <span class="sub-item">All Task</span>
                                 </a>
                             </li>
-                            <li class="{{ Request::routeIs('project-status.*') ? 'active' : '' }}">
-                                <a href="{{ route('project-status.index') }}">
-                                    <span class="sub-item">Project Status</span>
-                                </a>
-                            </li>
-                            <li class="{{ Request::routeIs('specialization.*') ? 'active' : '' }}">
-                                <a href="{{ route('specialization.index') }}">
-                                    <span class="sub-item">Specialization</span>
+                            <li class="{{ Request::get('type') == 'my' ? 'active' : '' }}">
+                                <a href="{{ route('task.index', ['type' => 'my']) }}">
+                                    <span class="sub-item">My Task</span>
                                 </a>
                             </li>
                         </ul>
                     </div>
                 </li>
+
+                @if (auth()->user()->role == 'pm')
+                    <li class="nav-section">
+                        <span class="sidebar-mini-icon">
+                            <i class="fa fa-ellipsis-h"></i>
+                        </span>
+                        <h4 class="text-section">Reports</h4>
+                    </li>
+                    <li class="nav-item {{ Request::routeIs('report.index') ? 'active' : '' }}">
+                        <a href="{{ route('report.index') }}">
+                            <i class="fas fa-file-contract"></i>
+                            <p>Laporan</p>
+                        </a>
+                    </li>
+
+                    <li class="nav-section">
+                        <span class="sidebar-mini-icon">
+                            <i class="fa fa-ellipsis-h"></i>
+                        </span>
+                        <h4 class="text-section">Others</h4>
+                    </li>
+                    <li class="nav-item {{ Request::is('setting*') ? 'active' : '' }}">
+                        <a data-bs-toggle="collapse" href="#base">
+                            <i class="fas fa-cog"></i>
+                            <p>Settings</p>
+                            <span class="caret"></span>
+                        </a>
+                        <div class="collapse {{ Request::is('setting*') ? 'show' : '' }}" id="base">
+                            <ul class="nav nav-collapse">
+                                <li class="{{ Request::routeIs('developer-status.*') ? 'active' : '' }}">
+                                    <a href="{{ route('developer-status.index') }}">
+                                        <span class="sub-item">Developer Status</span>
+                                    </a>
+                                </li>
+                                <li class="{{ Request::routeIs('project-status.*') ? 'active' : '' }}">
+                                    <a href="{{ route('project-status.index') }}">
+                                        <span class="sub-item">Project Status</span>
+                                    </a>
+                                </li>
+                                <li class="{{ Request::routeIs('task-status.*') ? 'active' : '' }}">
+                                    <a href="{{ route('task-status.index') }}">
+                                        <span class="sub-item">Task Status</span>
+                                    </a>
+                                </li>
+                                <li class="{{ Request::routeIs('specialization.*') ? 'active' : '' }}">
+                                    <a href="{{ route('specialization.index') }}">
+                                        <span class="sub-item">Specialization</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                @endif
             </ul>
         </div>
     </div>

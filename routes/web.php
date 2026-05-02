@@ -9,6 +9,10 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectStatusController;
 use App\Http\Controllers\RepositoryController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SpecializationController;
+use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskStatusController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -30,19 +34,47 @@ Route::middleware('auth')->group(function () {
         return view('pages.dashboard-overview');
     })->name('dashboard');
 
-    Route::resource('user', UserController::class);
-    Route::post('user/{user}/reset-password', [UserController::class, 'resetPassword'])->name('user.reset-password');
-    Route::get('user/avatar/{filename}', [UserController::class, 'serveAvatar'])->name('user.avatar');
-    Route::resource('client', ClientController::class);
-    Route::resource('developer', DeveloperController::class);
-    Route::get('project/search', [ProjectController::class, 'search'])->name('project.search');
-    Route::resource('project', ProjectController::class);
+    // Master Data & Settings (PM only)
+    Route::middleware('role:pm')->group(function () {
+        Route::resource('user', UserController::class);
+        Route::post('user/{user}/reset-password', [UserController::class, 'resetPassword'])->name('user.reset-password');
+        Route::resource('client', ClientController::class)->except(['show']);
+        Route::resource('developer', DeveloperController::class)->except(['show']);
 
-    Route::prefix('setting')->group(function () {
-        Route::resource('developer-status', DeveloperStatusController::class);
-        Route::resource('project-status', ProjectStatusController::class);
-        Route::resource('specialization', \App\Http\Controllers\SpecializationController::class);
+        Route::prefix('setting')->group(function () {
+            Route::resource('developer-status', DeveloperStatusController::class);
+            Route::resource('project-status', ProjectStatusController::class);
+            Route::resource('task-status', TaskStatusController::class);
+            Route::resource('specialization', SpecializationController::class);
+        });
+
+        Route::get('report', [ReportController::class, 'index'])->name('report.index');
     });
+
+    Route::get('user/avatar/{filename}', [UserController::class, 'serveAvatar'])->name('user.avatar');
+
+    // Projects
+    Route::get('project/search', [ProjectController::class, 'search'])->name('project.search');
+    
+    // Restriction for Project Creation (PM & Leader only)
+    Route::middleware('role:pm,leader')->group(function () {
+        Route::get('project/create', [ProjectController::class, 'create'])->name('project.create');
+        Route::post('project', [ProjectController::class, 'store'])->name('project.store');
+        Route::get('project/{project}/edit', [ProjectController::class, 'edit'])->name('project.edit');
+        Route::put('project/{project}', [ProjectController::class, 'update'])->name('project.update');
+        Route::delete('project/{project}', [ProjectController::class, 'destroy'])->name('project.destroy');
+    });
+
+    Route::resource('project', ProjectController::class)->only(['index', 'show']);
+
+    // Tasks
+    Route::get('task', [TaskController::class, 'index'])->name('task.index');
+    Route::get('task/create', [TaskController::class, 'create'])->name('task.create');
+    Route::post('task', [TaskController::class, 'store'])->name('task.store');
+    Route::get('task/{task}', [TaskController::class, 'show'])->name('task.show');
+    Route::get('project/{project}/users', [TaskController::class, 'getProjectUsers'])->name('project.users');
+    Route::post('task/checklist/{checklist}/toggle', [TaskController::class, 'toggleChecklist'])->name('task.checklist.toggle');
+    Route::post('task/{task}/status', [TaskController::class, 'updateStatus'])->name('task.update-status');
 
     Route::resource('repository', RepositoryController::class)->only(['index', 'show']);
     Route::post('repository/{repository}/toggle-visibility', [RepositoryController::class, 'toggleVisibility'])->name('repository.toggle-visibility');
