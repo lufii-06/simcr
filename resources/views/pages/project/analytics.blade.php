@@ -74,21 +74,47 @@
                     <h4 class="card-title">Project Activity Timeline (Recent)</h4>
                 </div>
                 <div class="card-body">
-                    <ol class="activity-feed">
-                        @php
-                            $allLogs = $teamStats->pluck('logs')->flatten()->sortByDesc('created_at')->take(15);
-                        @endphp
-                        @forelse($allLogs as $log)
-                            <li class="feed-item feed-item-{{ $log->action == 'status_changed' ? 'warning' : ($log->action == 'created' ? 'primary' : 'success') }}">
-                                <time class="date" datetime="{{ $log->created_at }}">{{ $log->created_at->diffForHumans() }}</time>
-                                <span class="text">
-                                    <strong>{{ $log->user->name }}</strong>: {{ $log->details }}
-                                </span>
+                    <ul class="timeline">
+                        @forelse($projectLogs as $log)
+                            @php
+                                $icon = 'fas fa-plus';
+                                $color = 'primary';
+                                if ($log->action == 'status_changed') {
+                                    $icon = 'fas fa-exchange-alt';
+                                    $color = 'warning';
+                                } elseif ($log->action == 'checklist_toggled') {
+                                    $icon = 'fas fa-check-circle';
+                                    $color = 'success';
+                                }
+                                $inverted = $loop->even ? 'timeline-inverted' : '';
+                            @endphp
+                            <li class="{{ $inverted }}">
+                                <div class="timeline-badge {{ $color }}">
+                                    <i class="{{ $icon }}"></i>
+                                </div>
+                                <div class="timeline-panel">
+                                    <div class="timeline-heading">
+                                        <h4 class="timeline-title fw-bold text-{{ $color }}">{{ $log->user->name }}</h4>
+                                        <p>
+                                            <small class="text-muted"><i class="far fa-clock"></i>
+                                                {{ $log->created_at->translatedFormat('d M Y, H:i') }} ({{ $log->created_at->diffForHumans() }})</small>
+                                        </p>
+                                    </div>
+                                    <div class="timeline-body">
+                                        <p class="mb-1">{{ $log->details }}</p>
+                                        <span class="badge badge-count bg-light text-muted border">
+                                            <i class="fas fa-tasks mr-1"></i> {{ $log->task->code ?? 'T-XXX' }}: {{ Str::limit($log->task->title ?? '', 40) }}
+                                        </span>
+                                    </div>
+                                </div>
                             </li>
                         @empty
-                            <li class="text-muted">No activities recorded yet.</li>
+                            <div class="text-center py-5">
+                                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Belum ada aktivitas yang tercatat untuk proyek ini.</p>
+                            </div>
                         @endforelse
-                    </ol>
+                    </ul>
                 </div>
             </div>
         </div>

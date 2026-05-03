@@ -352,6 +352,14 @@ class ProjectController extends Controller
             ];
         });
 
-        return view('pages.project.analytics', compact('project', 'teamStats'));
+        $projectLogs = \App\Models\TaskLog::whereHas('task', function($q) use ($project) {
+                $q->where('project_id', $project->id);
+            })
+            ->with(['user', 'task.status'])
+            ->latest()
+            ->take(20)
+            ->get();
+
+        return view('pages.project.analytics', compact('project', 'teamStats', 'projectLogs'));
     }
 }

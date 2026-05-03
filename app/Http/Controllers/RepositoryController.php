@@ -185,8 +185,38 @@ class RepositoryController extends Controller
                 }
                 usort($languages, fn($a, $b) => $b['percent'] <=> $a['percent']);
             }
+
+            // 7. Day of Week Activity
+            exec("cd " . escapeshellarg($repoPath) . " && git log --all --pretty=format:\"%ad\" --date=format:\"%A\"", $daysOutput);
+            $dayCounts = [
+                'Monday' => 0, 'Tuesday' => 0, 'Wednesday' => 0, 
+                'Thursday' => 0, 'Friday' => 0, 'Saturday' => 0, 'Sunday' => 0
+            ];
+            foreach ($daysOutput as $day) {
+                if (isset($dayCounts[$day])) $dayCounts[$day]++;
+            }
+            $dayActivityData = [
+                'labels' => array_keys($dayCounts),
+                'data' => array_values($dayCounts)
+            ];
+
+            // 8. Generate HTTP Clone URL
+            $httpRoot = request()->getSchemeAndHttpHost();
+            $tokenPart = !($repository->is_public) && $repository->access_token 
+                ? $repository->access_token . '@' 
+                : '';
+            $cleanHttpRoot = str_replace(['http://', 'https://'], '', $httpRoot);
+            $protocol = request()->getScheme();
+            $httpUrl = "{$protocol}://{$tokenPart}{$cleanHttpRoot}/repositories/{$repository->name}.git";
+
+            // 9. Get Git Network Graph (Visual branching)
+            exec("cd " . escapeshellarg($repoPath) . " && git log --graph --oneline --all --decorate --color=never", $graphOutput);
+            $gitGraph = implode("\n", $graphOutput);
         } else {
             $error = "Repository physical folder not found. Please ensure the repository has been created correctly on the server.";
+            $dayActivityData = ['labels' => [], 'data' => []];
+            $httpUrl = '';
+            $gitGraph = '';
         }
 
         return view('pages.repository.show', compact(
@@ -198,6 +228,9 @@ class RepositoryController extends Controller
             'stats',
             'contributionData',
             'activityData',
+            'dayActivityData',
+            'gitGraph',
+            'httpUrl',
             'error',
             'files',
             'readme',
