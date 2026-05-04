@@ -47,7 +47,18 @@ Route::middleware('auth')->group(function () {
             Route::resource('specialization', SpecializationController::class);
         });
 
-        Route::get('report', [ReportController::class, 'index'])->name('report.index');
+        // Reports
+        Route::prefix('report')->name('report.')->group(function () {
+            Route::get('/', function() { return redirect()->route('report.master'); })->name('index');
+            Route::get('/master', [ReportController::class, 'master'])->name('master');
+            Route::get('/project', [ReportController::class, 'project'])->name('project');
+            Route::get('/task', [ReportController::class, 'task'])->name('task');
+            Route::get('/repository', [ReportController::class, 'repository'])->name('repository');
+            
+            // Export routes
+            Route::post('/export/pdf', [ReportController::class, 'exportPdf'])->name('export.pdf');
+            Route::post('/export/excel', [ReportController::class, 'exportExcel'])->name('export.excel');
+        });
     });
 
     Route::get('user/avatar/{filename}', [UserController::class, 'serveAvatar'])->name('user.avatar');

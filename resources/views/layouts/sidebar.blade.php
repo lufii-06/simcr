@@ -131,11 +131,36 @@
                         </span>
                         <h4 class="text-section">Reports</h4>
                     </li>
-                    <li class="nav-item {{ Request::routeIs('report.index') ? 'active' : '' }}">
-                        <a href="{{ route('report.index') }}">
+                    <li class="nav-item {{ Request::is('report*') ? 'active' : '' }}">
+                        <a data-bs-toggle="collapse" href="#reportNav">
                             <i class="fas fa-file-contract"></i>
                             <p>Laporan</p>
+                            <span class="caret"></span>
                         </a>
+                        <div class="collapse {{ Request::is('report*') ? 'show' : '' }}" id="reportNav">
+                            <ul class="nav nav-collapse">
+                                <li class="{{ Request::routeIs('report.master') ? 'active' : '' }}">
+                                    <a href="{{ route('report.master') }}">
+                                        <span class="sub-item">Master</span>
+                                    </a>
+                                </li>
+                                <li class="{{ Request::routeIs('report.project') ? 'active' : '' }}">
+                                    <a href="{{ route('report.project') }}">
+                                        <span class="sub-item">Projects</span>
+                                    </a>
+                                </li>
+                                <li class="{{ Request::routeIs('report.task') ? 'active' : '' }}">
+                                    <a href="{{ route('report.task') }}">
+                                        <span class="sub-item">Tasks</span>
+                                    </a>
+                                </li>
+                                <li class="{{ Request::routeIs('report.repository') ? 'active' : '' }}">
+                                    <a href="{{ route('report.repository') }}">
+                                        <span class="sub-item">Repository</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </li>
 
                     <li class="nav-section">
