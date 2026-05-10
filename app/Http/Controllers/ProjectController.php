@@ -8,9 +8,8 @@ use App\Models\Project;
 use App\Models\ProjectDeveloper;
 use App\Models\ProjectStatus;
 use App\Models\Repository;
-use App\Models\User;
-use App\Models\Task;
 use App\Models\TaskLog;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -124,10 +123,9 @@ class ProjectController extends Controller
         }
     }
 
-    public function show($id)
+    public function show(Project $project)
     {
-        $project = Project::with(['client.user', 'status', 'owner', 'developers.user', 'developers.role'])->findOrFail($id);
-
+        $project->load(['client.user', 'status', 'owner', 'developers.user', 'developers.role']);
         return response()->json($project);
     }
 
@@ -230,9 +228,9 @@ class ProjectController extends Controller
     private function generateRepoName(Project $project, ?string $customName = null): string
     {
         $name = $customName ?: $project->name;
-        $prefix = $project->code ?? ('PRJ-' . str_pad($project->id, 4, '0', STR_PAD_LEFT));
+        $prefix = $project->code ?? ('PRJ-'.str_pad($project->id, 4, '0', STR_PAD_LEFT));
 
-        return $prefix . '-' . Str::slug($name);
+        return $prefix.'-'.Str::slug($name);
     }
 
     private function createBlankRepository(Project $project): void
@@ -255,7 +253,7 @@ class ProjectController extends Controller
 
         // Save to database
         $rootUrl = env('REPO_ROOT_URL', 'git@localhost');
-        $fullUrl = $rootUrl . ':repositories/' . $repoName . '.git';
+        $fullUrl = $rootUrl.':repositories/'.$repoName.'.git';
 
         Repository::create([
             'project_id' => $project->id,
@@ -296,7 +294,7 @@ class ProjectController extends Controller
 
         // Sync with database
         $rootUrl = env('REPO_ROOT_URL', 'git@localhost');
-        $fullUrl = $rootUrl . ':repositories/' . $newRepoName . '.git';
+        $fullUrl = $rootUrl.':repositories/'.$newRepoName.'.git';
 
         $repository->update([
             'name' => $newRepoName,
@@ -322,20 +320,21 @@ class ProjectController extends Controller
         // Delete database record
         $repository->delete();
     }
+
     public function analytics(Project $project)
     {
         $project->load(['developers.user', 'developers.role', 'owner', 'tasks.status', 'tasks.checklists']);
-        
+
         $teamStats = $project->developers->map(function ($dev) use ($project) {
             $userTasks = $project->tasks->where('assigned_to', $dev->user_id);
             $totalTasks = $userTasks->count();
-            $completedTasks = $userTasks->filter(fn($t) => $t->status && strtolower($t->status->name) === 'done')->count();
-            
+            $completedTasks = $userTasks->filter(fn ($t) => $t->status && strtolower($t->status->name) === 'done')->count();
+
             $progress = $totalTasks > 0 ? ($completedTasks / $totalTasks) * 100 : 0;
-            
+
             // Get logs for this user in this project
             $logs = TaskLog::where('user_id', $dev->user_id)
-                ->whereHas('task', function($q) use ($project) {
+                ->whereHas('task', function ($q) use ($project) {
                     $q->where('project_id', $project->id);
                 })
                 ->latest()
@@ -348,13 +347,13 @@ class ProjectController extends Controller
                 'total_tasks' => $totalTasks,
                 'completed_tasks' => $completedTasks,
                 'progress' => $progress,
-                'logs' => $logs
+                'logs' => $logs,
             ];
         });
 
-        $projectLogs = \App\Models\TaskLog::whereHas('task', function($q) use ($project) {
-                $q->where('project_id', $project->id);
-            })
+        $projectLogs = \App\Models\TaskLog::whereHas('task', function ($q) use ($project) {
+            $q->where('project_id', $project->id);
+        })
             ->with(['user', 'task.status'])
             ->latest()
             ->take(20)

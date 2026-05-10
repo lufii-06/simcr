@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Developer;
-use App\Models\User;
 use App\Models\Specialization;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class DeveloperController extends Controller
@@ -45,13 +45,14 @@ class DeveloperController extends Controller
         return response()->json([
             'developer' => $developer,
             'user' => $developer->user,
-            'specialization' => $developer->specialization
+            'specialization' => $developer->specialization,
         ]);
     }
 
     public function edit(Developer $developer)
     {
         $specializations = Specialization::all();
+
         return view('pages.developer.form', compact('developer', 'specializations'));
     }
 

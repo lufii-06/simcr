@@ -37,8 +37,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:pm')->group(function () {
         Route::resource('user', UserController::class);
         Route::post('user/{user}/reset-password', [UserController::class, 'resetPassword'])->name('user.reset-password');
-        Route::resource('client', ClientController::class)->except(['show']);
-        Route::resource('developer', DeveloperController::class)->except(['show']);
+        Route::resource('client', ClientController::class);
+        Route::resource('developer', DeveloperController::class);
 
         Route::prefix('setting')->group(function () {
             Route::resource('developer-status', DeveloperStatusController::class);
@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
         Route::post('project', [ProjectController::class, 'store'])->name('project.store');
         Route::get('project/{project}/edit', [ProjectController::class, 'edit'])->name('project.edit');
         Route::put('project/{project}', [ProjectController::class, 'update'])->name('project.update');
+        Route::get('project/{project}', [ProjectController::class, 'show'])->name('project.show');
         Route::delete('project/{project}', [ProjectController::class, 'destroy'])->name('project.destroy');
     });
 
@@ -105,3 +106,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/read/{id}', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 });
+
+// Git HTTP Smart Protocol Routes (Accessible by Git CLI clients with token/auth) ini digunakan untuk cloning dan git action lainnya
+Route::get('repository/{repositoryName}.git/info/refs', [RepositoryController::class, 'gitInfoRefs'])->name('repository.git-info-refs');
+Route::post('repository/{repositoryName}.git/{service}', [RepositoryController::class, 'gitServiceRpc'])->where('service', 'git-upload-pack|git-receive-pack')->name('repository.git-service-rpc');

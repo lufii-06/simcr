@@ -16,6 +16,8 @@ class Repository extends Model
         'url',
         'default_branch',
         'status',
+        'is_public',
+        'access_token',
     ];
 
     protected static function booted()

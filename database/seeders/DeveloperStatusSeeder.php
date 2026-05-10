@@ -10,7 +10,7 @@ class DeveloperStatusSeeder extends Seeder
     public function run(): void
     {
         $statuses = [
-            ['name' => 'Project Manager'],
+            ['name' => 'Project Leader'],
             ['name' => 'Developer'],
             ['name' => 'Maintainer'],
             ['name' => 'Tech Lead'],
