@@ -28,16 +28,16 @@
     @endif
 
     <div class="row">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card card-stats card-round">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-5">
-                            <div class="icon-big text-center icon-primary">
+                        <div class="col-4">
+                            <div class="icon-big text-center icon-info">
                                 <i class="fas fa-hdd"></i>
                             </div>
                         </div>
-                        <div class="col-7 col-stats">
+                        <div class="col-8 col-stats">
                             <div class="numbers">
                                 <p class="card-category">Repo Size</p>
                                 <h4 class="card-title">{{ $stats['size'] }}</h4>
@@ -47,16 +47,16 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <div class="card card-stats card-round">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-5">
-                            <div class="icon-big text-center icon-success">
+                        <div class="col-4">
+                            <div class="icon-big text-center icon-primary">
                                 <i class="fas fa-file-code"></i>
                             </div>
                         </div>
-                        <div class="col-7 col-stats">
+                        <div class="col-8 col-stats">
                             <div class="numbers">
                                 <p class="card-category">Total Files</p>
                                 <h4 class="card-title">{{ $stats['files'] }}</h4>
@@ -66,19 +66,19 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6">
             <div class="card card-stats card-round">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-5">
-                            <div class="icon-big text-center icon-info">
-                                <i class="fas fa-cubes"></i>
+                        <div class="col-2">
+                            <div class="icon-big text-center icon-success">
+                                <i class="fas fa-calendar"></i>
                             </div>
                         </div>
-                        <div class="col-7 col-stats">
+                        <div class="col-10 col-stats">
                             <div class="numbers">
-                                <p class="card-category">Git Objects</p>
-                                <h4 class="card-title">{{ $stats['objects'] }}</h4>
+                                <p class="card-category">Last Commit</p>
+                                <h4 class="card-title">{{ $stats['last_commit'] }}</h4>
                             </div>
                         </div>
                     </div>

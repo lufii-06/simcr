@@ -10,9 +10,6 @@
                     </div>
                     <small class="text-light fw-bold">git-network-graph --all</small>
                 </div>
-                <button class="btn btn-xs btn-outline-light" onclick="location.reload()">
-                    <i class="fas fa-sync-alt"></i> Refresh
-                </button>
             </div>
         </div>
         <div class="card-body p-0">

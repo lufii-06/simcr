@@ -24,6 +24,56 @@
         <div class="col-md-4">
             {{-- Stats Cards: Branches, Tags, Commits Count --}}
             @include('pages.repository.partials._stats_cards')
+
+            <!-- Download Archive Card -->
+            <div class="card card-round mt-4">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-download me-1 text-success"></i> Download Source Code
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">Download the entire repository source code for the currently selected branch (<b>{{ $selectedBranch }}</b>).</p>
+                    <a href="{{ route('repository.download-archive', [$repository, 'branch' => $selectedBranch, 'format' => 'zip']) }}" class="btn btn-success btn-block mb-2 text-white">
+                        <i class="fas fa-file-archive me-2"></i> Download as .ZIP
+                    </a>
+                    <a href="{{ route('repository.download-archive', [$repository, 'branch' => $selectedBranch, 'format' => 'tar.gz']) }}" class="btn btn-outline-success btn-block text-success">
+                        <i class="fas fa-file-alt me-2"></i> Download as .TAR.GZ
+                    </a>
+                </div>
+            </div>
+
+            <!-- Recent Activity Timeline Card -->
+            <div class="card card-round mt-4">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-history me-1 text-primary"></i> Recent Activity
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="feed-timeline">
+                        @forelse (array_slice($recentCommits, 0, 4) as $commit)
+                            <div class="d-flex align-items-start mb-3 pb-3 border-bottom">
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 32px; height: 32px; flex-shrink: 0; margin-right: 12px;">
+                                    <i class="fas fa-code-branch fa-xs"></i>
+                                </div>
+                                <div class="feed-content flex-grow-1" style="min-width: 0;">
+                                    <div class="d-flex align-items-center mb-1 justify-content-between">
+                                        <span class="text-xs fw-bold text-primary" style="font-weight: 700; font-size: 0.75rem;">{{ $commit['hash'] }}</span>
+                                        <small class="text-muted text-xs" style="font-size: 0.75rem;">{{ $commit['date'] }}</small>
+                                    </div>
+                                    <p class="mb-0 text-dark text-wrap-break" style="font-size: 0.85rem; line-height: 1.3; overflow-wrap: break-word; word-break: break-word;">
+                                        {{ $commit['message'] }}
+                                    </p>
+                                    <small class="text-muted text-xs d-block mt-1" style="font-size: 0.7rem;"><i class="far fa-user me-1"></i> {{ $commit['author'] }}</small>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="text-center text-muted py-3">No recent commits found</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="col-md-8">
@@ -32,7 +82,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div class="d-flex align-items-center">
                             <h4 class="card-title me-3">Repository Explorer</h4>
-                            <select class="form-select form-select-sm" style="width: auto;"
+                            <select class="form-select form-select-sm me-2" style="width: auto;"
                                 onchange="window.location.href='?branch=' + this.value">
                                 @forelse ($branches as $branch)
                                     <option value="{{ $branch }}" {{ $selectedBranch == $branch ? 'selected' : '' }}>
@@ -42,6 +92,9 @@
                                     <option disabled selected>No branches found</option>
                                 @endforelse
                             </select>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="window.location.reload()" title="Refresh Explorer">
+                                <i class="fas fa-sync-alt me-1"></i> Refresh
+                            </button>
                         </div>
                         <div class="dropdown">
                             <button class="btn btn-icon btn-clean btn-lg w-auto px-2" type="button"
@@ -77,40 +130,39 @@
                 <div class="card-body">
                     <ul class="nav nav-pills nav-secondary nav-pills-no-bd" id="pills-tab-without-border" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" id="pills-files-tab" data-bs-toggle="pill" href="#pills-files"
+                            <a class="nav-link" id="pills-branches-tab" data-bs-toggle="pill" onclick="showTab('pills-branches')" href="#pills-branches" role="tab" aria-controls="pills-branches" aria-selected="false">
+                                <i class="fas fa-code-branch me-1"></i> Branches
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" id="pills-files-tab" data-bs-toggle="pill" href="#pills-files" onclick="showTab('pills-files')"
                                 role="tab" aria-controls="pills-files" aria-selected="true">
                                 <i class="fas fa-folder-open me-1"></i> Files
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="pills-branches-tab" data-bs-toggle="pill" href="#pills-branches"
-                                role="tab" aria-controls="pills-branches" aria-selected="false">
-                                <i class="fas fa-code-branch me-1"></i> Branches
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" id="pills-commits-tab" data-bs-toggle="pill" href="#pills-commits"
+                            <a class="nav-link" id="pills-commits-tab" data-bs-toggle="pill" onclick="showTab('pills-commits')"href="#pills-commits"
                                 role="tab" aria-controls="pills-commits" aria-selected="false">
                                 <i class="fas fa-history me-1"></i> Commits
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="pills-network-tab" data-bs-toggle="pill" href="#pills-network"
+                            <a class="nav-link" id="pills-network-tab" data-bs-toggle="pill" onclick="showTab('pills-network')"href="#pills-network"
                                 role="tab" aria-controls="pills-network" aria-selected="false">
                                 <i class="fas fa-project-diagram me-1"></i> Network
                             </a>
                         </li>
                         {{-- Hidden Triggers for Kebab Menu --}}
                         <li class="nav-item d-none">
-                            <a class="nav-link" id="pills-insights-tab" data-bs-toggle="pill" href="#pills-insights"
+                            <a class="nav-link" id="pills-insights-tab" data-bs-toggle="pill" onclick="showTab('pills-insights')"href="#pills-insights"
                                 role="tab">Insights</a>
                         </li>
                         <li class="nav-item d-none">
-                            <a class="nav-link" id="pills-tags-tab" data-bs-toggle="pill" href="#pills-tags"
+                            <a class="nav-link" id="pills-tags-tab" data-bs-toggle="pill" onclick="showTab('pills-tags')"href="#pills-tags"
                                 role="tab">Tags</a>
                         </li>
                         <li class="nav-item d-none">
-                            <a class="nav-link" id="pills-settings-tab" data-bs-toggle="pill" href="#pills-settings"
+                            <a class="nav-link" id="pills-settings-tab" data-bs-toggle="pill" onclick="showTab('pills-settings')"href="#pills-settings"
                                 role="tab">Settings</a>
                         </li>
                     </ul>
@@ -129,8 +181,7 @@
                 </div>
             </div>
         </div>
-    </div>
-@endsection
+    </div> @endsection
 
 @push('modals')
     <!-- File Viewer Modal -->

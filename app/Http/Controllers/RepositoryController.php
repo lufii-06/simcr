@@ -6,6 +6,7 @@ use App\Models\Repository;
 use App\Models\User;
 use Fruitcake\LaravelDebugbar\Facades\Debugbar;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 
 class RepositoryController extends Controller
@@ -74,8 +75,8 @@ class RepositoryController extends Controller
 
     public function viewFile(Request $request, Repository $repository)
     {
-        $path = $request->get('path');
-        $branch = $request->get('branch', $repository->default_branch);
+        $path = $request->input('path');
+        $branch = $request->input('branch', $repository->default_branch);
 
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
@@ -84,15 +85,15 @@ class RepositoryController extends Controller
             return response()->json(['error' => 'Repository not found'], 404);
         }
 
-        exec('cd '.escapeshellarg($repoPath).' && git show '.escapeshellarg($branch).':'.escapeshellarg($path).' 2>&1', $output, $returnCode);
+        $res = $this->runGitCommand($repoPath, 'show '.escapeshellarg($branch).':'.escapeshellarg($path));
 
-        if ($returnCode !== 0) {
+        if (! $res['success']) {
             return response()->json(['error' => 'Could not read file content'], 400);
         }
 
         return response()->json([
             'name' => basename($path),
-            'content' => implode("\n", $output),
+            'content' => implode("\n", $res['output']),
             'path' => $path,
             'branch' => $branch,
         ]);
@@ -100,8 +101,8 @@ class RepositoryController extends Controller
 
     public function downloadFile(Request $request, Repository $repository)
     {
-        $path = $request->get('path');
-        $branch = $request->get('branch', $repository->default_branch);
+        $path = $request->input('path');
+        $branch = $request->input('branch', $repository->default_branch);
 
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
@@ -122,6 +123,44 @@ class RepositoryController extends Controller
         }, $fileName);
     }
 
+    public function downloadArchive(Request $request, Repository $repository)
+    {
+        $branch = $request->input('branch', $repository->default_branch ?? 'main');
+        $format = $request->input('format', 'zip'); // zip or tar.gz
+
+        if ($format !== 'zip' && $format !== 'tar.gz') {
+            abort(400, 'Invalid format');
+        }
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (! file_exists($repoPath)) {
+            abort(404, 'Repository physical folder not found');
+        }
+
+        $ext = $format === 'zip' ? 'zip' : 'tar.gz';
+        $fileName = $repository->name.'-'.$branch.'.'.$ext;
+        $formatArg = $format === 'zip' ? 'zip' : 'tar.gz';
+
+        return response()->streamDownload(function () use ($repoPath, $branch, $formatArg) {
+            $cmd = 'git --git-dir='.escapeshellarg($repoPath).
+                ' archive --format='.escapeshellarg($formatArg).
+                ' '.escapeshellarg($branch).' 2>NUL';
+
+            $handle = popen($cmd, 'r');
+            if ($handle) {
+                while (! feof($handle)) {
+                    echo fread($handle, 8192);
+                }
+                pclose($handle);
+            }
+        }, $fileName, [
+            'Content-Type' => $format === 'zip' ? 'application/zip' : 'application/x-gzip',
+            'Cache-Control' => 'no-cache, private',
+        ]);
+    }
+
     public function show(Request $request, Repository $repository)
     {
         $user = auth()->user();
@@ -130,6 +169,7 @@ class RepositoryController extends Controller
         $this->showAuthorize($repository, $user);
 
         $selectedBranch = $request->input('branch', $repository->default_branch ?? 'main');
+        $path = $request->input('path', '');
         $error = null;
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
@@ -152,7 +192,7 @@ class RepositoryController extends Controller
             $branches = $this->showGetBranches($repoPath, $repository);
             $tags = $this->showGetTags($repoPath);
             $recentCommits = $this->showGetRecentCommits($repoPath, $selectedBranch);
-            $files = $this->showGetFiles($repoPath, $selectedBranch);
+            $files = $this->showGetFiles($repoPath, $selectedBranch, $path);
             $readme = $this->showGetReadme($repoPath, $selectedBranch);
             $stats = $this->showGetStats($repoPath, $selectedBranch);
             $contributionData = $this->showGetContributionData($repoPath, $user);
@@ -171,6 +211,7 @@ class RepositoryController extends Controller
             'tags',
             'recentCommits',
             'selectedBranch',
+            'path',
             'stats',
             'contributionData',
             'activityData',
@@ -182,6 +223,21 @@ class RepositoryController extends Controller
             'readme',
             'languages'
         ));
+    }
+
+    private function runGitCommand(string $repoPath, string $command): array
+    {
+        $nullDevice = DIRECTORY_SEPARATOR === '\\' ? 'NUL' : '/dev/null';
+        $fullCommand = 'git --git-dir='.escapeshellarg($repoPath).
+            ' '.$command.' 2>'.$nullDevice;
+
+        exec($fullCommand, $output, $result);
+
+        return [
+            'success' => $result === 0,
+            'output' => $output,
+            'command' => $fullCommand,
+        ];
     }
 
     private function showAuthorize(Repository $repository, $user): void
@@ -200,8 +256,8 @@ class RepositoryController extends Controller
 
     private function showGetBranches(string $repoPath, Repository $repository): array
     {
-        exec('cd '.escapeshellarg($repoPath).' && git branch', $branchesOutput);
-        $branches = array_map(fn ($b) => trim(str_replace('*', '', $b)), $branchesOutput);
+        $res = $this->runGitCommand($repoPath, 'branch');
+        $branches = array_map(fn ($b) => trim(str_replace('*', '', $b)), $res['output']);
 
         if (empty($branches)) {
             $branches = [$repository->default_branch ?? 'main'];
@@ -212,18 +268,25 @@ class RepositoryController extends Controller
 
     private function showGetTags(string $repoPath): array
     {
-        exec('cd '.escapeshellarg($repoPath).' && git tag', $tags);
+        $res = $this->runGitCommand($repoPath, 'tag');
 
-        return $tags;
+        return $res['output'];
     }
 
     private function showGetRecentCommits(string $repoPath, string $selectedBranch): array
     {
         $recentCommits = [];
-        exec('cd '.escapeshellarg($repoPath).' && git log '.escapeshellarg($selectedBranch).' -n 10 --pretty=format:"%h|%s|%an|%ad" --date=short 2>/dev/null', $commitsOutput);
-        foreach ($commitsOutput as $line) {
+
+        $cmd = 'log '.escapeshellarg($selectedBranch).' -n 10 --pretty=format:"%h|%s|%an|%ad" --date=short';
+        $res = $this->runGitCommand($repoPath, $cmd);
+
+        if (! $res['success']) {
+            return [];
+        }
+        foreach ($res['output'] as $line) {
             $parts = explode('|', $line);
-            if (count($parts) == 4) {
+
+            if (count($parts) === 4) {
                 $recentCommits[] = [
                     'hash' => $parts[0],
                     'message' => $parts[1],
@@ -236,67 +299,93 @@ class RepositoryController extends Controller
         return $recentCommits;
     }
 
-    private function showGetFiles(string $repoPath, string $selectedBranch): array
+    private function showGetFiles(string $repoPath, string $selectedBranch, ?string $path = ''): array
     {
         $files = [];
-        exec('cd '.escapeshellarg($repoPath).' && git ls-tree -l '.escapeshellarg($selectedBranch).' 2>/dev/null', $filesOutput);
-        foreach ($filesOutput as $line) {
-            if (preg_match('/^(\d+)\s+(\w+)\s+([0-9a-f]+)\s+(\d+|-)\s+(.*)$/', $line, $matches)) {
+
+        // FIX 1: tambahkan trailing slash jika masuk folder
+        $cleanPath = $path ? rtrim($path, '/').'/' : '';
+
+        // FIX 2: gunakan path yang sudah dibersihkan
+        $pathArg = $cleanPath ? escapeshellarg($cleanPath) : '';
+
+        $cmd = 'ls-tree -l '.escapeshellarg($selectedBranch).' '.$pathArg;
+        $res = $this->runGitCommand($repoPath, $cmd);
+
+        if (! $res['success']) {
+            return [];
+        }
+        foreach ($res['output'] as $line) {
+            // FIX 3: regex diperbaiki agar lebih stabil
+            if (preg_match('/^(\d+)\s+(\w+)\s+([a-f0-9]+)\s+(\d+|-)\t(.+)$/', $line, $matches)) {
+                $fullPath = $matches[5];
+                $size = trim($matches[4]);
+
+                // FIX 4: ambil nama relatif terhadap folder saat ini
+                $relativeName = $cleanPath
+                    ? str_replace($cleanPath, '', $fullPath)
+                    : $fullPath;
+
+                // FIX 5: skip nested child agar tidak tampil recursive
+                if (str_contains($relativeName, '/')) {
+                    continue;
+                }
+
                 $files[] = [
-                    'type' => $matches[2],
-                    'size' => $matches[4] == '-' ? '-' : round($matches[4] / 1024, 2).' KB',
-                    'name' => $matches[5],
+                    'type' => $matches[2], // blob / tree
+                    'size' => $size === '-'
+                        ? '-'
+                        : round((int) $size / 1024, 2).' KB',
+                    'name' => $relativeName,
+                    'path' => $fullPath,
                 ];
             }
         }
+
         usort($files, function ($a, $b) {
             if ($a['type'] === $b['type']) {
                 return strcasecmp($a['name'], $b['name']);
             }
 
-            return ($a['type'] === 'tree') ? -1 : 1;
+            return $a['type'] === 'tree' ? -1 : 1;
         });
+
+        // FIX 6: parent path pakai cleanPath
+        if ($cleanPath) {
+            $parts = explode('/', trim($cleanPath, '/'));
+            array_pop($parts);
+            $parentPath = implode('/', $parts);
+
+            array_unshift($files, [
+                'type' => 'tree',
+                'size' => '-',
+                'name' => '..',
+                'path' => $parentPath,
+                'is_parent' => true,
+            ]);
+        }
 
         return $files;
     }
 
     private function showGetReadme(string $repoPath, string $selectedBranch): ?string
     {
-        exec('cd '.escapeshellarg($repoPath).' && git show '.escapeshellarg($selectedBranch).':README.md 2>/dev/null', $readmeOutput);
-        if (! empty($readmeOutput)) {
-            return implode("\n", $readmeOutput);
+        $res = $this->runGitCommand($repoPath, 'show '.escapeshellarg($selectedBranch).':README.md');
+        if ($res['success'] && ! empty($res['output'])) {
+            return implode("\n", $res['output']);
         }
 
         return null;
     }
 
-    private function showGetStats(string $repoPath, string $selectedBranch): array
-    {
-        $stats = ['size' => '0', 'files' => '0', 'objects' => '0'];
-
-        // 1. Repo Size
-        exec('du -sh '.escapeshellarg($repoPath), $sizeOutput);
-        $stats['size'] = explode("\t", $sizeOutput[0] ?? '0')[0];
-
-        // 2. Total Files Count
-        exec('cd '.escapeshellarg($repoPath).' && git ls-tree -r --name-only '.escapeshellarg($selectedBranch).' | wc -l', $fileCountOutput);
-        $stats['files'] = trim($fileCountOutput[0] ?? '0');
-
-        // 3. Git Objects Count
-        exec('cd '.escapeshellarg($repoPath).' && git count-objects', $objectsOutput);
-        $stats['objects'] = explode(' ', $objectsOutput[0] ?? '0')[0];
-
-        return $stats;
-    }
-
     private function showGetContributionData(string $repoPath, $user): array
     {
-        exec('cd '.escapeshellarg($repoPath).' && git shortlog -sn --all', $shortlogOutput);
+        $res = $this->runGitCommand($repoPath, 'shortlog -sn --all');
+
         $currentUserName = $user->name;
         $currentUserCommits = 0;
         $othersCommits = 0;
-
-        foreach ($shortlogOutput as $line) {
+        foreach ($res['output'] as $line) {
             $line = trim($line);
             if (preg_match('/(\d+)\t(.+)/', $line, $matches)) {
                 $count = (int) $matches[1];
@@ -317,9 +406,13 @@ class RepositoryController extends Controller
 
     private function showGetActivityData(string $repoPath): array
     {
-        exec('cd '.escapeshellarg($repoPath)." && git log --all --since='30 days ago' --pretty=format:\"%ad\" --date=short", $historyOutput);
-        if (! empty($historyOutput)) {
-            $historyCounts = array_count_values($historyOutput);
+        $res = $this->runGitCommand($repoPath, 'log --all --since="30 days ago" --pretty=format:"%ad" --date=short');
+        if (! $res['success']) {
+            return ['labels' => [], 'data' => []];
+        }
+
+        if (! empty($res['output'])) {
+            $historyCounts = array_count_values($res['output']);
             ksort($historyCounts);
 
             return [
@@ -331,12 +424,63 @@ class RepositoryController extends Controller
         return ['labels' => [], 'data' => []];
     }
 
+    private function showGetStats(string $repoPath, string $selectedBranch): array
+    {
+        $stats = [
+            'size' => '0 MB',
+            'files' => '0',
+            'last_commit' => '-',
+        ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | 1. Repository Size
+        |--------------------------------------------------------------------------
+        */
+        $totalBytes = 0;
+        if (\File::exists($repoPath)) {
+            $files = \File::allFiles($repoPath);
+            foreach ($files as $file) {
+                $totalBytes += $file->getSize();
+            }
+        }
+        $stats['size'] = round($totalBytes / 1024 / 1024, 2).' MB';
+
+        /*
+        |--------------------------------------------------------------------------
+        | 2. Total Files
+        |--------------------------------------------------------------------------
+        */
+        $resFiles = $this->runGitCommand($repoPath, 'ls-tree -r --name-only '.escapeshellarg($selectedBranch));
+        if ($resFiles['success']) {
+            $stats['files'] = (string) count($resFiles['output']);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | 3. Last Commit
+        |--------------------------------------------------------------------------
+        */
+        $resLastCommit = $this->runGitCommand($repoPath, 'log -1 --format="%h | %an | %ad" --date=short '.escapeshellarg($selectedBranch));
+        if ($resLastCommit['success'] && ! empty($resLastCommit['output'])) {
+            $stats['last_commit'] = $resLastCommit['output'][0];
+        }
+
+        return $stats;
+    }
+
     private function showGetLanguages(string $repoPath, string $selectedBranch): array
     {
         $languages = [];
-        exec('cd '.escapeshellarg($repoPath).' && git ls-tree -r --name-only '.escapeshellarg($selectedBranch).' 2>/dev/null', $allFiles);
+
+        $res = $this->runGitCommand($repoPath, 'ls-tree -r --name-only '.escapeshellarg($selectedBranch));
+        if (! $res['success']) {
+            return [];
+        }
+
         $langCounts = [];
         $totalCount = 0;
+
         $langMap = [
             'php' => ['name' => 'PHP', 'color' => '#4F5D95'],
             'js' => ['name' => 'JavaScript', 'color' => '#f1e05a'],
@@ -344,42 +488,60 @@ class RepositoryController extends Controller
             'html' => ['name' => 'HTML', 'color' => '#e34c26'],
             'blade.php' => ['name' => 'Blade', 'color' => '#ff2d20'],
             'sql' => ['name' => 'SQL', 'color' => '#e38c00'],
-            'py' => ['name' => 'Python', 'color' => '#3572A5'],
+            'json' => ['name' => 'JSON', 'color' => '#292929'],
+            'md' => ['name' => 'Markdown', 'color' => '#083fa1'],
+            'yml' => ['name' => 'YAML', 'color' => '#cb171e'],
+            'yaml' => ['name' => 'YAML', 'color' => '#cb171e'],
+            'vue' => ['name' => 'Vue', 'color' => '#41b883'],
+            'ts' => ['name' => 'TypeScript', 'color' => '#3178c6'],
         ];
 
-        foreach ($allFiles as $file) {
-            $ext = pathinfo($file, PATHINFO_EXTENSION);
-            if (strpos($file, '.blade.php') !== false) {
-                $ext = 'blade.php';
+        foreach ($res['output'] as $file) {
+            // FIX 3: skip file tanpa extension
+            if (! str_contains($file, '.')) {
+                continue;
             }
+
+            // FIX 4: prioritas khusus blade.php
+            if (str_ends_with($file, '.blade.php')) {
+                $ext = 'blade.php';
+            } else {
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            }
+
             if (isset($langMap[$ext])) {
                 $langCounts[$ext] = ($langCounts[$ext] ?? 0) + 1;
                 $totalCount++;
             }
         }
 
-        if ($totalCount > 0) {
-            foreach ($langCounts as $ext => $count) {
-                $languages[] = [
-                    'name' => $langMap[$ext]['name'],
-                    'color' => $langMap[$ext]['color'],
-                    'percent' => round(($count / $totalCount) * 100, 1),
-                ];
-            }
-            usort($languages, fn ($a, $b) => $b['percent'] <=> $a['percent']);
+        // FIX 5: hindari divide by zero
+        if ($totalCount <= 0) {
+            return [];
         }
+
+        foreach ($langCounts as $ext => $count) {
+            $languages[] = [
+                'name' => $langMap[$ext]['name'],
+                'color' => $langMap[$ext]['color'],
+                'percent' => round(($count / $totalCount) * 100, 1),
+                'count' => $count,
+            ];
+        }
+
+        usort($languages, fn ($a, $b) => $b['percent'] <=> $a['percent']);
 
         return $languages;
     }
 
     private function showGetDayActivityData(string $repoPath): array
     {
-        exec('cd '.escapeshellarg($repoPath).' && git log --all --pretty=format:"%ad" --date=format:"%A"', $daysOutput);
+        $res = $this->runGitCommand($repoPath, 'log --all --pretty=format:"%ad" --date=format:"%A"');
         $dayCounts = [
             'Monday' => 0, 'Tuesday' => 0, 'Wednesday' => 0,
             'Thursday' => 0, 'Friday' => 0, 'Saturday' => 0, 'Sunday' => 0,
         ];
-        foreach ($daysOutput as $day) {
+        foreach ($res['output'] as $day) {
             if (isset($dayCounts[$day])) {
                 $dayCounts[$day]++;
             }
@@ -405,9 +567,9 @@ class RepositoryController extends Controller
 
     private function showGetGitGraph(string $repoPath): string
     {
-        exec('cd '.escapeshellarg($repoPath).' && git log --graph --oneline --all --decorate --color=never', $graphOutput);
+        $res = $this->runGitCommand($repoPath, 'log --graph --oneline --all --decorate --color=never');
 
-        return implode("\n", $graphOutput);
+        return implode("\n", $res['output']);
     }
 
     private function gitAuthenticate(Request $request, Repository $repository): bool

@@ -35,7 +35,7 @@
                                 <label class="small fw-bold text-muted mb-1">SSH Clone URL</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control form-control-sm bg-light" id="ssh-url"
-                                        value="{{ env('REPO_ROOT_URL', 'git@localhost') }}:repositories/{{ $repository->name ?? 'unknown' }}.git"
+                                        value="{{ "git clone ".env('REPO_ROOT_URL', 'git@[IP_ADDRESS]') }}:repositories/{{ $repository->name ?? 'unknown' }}.git"
                                         readonly>
                                     <div class="input-group-append">
                                         <button class="btn btn-primary btn-sm" type="button"
@@ -49,7 +49,7 @@
                                 <label class="small fw-bold text-muted mb-1">HTTP Clone URL</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control form-control-sm bg-light" id="http-url"
-                                        value="{{ $httpUrl }}" readonly>
+                                        value="{{ "git clone ".$httpUrl }}" readonly>
                                     <div class="input-group-append">
                                         <button class="btn btn-secondary btn-sm" type="button"
                                             onclick="copyToClipboard('http-url')">

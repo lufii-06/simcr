@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function () {
     Route::post('repository/{repository}/generate-token', [RepositoryController::class, 'generateToken'])->name('repository.generate-token');
     Route::get('repository/{repository}/view-file', [RepositoryController::class, 'viewFile'])->name('repository.view-file');
     Route::get('repository/{repository}/download-file', [RepositoryController::class, 'downloadFile'])->name('repository.download-file');
+    Route::get('repository/{repository}/download-archive', [RepositoryController::class, 'downloadArchive'])->name('repository.download-archive');
 
     Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');

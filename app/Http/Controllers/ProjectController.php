@@ -244,11 +244,42 @@ class ProjectController extends Controller
             throw new \Exception("Folder repository '{$repoName}' sudah ada di server.");
         }
 
-        // Execute git init --bare
-        exec('git init --bare '.escapeshellarg($repoPath), $output, $result);
+        // Create a temporary non-bare repository in Laravel storage
+        $tempPath = storage_path('app/temp_git_'.uniqid());
+        try {
+            File::makeDirectory($tempPath, 0755, true);
 
-        if ($result !== 0) {
-            throw new \Exception('Gagal melakukan inisialisasi Git repository.');
+            // Initialize standard repository
+            exec('git -C '.escapeshellarg($tempPath).' init', $output, $result);
+            if ($result !== 0) {
+                throw new \Exception('Gagal inisialisasi git di folder temporary.');
+            }
+
+            // Create initial README.md file
+            $readmeContent = "# {$project->name}\n\nInitial repository setup for **{$project->name}** under SIMCR.";
+            File::put($tempPath.'/README.md', $readmeContent);
+
+            // Configure local user credentials for the commit
+            exec('git -C '.escapeshellarg($tempPath).' config user.name "SIMCR System"');
+            exec('git -C '.escapeshellarg($tempPath).' config user.email "system@simcr.com"');
+
+            // Stage and commit the file
+            exec('git -C '.escapeshellarg($tempPath).' add README.md');
+            exec('git -C '.escapeshellarg($tempPath).' commit -m "Initial commit by SIMCR"');
+
+            // Rename the default branch to 'main' (ensuring compatibility across all git versions)
+            exec('git -C '.escapeshellarg($tempPath).' branch -m main');
+
+            // Convert to bare repository at the target path
+            exec('git clone --bare '.escapeshellarg($tempPath).' '.escapeshellarg($repoPath), $output, $result);
+            if ($result !== 0 || !File::exists($repoPath)) {
+                throw new \Exception('Gagal melakukan cloning ke bare repository.');
+            }
+        } finally {
+            // Clean up temporary directory
+            if (File::exists($tempPath)) {
+                File::deleteDirectory($tempPath);
+            }
         }
 
         // Save to database

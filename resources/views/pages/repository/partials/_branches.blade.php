@@ -8,8 +8,7 @@
                     @if ($branch === $repository->default_branch)
                         <span class="badge badge-primary badge-xs ms-2">Default</span>
                     @endif
-                    <a href="?branch={{ $branch }}" class="btn btn-xs btn-link ms-auto">View
-                        Commits</a>
+                    <a href="?branch={{ $branch }}" class="btn btn-xs btn-link ms-auto">View Files</a>
                 </div>
             </div>
         @empty
