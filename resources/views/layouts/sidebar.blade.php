@@ -124,24 +124,24 @@
                     </div>
                 </li>
 
-                @if (auth()->user()->role == 'pm')
+                @if (auth()->user()->role == 'pm' || auth()->user()->role == 'owner')
                     <li class="nav-section">
                         <span class="sidebar-mini-icon">
                             <i class="fa fa-ellipsis-h"></i>
                         </span>
-                        <h4 class="text-section">Reports</h4>
+                        <h4 class="text-section">Outputs</h4>
                     </li>
                     <li class="nav-item {{ Request::is('report*') ? 'active' : '' }}">
                         <a data-bs-toggle="collapse" href="#reportNav">
                             <i class="fas fa-file-contract"></i>
-                            <p>Laporan</p>
+                            <p>Reports</p>
                             <span class="caret"></span>
                         </a>
                         <div class="collapse {{ Request::is('report*') ? 'show' : '' }}" id="reportNav">
                             <ul class="nav nav-collapse">
                                 <li class="{{ Request::routeIs('report.master') ? 'active' : '' }}">
                                     <a href="{{ route('report.master') }}">
-                                        <span class="sub-item">Master</span>
+                                        <span class="sub-item">Users</span>
                                     </a>
                                 </li>
                                 <li class="{{ Request::routeIs('report.project') ? 'active' : '' }}">
@@ -162,7 +162,9 @@
                             </ul>
                         </div>
                     </li>
+                @endif
 
+                @if (auth()->user()->role == 'pm')
                     <li class="nav-section">
                         <span class="sidebar-mini-icon">
                             <i class="fa fa-ellipsis-h"></i>

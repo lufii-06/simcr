@@ -19,5 +19,11 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => 'pm',
         ]);
+        User::create([
+            'name' => 'Owner',
+            'email' => 'owner@simcr.com',
+            'password' => Hash::make('password'),
+            'role' => 'owner',
+        ]);
     }
 }

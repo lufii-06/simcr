@@ -61,9 +61,13 @@
    ```
 
 ## 📸 Screenshots
-*(Tambahkan screenshot dashboard Anda di sini)*
-> [!TIP]
-> Gunakan `php artisan migrate:fresh --seed` untuk mendapatkan data awal (Specializations, Roles, Admin User) secara otomatis.
+![Dashboard](screenshot1.png)
+![Dashboard](screenshot2.png)
+![Dashboard](screenshot3.png)
+![Dashboard](screenshot4.png)
+![Dashboard](screenshot5.png)
+![Dashboard](screenshot6.png)
+![Dashboard](screenshot7.png)
 
 ## 📄 License
 Project ini dilisensikan di bawah [MIT license](https://opensource.org/licenses/MIT).

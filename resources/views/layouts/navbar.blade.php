@@ -288,7 +288,7 @@
                                      <p class="text-muted text-break mb-1">{{ auth()->user()->email }}</p>
                                      <span
                                          class="badge badge-secondary me-1">{{ ucfirst(auth()->user()->role) }}</span>
-                                     <span class="badge badge-success">Online</span>
+                                     <span id="network-status-badge" class="badge badge-success">Online</span>
                                  </div>
                              </div>
                          </li>
@@ -312,3 +312,23 @@
      </div>
  </nav>
  <!-- End Navbar -->
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const badge = document.getElementById('network-status-badge');
+        if (badge) {
+            function updateNetworkStatus() {
+                if (navigator.onLine) {
+                    badge.textContent = 'Online';
+                    badge.className = 'badge badge-success';
+                } else {
+                    badge.textContent = 'Offline';
+                    badge.className = 'badge badge-danger';
+                }
+            }
+            window.addEventListener('online', updateNetworkStatus);
+            window.addEventListener('offline', updateNetworkStatus);
+            updateNetworkStatus(); // Initial check
+        }
+    });
+</script>

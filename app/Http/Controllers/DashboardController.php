@@ -22,16 +22,16 @@ class DashboardController extends Controller
         }
         $totalProjects = $projectQuery->count();
 
-        $totalClients = ($user->role === 'pm') ? Client::count() : 0;
+        $totalClients = ($user->role === 'pm' || $user->role === 'owner') ? Client::count() : 0;
 
         $taskQuery = Task::query();
         if ($user->role === 'developer') {
             $taskQuery->where('assigned_to', $user->id);
-        } elseif ($user->role === 'client' || $user->role === 'pm' || $user->role === 'leader') {
+        } elseif ($user->role === 'client' || $user->role === 'pm' || $user->role === 'leader' || $user->role === 'owner') {
             $taskQuery->whereHas('project', function($q) use ($user) {
                 if ($user->role === 'client') {
                     $q->where('client_id', $user->client->id ?? 0);
-                } elseif ($user->role != 'pm') {
+                } elseif ($user->role !== 'pm' && $user->role !== 'owner') {
                     $q->where('user_id', $user->id)->orWhereHas('developers', fn($sq) => $sq->where('user_id', $user->id));
                 }
             });

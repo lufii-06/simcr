@@ -46,8 +46,10 @@ Route::middleware('auth')->group(function () {
             Route::resource('task-status', TaskStatusController::class);
             Route::resource('specialization', SpecializationController::class);
         });
+    });
 
-        // Reports
+    // Reports (PM & Owner only)
+    Route::middleware('role:pm,owner')->group(function () {
         Route::prefix('report')->name('report.')->group(function () {
             Route::get('/', function() { return redirect()->route('report.master'); })->name('index');
             Route::get('/master', [ReportController::class, 'master'])->name('master');
