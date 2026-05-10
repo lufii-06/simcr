@@ -3,20 +3,6 @@
 @section('title', 'Project Analytics: ' . $project->name)
 
 @section('content')
-    <div class="page-header">
-        <h4 class="page-title">Project Analytics</h4>
-        <ul class="breadcrumbs">
-            <li class="nav-home">
-                <a href="{{ route('dashboard') }}"><i class="flaticon-home"></i></a>
-            </li>
-            <li class="separator"><i class="flaticon-right-arrow"></i></li>
-            <li class="nav-item">
-                <a href="{{ route('project.index', ['view' => 'analytics']) }}">Analytics</a>
-            </li>
-            <li class="separator"><i class="flaticon-right-arrow"></i></li>
-            <li class="nav-item"><a>{{ $project->name }}</a></li>
-        </ul>
-    </div>
 
     <div class="row">
         <!-- Team Overview -->
