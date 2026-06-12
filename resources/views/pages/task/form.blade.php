@@ -22,7 +22,7 @@
                                     <select class="form-control" id="project_id" name="project_id" required>
                                         <option value="">Select Project</option>
                                         @foreach ($projects as $project)
-                                            <option value="{{ $project->id }}" 
+                                            <option value="{{ $project->id }}" data-route-key="{{ $project->getRouteKey() }}"
                                                 {{ old('project_id', $task->project_id ?? '') == $project->id ? 'selected' : '' }}>
                                                 {{ $project->name }}
                                             </option>
@@ -130,13 +130,17 @@
 
             // Dependent Dropdown for Assignee
             $('#project_id').on('change', function() {
-                const projectId = $(this).val();
-                if (projectId) {
+                const selectedOption = $(this).find(':selected');
+                const projectRouteKey = selectedOption.data('route-key');
+                if (projectRouteKey) {
                     $('#assigned_to').html('<option value="">Loading users...</option>');
-                    $.get(`/project/${projectId}/users`, function(users) {
+                    $.get(`/project/${projectRouteKey}/users`, function(users) {
                         let options = '<option value="">Select Assignee</option>';
-                        users.forEach(user => {
-                            options += `<option value="${user.id}">${user.name} (${user.role})</option>`;
+                        const oldAssignedTo = '{{ old('assigned_to', $task->assigned_to ?? '') }}';
+                        const userList = Array.isArray(users) ? users : Object.values(users);
+                        userList.forEach(user => {
+                            const selected = oldAssignedTo == user.id ? 'selected' : '';
+                            options += `<option value="${user.id}" ${selected}>${user.name} (${user.role})</option>`;
                         });
                         $('#assigned_to').html(options);
                     });

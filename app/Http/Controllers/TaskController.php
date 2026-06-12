@@ -106,7 +106,7 @@ class TaskController extends Controller
         
         $users = collect([$owner])->concat($developers)->unique('id');
         
-        return response()->json($users);
+        return response()->json($users->values());
     }
 
     public function store(Request $request)
