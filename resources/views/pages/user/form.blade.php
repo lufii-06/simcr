@@ -140,9 +140,6 @@
                                     <label for="role" class="required">Role</label>
                                     <select class="form-control" data-bs-toggle="select" data-btn-width="100%"
                                         data-live-search="true" id="role" name="role" required>
-                                        <option value="leader"
-                                            {{ old('role', $user->role ?? '') == 'leader' ? 'selected' : '' }}>Leader
-                                        </option>
                                         <option value="client"
                                             {{ old('role', $user->role ?? '') == 'client' ? 'selected' : '' }}>Client
                                         </option>

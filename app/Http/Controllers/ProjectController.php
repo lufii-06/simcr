@@ -125,7 +125,7 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
-        $project->load(['client.user', 'status', 'owner', 'developers.user', 'developers.role']);
+        $project->load(['client.user', 'status', 'owner', 'developers.user', 'developers.role', 'repository']);
         return response()->json($project);
     }
 

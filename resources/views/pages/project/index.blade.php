@@ -130,6 +130,16 @@
                                 <tr><th>Start Date</th><td>${data.start_date || '-'}</td></tr>
                                 <tr><th>End Date</th><td>${data.end_date || '-'}</td></tr>
                                 <tr><th>Description</th><td>${data.description ? data.description.replace(/\n/g, '<br>') : '-'}</td></tr>
+                                <tr>
+                                    <th>Repository</th>
+                                    <td>
+                                        ${data.repository ? `
+                                            <a href="{{ url('repository') }}/${data.repository.name}" class="btn btn-primary btn-sm btn-round text-white">
+                                                <i class="fas fa-code me-1"></i> Go to Repository
+                                            </a>
+                                        ` : '<span class="text-muted">-</span>'}
+                                    </td>
+                                </tr>
                             </table>
                         </div>
                         <div class="col-md-12 mt-4">

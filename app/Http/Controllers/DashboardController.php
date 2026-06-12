@@ -27,7 +27,7 @@ class DashboardController extends Controller
         $taskQuery = Task::query();
         if ($user->role === 'developer') {
             $taskQuery->where('assigned_to', $user->id);
-        } elseif ($user->role === 'client' || $user->role === 'pm' || $user->role === 'leader' || $user->role === 'owner') {
+        } elseif ($user->role === 'client' || $user->role === 'pm' || $user->role === 'owner') {
             $taskQuery->whereHas('project', function($q) use ($user) {
                 if ($user->role === 'client') {
                     $q->where('client_id', $user->client->id ?? 0);

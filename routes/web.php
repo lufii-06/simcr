@@ -69,8 +69,8 @@ Route::middleware('auth')->group(function () {
     Route::get('project/search', [ProjectController::class, 'search'])->name('project.search');
     Route::get('project/{project}/analytics', [ProjectController::class, 'analytics'])->name('project.analytics');
     
-    // Restriction for Project Creation (PM & Leader only)
-    Route::middleware('role:pm,leader')->group(function () {
+    // Restriction for Project Creation (PM only)
+    Route::middleware('role:pm')->group(function () {
         Route::get('project/create', [ProjectController::class, 'create'])->name('project.create');
         Route::post('project', [ProjectController::class, 'store'])->name('project.store');
         Route::get('project/{project}/edit', [ProjectController::class, 'edit'])->name('project.edit');

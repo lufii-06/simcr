@@ -120,7 +120,7 @@
                                                 <select class="form-select user-select selectpicker" data-live-search="true"
                                                     name="developer_ids[]" required disabled>
                                                     @foreach ($users as $user)
-                                                        @if ($user->role !== 'client')
+                                                        @if ($user->role !== 'client' && $user->role !== 'owner')
                                                             <option value="{{ $user->id }}">{{ $user->name }}
                                                                 ({{ $user->role }})
                                                             </option>
