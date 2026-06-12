@@ -72,8 +72,8 @@
         <table width="100%">
             <tr>
                 <td width="20%">
-                    @if(file_exists(public_path('images/logo-color.png')))
-                        <img src="{{ public_path('images/logo-color.png') }}" class="logo">
+                    @if(file_exists(public_path('images/logo-black.png')))
+                        <img src="{{ public_path('images/logo-black.png') }}" class="logo">
                     @else
                         <div style="font-weight: bold; font-size: 20pt;">LOGO</div>
                     @endif

@@ -34,7 +34,7 @@
                 </div>
                 <div class="card-body">
                     <p class="text-muted small">Download the entire repository source code for the currently selected branch (<b>{{ $selectedBranch }}</b>).</p>
-                    <a href="{{ route('repository.download-archive', [$repository, 'branch' => $selectedBranch, 'format' => 'zip']) }}" class="btn btn-success btn-block mb-2 text-white">
+                    <a href="{{ route('repository.download-archive', [$repository, 'branch' => $selectedBranch, 'format' => 'zip']) }}" class="btn btn-success btn-block text-white">
                         <i class="fas fa-file-archive me-2"></i> Download as .ZIP
                     </a>
                     <a href="{{ route('repository.download-archive', [$repository, 'branch' => $selectedBranch, 'format' => 'tar.gz']) }}" class="btn btn-outline-success btn-block text-success">
