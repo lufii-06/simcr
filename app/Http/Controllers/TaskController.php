@@ -183,13 +183,14 @@ class TaskController extends Controller
             'details' => ($checklist->is_completed ? 'Checked' : 'Unchecked') . " item: {$checklist->item_text}",
         ]);
 
-        $task = $checklist->task;
+        $task = $checklist->task->fresh(['status']);
 
         return response()->json([
             'success' => true,
             'is_completed' => $checklist->is_completed,
             'progress' => $task->progress,
-            'progress_text' => $task->progress_text
+            'progress_text' => $task->progress_text,
+            'status_name' => $task->status->name ?? 'Unknown',
         ]);
     }
 

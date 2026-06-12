@@ -50,7 +50,17 @@
                                         <td>{{ $task->title }}</td>
                                         <td>{{ $task->assignee->name }}</td>
                                         <td>
-                                            <span class="badge badge-info">{{ $task->status->name }}</span>
+                                            @php
+                                                $badgeClass = 'badge-info';
+                                                if ($task->status->name === 'To Do') {
+                                                    $badgeClass = 'badge-primary';
+                                                } elseif ($task->status->name === 'In Progress') {
+                                                    $badgeClass = 'badge-warning';
+                                                } elseif ($task->status->name === 'Done') {
+                                                    $badgeClass = 'badge-success';
+                                                }
+                                            @endphp
+                                            <span class="badge {{ $badgeClass }} task-status-{{ $task->id }}">{{ $task->status->name }}</span>
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center">
@@ -140,6 +150,25 @@
                         $(`#progress-bar-${taskId}`).attr('aria-valuenow', data.progress);
                         $(`#progress-text-${taskId}`).text(data.progress_text);
                         
+                        // Update status on table and modal
+                        let badgeClass = 'badge-info';
+                        if (data.status_name === 'To Do') {
+                            badgeClass = 'badge-primary';
+                        } else if (data.status_name === 'In Progress') {
+                            badgeClass = 'badge-warning';
+                        } else if (data.status_name === 'Done') {
+                            badgeClass = 'badge-success';
+                        }
+
+                        $(`.task-status-${taskId}`)
+                            .removeClass('badge-primary badge-warning badge-success badge-info')
+                            .addClass(badgeClass)
+                            .text(data.status_name);
+                        $(`.modal-task-status-${taskId}`)
+                            .removeClass('badge-primary badge-warning badge-success badge-info')
+                            .addClass(badgeClass)
+                            .text(data.status_name);
+                        
                         $.notify({
                             icon: 'fa fa-check',
                             title: 'Updated',
@@ -165,12 +194,21 @@
                 modal.modal('show');
 
                 $.get(`/task/${id}`, function(task) {
+                    let badgeClass = 'badge-info';
+                    if (task.status.name === 'To Do') {
+                        badgeClass = 'badge-primary';
+                    } else if (task.status.name === 'In Progress') {
+                        badgeClass = 'badge-warning';
+                    } else if (task.status.name === 'Done') {
+                        badgeClass = 'badge-success';
+                    }
+
                     let infoHtml = `
                         <div class="row">
                             <div class="col-md-6">
                                 <p><strong>Project:</strong> ${task.project.name}</p>
                                 <p><strong>Title:</strong> ${task.title}</p>
-                                <p><strong>Status:</strong> <span class="badge badge-info">${task.status.name}</span></p>
+                                <p><strong>Status:</strong> <span class="badge ${badgeClass} modal-task-status-${task.id}">${task.status.name}</span></p>
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Created By:</strong> ${task.creator.name}</p>
@@ -197,7 +235,9 @@
                                             data-id="${item.id}" data-task-id="${task.id}"
                                             ${isChecked} ${disabled}>
                                     </div>
-                                    <span class="${item.is_completed ? 'text-muted text-decoration-line-through' : ''}">${item.item_text}</span>
+                                    <span class="${item.is_completed ? 'text-muted text-decoration-line-through' : ''}">
+                                        <strong class="text-primary me-1">[${item.code}]</strong> ${item.item_text}
+                                    </span>
                                 </li>
                             `;
                         });

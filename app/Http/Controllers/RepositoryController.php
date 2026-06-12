@@ -833,6 +833,14 @@ class RepositoryController extends Controller
 
             proc_close($process);
 
+            if ($service === 'git-receive-pack') {
+                try {
+                    $this->processPushedCommits($input, $repoPath, $repository);
+                } catch (\Exception $e) {
+                    \Log::error("Failed to process pushed commits: " . $e->getMessage());
+                }
+            }
+
             return response($output)
                 ->header('Content-Type', 'application/x-'.$service.'-result')
                 ->header('Cache-Control', 'no-cache, max-age=0, must-revalidate')
@@ -841,5 +849,101 @@ class RepositoryController extends Controller
         }
 
         return response('Internal Server Error', 500);
+    }
+
+    private function processPushedCommits($input, string $repoPath, Repository $repository)
+    {
+        $updates = [];
+        if (preg_match_all('/([0-9a-f]{40})\s+([0-9a-f]{40})\s+(refs\/[^\s\0\n]+)/', $input, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $updates[] = [
+                    'old' => $match[1],
+                    'new' => $match[2],
+                    'ref' => $match[3]
+                ];
+            }
+        }
+
+        foreach ($updates as $update) {
+            if ($update['new'] === '0000000000000000000000000000000000000000') {
+                continue; // Skip branch/tag deletion
+            }
+
+            if ($update['old'] === '0000000000000000000000000000000000000000') {
+                // New branch: get all commits on the new ref that aren't on any other refs
+                $gitLogCmd = "log " . escapeshellarg($update['new']) . " --not --all --exclude=" . escapeshellarg($update['ref']) . " --format=" . escapeshellarg("%H|%ae|%B[COMMIT_DELIMITER]");
+            } else {
+                // Existing branch: get commits between old and new
+                $gitLogCmd = "log " . escapeshellarg($update['old'] . '..' . $update['new']) . " --format=" . escapeshellarg("%H|%ae|%B[COMMIT_DELIMITER]");
+            }
+
+            $res = $this->runGitCommand($repoPath, $gitLogCmd);
+            if ($res['success'] && !empty($res['output'])) {
+                $rawCommits = implode("\n", $res['output']);
+                $commits = explode("[COMMIT_DELIMITER]", $rawCommits);
+
+                foreach ($commits as $commitRaw) {
+                    $commitRaw = trim($commitRaw);
+                    if (empty($commitRaw)) {
+                        continue;
+                    }
+
+                    $parts = explode('|', $commitRaw, 3);
+                    if (count($parts) < 3) {
+                        continue;
+                    }
+
+                    $authorEmail = trim($parts[1]);
+                    $message = trim($parts[2]);
+
+                    $this->processCommitMessage($message, $authorEmail, $repository);
+                }
+            }
+        }
+    }
+
+    private function processCommitMessage(string $message, string $authorEmail, Repository $repository)
+    {
+        if (preg_match_all('/\[(CHK-\d+)\]\s*\[(FINISH|UNFINISH)\]/i', $message, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $chkCode = strtoupper($match[1]);
+                $status = strtoupper($match[2]);
+                $isCompleted = ($status === 'FINISH');
+
+                // Normalize code (e.g. CHK-1 -> CHK-0001)
+                if (preg_match('/CHK-(\d+)/i', $chkCode, $numMatch)) {
+                    $normalizedCode = 'CHK-' . str_pad($numMatch[1], 4, '0', STR_PAD_LEFT);
+                } else {
+                    $normalizedCode = $chkCode;
+                }
+
+                $checklist = \App\Models\TaskChecklist::where('code', $normalizedCode)->first();
+                if ($checklist) {
+                    // Security check: must belong to the repository's project
+                    if ($checklist->task->project_id !== $repository->project_id) {
+                        continue;
+                    }
+
+                    if ($checklist->is_completed !== $isCompleted) {
+                        $checklist->update([
+                            'is_completed' => $isCompleted
+                        ]);
+
+                        // Determine user to log
+                        $user = User::where('email', $authorEmail)->first();
+                        if (!$user) {
+                            $user = auth()->user() ?? User::where('role', 'pm')->first();
+                        }
+
+                        \App\Models\TaskLog::create([
+                            'task_id' => $checklist->task_id,
+                            'user_id' => $user ? $user->id : null,
+                            'action' => 'checklist_toggled',
+                            'details' => "[Auto-Commit] " . ($isCompleted ? 'Checked' : 'Unchecked') . " item: {$checklist->item_text} via commit message",
+                        ]);
+                    }
+                }
+            }
+        }
     }
 }
