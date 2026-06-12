@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <!-- Filter Preview -->
                     <form action="{{ route('report.repository') }}" method="GET" class="row mb-4">
-                        <div class="col-md-4">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Project</label>
                                 <select name="project_id" class="form-select form-control">
@@ -49,7 +49,13 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-4 d-flex align-items-end">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Kata Kunci</label>
+                                <input type="text" name="keyword" class="form-control" placeholder="Cari nama..." value="{{ $keyword }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
                             <div class="form-group w-100">
                                 <button type="submit" class="btn btn-secondary btn-block">Filter Preview</button>
                             </div>
@@ -122,6 +128,12 @@
                     <div class="modal-body">
                         <p class="small text-muted">Sesuaikan parameter sebelum mencetak laporan.</p>
                         <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Kata Kunci</label>
+                                    <input type="text" name="keyword" class="form-control" placeholder="Cari nama..." value="{{ $keyword }}">
+                                </div>
+                            </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label>Filter Project</label>

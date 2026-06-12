@@ -26,6 +26,20 @@ class DeveloperExport implements FromCollection, WithHeadings, WithMapping, Shou
         if (!empty($this->filters['specialization_id'])) {
             $query->where('specialization_id', $this->filters['specialization_id']);
         }
+        if (!empty($this->filters['keyword'])) {
+            $keyword = $this->filters['keyword'];
+            $query->where(function ($q) use ($keyword) {
+                $q->where('phone', 'like', "%{$keyword}%")
+                  ->orWhere('address', 'like', "%{$keyword}%")
+                  ->orWhereHas('user', function ($uq) use ($keyword) {
+                      $uq->where('name', 'like', "%{$keyword}%")
+                        ->orWhere('email', 'like', "%{$keyword}%");
+                  })
+                  ->orWhereHas('specialization', function ($sq) use ($keyword) {
+                      $sq->where('name', 'like', "%{$keyword}%");
+                  });
+            });
+        }
         return $query->latest()->get();
     }
 

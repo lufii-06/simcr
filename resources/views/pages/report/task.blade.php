@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <!-- Filter Preview -->
                     <form action="{{ route('report.task') }}" method="GET" class="row mb-4">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Project</label>
                                 <select name="project_id" class="form-select form-control">
@@ -29,7 +29,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Assignee</label>
                                 <select name="assigned_to" class="form-select form-control">
@@ -40,7 +40,7 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Status</label>
                                 <select name="status_id" class="form-select form-control">
@@ -49,6 +49,12 @@
                                         <option value="{{ $status->id }}" {{ $statusId == $status->id ? 'selected' : '' }}>{{ $status->name }}</option>
                                     @endforeach
                                 </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>Kata Kunci</label>
+                                <input type="text" name="keyword" class="form-control" placeholder="Cari judul, kode..." value="{{ $keyword }}">
                             </div>
                         </div>
                         <div class="col-md-3 d-flex align-items-end">
@@ -123,6 +129,12 @@
                     <div class="modal-body">
                         <p class="small text-muted">Sesuaikan parameter sebelum mencetak laporan.</p>
                         <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Kata Kunci</label>
+                                    <input type="text" name="keyword" class="form-control" placeholder="Cari judul, kode..." value="{{ $keyword }}">
+                                </div>
+                            </div>
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label>Filter Project</label>

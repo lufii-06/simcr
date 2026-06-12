@@ -18,7 +18,7 @@
                 <div class="card-body">
                     <!-- Filter Preview -->
                     <form action="{{ route('report.project') }}" method="GET" class="row mb-4">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <div class="form-group">
                                 <label>Klien</label>
                                 <select name="client_id" class="form-select form-control">
@@ -52,7 +52,13 @@
                                 <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
                             </div>
                         </div>
-                        <div class="col-md-3 d-flex align-items-end">
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>Kata Kunci</label>
+                                <input type="text" name="keyword" class="form-control" placeholder="Cari nama, kode..." value="{{ $keyword }}">
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
                             <div class="form-group w-100">
                                 <button type="submit" class="btn btn-secondary btn-block">Filter Preview</button>
                             </div>
@@ -139,6 +145,12 @@
                                             <option value="{{ $status->id }}" {{ $statusId == $status->id ? 'selected' : '' }}>{{ $status->name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Kata Kunci</label>
+                                    <input type="text" name="keyword" class="form-control" placeholder="Cari nama, kode..." value="{{ $keyword }}">
                                 </div>
                             </div>
                             <div class="col-md-6">

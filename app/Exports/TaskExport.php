@@ -25,6 +25,19 @@ class TaskExport implements FromCollection, WithHeadings, WithMapping, ShouldAut
         if (!empty($this->filters['project_id'])) $query->where('project_id', $this->filters['project_id']);
         if (!empty($this->filters['assigned_to'])) $query->where('assigned_to', $this->filters['assigned_to']);
         if (!empty($this->filters['status_id'])) $query->where('task_status_id', $this->filters['status_id']);
+        if (!empty($this->filters['keyword'])) {
+            $keyword = $this->filters['keyword'];
+            $query->where(function ($q) use ($keyword) {
+                $q->where('title', 'like', "%{$keyword}%")
+                  ->orWhere('code', 'like', "%{$keyword}%")
+                  ->orWhereHas('project', function ($pq) use ($keyword) {
+                      $pq->where('name', 'like', "%{$keyword}%");
+                  })
+                  ->orWhereHas('assignee', function ($aq) use ($keyword) {
+                      $aq->where('name', 'like', "%{$keyword}%");
+                  });
+            });
+        }
         
         return $query->latest()->get();
     }

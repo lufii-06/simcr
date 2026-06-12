@@ -35,20 +35,20 @@
                     <!-- Filter Preview -->
                     <form action="{{ route('report.master') }}" method="GET" class="row mb-4">
                         <input type="hidden" name="category" value="{{ $category }}">
-                        <div class="{{ $category == 'developer' ? 'col-md-3' : 'col-md-4' }}">
+                        <div class="{{ $category == 'developer' ? 'col-md-2' : 'col-md-3' }}">
                             <div class="form-group">
                                 <label>Dari Tanggal</label>
                                 <input type="date" name="start_date" class="form-control" value="{{ $startDate }}">
                             </div>
                         </div>
-                        <div class="{{ $category == 'developer' ? 'col-md-3' : 'col-md-4' }}">
+                        <div class="{{ $category == 'developer' ? 'col-md-2' : 'col-md-3' }}">
                             <div class="form-group">
                                 <label>Sampai Tanggal</label>
                                 <input type="date" name="end_date" class="form-control" value="{{ $endDate }}">
                             </div>
                         </div>
                         @if($category == 'developer')
-                            <div class="col-md-3">
+                            <div class="col-md-2">
                                 <div class="form-group">
                                     <label>Spesialisasi</label>
                                     <select name="specialization_id" class="form-select form-control">
@@ -60,6 +60,12 @@
                                 </div>
                             </div>
                         @endif
+                        <div class="{{ $category == 'developer' ? 'col-md-3' : 'col-md-3' }}">
+                            <div class="form-group">
+                                <label>Kata Kunci</label>
+                                <input type="text" name="keyword" class="form-control" placeholder="Cari nama, email..." value="{{ $keyword }}">
+                            </div>
+                        </div>
                         <div class="{{ $category == 'developer' ? 'col-md-3' : 'col-md-3' }} d-flex align-items-end">
                             <div class="form-group w-100">
                                 <button type="submit" class="btn btn-secondary btn-block">Filter Preview</button>
@@ -164,6 +170,12 @@
                                             <option value="{{ $spec->id }}" {{ $specializationId == $spec->id ? 'selected' : '' }}>{{ $spec->name }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label>Kata Kunci</label>
+                                    <input type="text" name="keyword" class="form-control" placeholder="Cari nama, email..." value="{{ $keyword }}">
                                 </div>
                             </div>
                             <div class="col-md-6">

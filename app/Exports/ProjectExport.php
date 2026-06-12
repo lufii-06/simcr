@@ -26,6 +26,16 @@ class ProjectExport implements FromCollection, WithHeadings, WithMapping, Should
         if (!empty($this->filters['status_id'])) $query->where('project_status_id', $this->filters['status_id']);
         if (!empty($this->filters['start_date'])) $query->whereDate('start_date', '>=', $this->filters['start_date']);
         if (!empty($this->filters['end_date'])) $query->whereDate('end_date', '<=', $this->filters['end_date']);
+        if (!empty($this->filters['keyword'])) {
+            $keyword = $this->filters['keyword'];
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                  ->orWhere('code', 'like', "%{$keyword}%")
+                  ->orWhereHas('client', function ($cq) use ($keyword) {
+                      $cq->where('company_name', 'like', "%{$keyword}%");
+                  });
+            });
+        }
         
         return $query->latest()->get();
     }

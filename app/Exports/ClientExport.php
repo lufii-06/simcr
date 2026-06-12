@@ -23,6 +23,16 @@ class ClientExport implements FromCollection, WithHeadings, WithMapping, ShouldA
         $query = Client::with('user');
         if (!empty($this->filters['start_date'])) $query->whereDate('created_at', '>=', $this->filters['start_date']);
         if (!empty($this->filters['end_date'])) $query->whereDate('created_at', '<=', $this->filters['end_date']);
+        if (!empty($this->filters['keyword'])) {
+            $keyword = $this->filters['keyword'];
+            $query->where(function ($q) use ($keyword) {
+                $q->where('company_name', 'like', "%{$keyword}%")
+                  ->orWhere('main_contact', 'like', "%{$keyword}%")
+                  ->orWhereHas('user', function ($uq) use ($keyword) {
+                      $uq->where('email', 'like', "%{$keyword}%");
+                  });
+            });
+        }
         return $query->latest()->get();
     }
 

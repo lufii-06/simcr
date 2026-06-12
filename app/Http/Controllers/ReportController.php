@@ -20,15 +20,38 @@ class ReportController extends Controller
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
         $specializationId = $request->get('specialization_id');
+        $keyword = $request->get('keyword');
 
         $specializations = \App\Models\Specialization::all();
 
         if ($category == 'client') {
             $query = Client::with('user');
+            if ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('company_name', 'like', "%{$keyword}%")
+                      ->orWhere('main_contact', 'like', "%{$keyword}%")
+                      ->orWhereHas('user', function ($uq) use ($keyword) {
+                          $uq->where('email', 'like', "%{$keyword}%");
+                      });
+                });
+            }
         } else {
             $query = Developer::with(['user', 'specialization']);
             if ($specializationId) {
                 $query->where('specialization_id', $specializationId);
+            }
+            if ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('phone', 'like', "%{$keyword}%")
+                      ->orWhere('address', 'like', "%{$keyword}%")
+                      ->orWhereHas('user', function ($uq) use ($keyword) {
+                          $uq->where('name', 'like', "%{$keyword}%")
+                            ->orWhere('email', 'like', "%{$keyword}%");
+                      })
+                      ->orWhereHas('specialization', function ($sq) use ($keyword) {
+                          $sq->where('name', 'like', "%{$keyword}%");
+                      });
+                });
             }
         }
 
@@ -42,7 +65,7 @@ class ReportController extends Controller
 
         $data = $query->latest()->get();
 
-        return view('pages.report.master', compact('data', 'category', 'startDate', 'endDate', 'specializations', 'specializationId'));
+        return view('pages.report.master', compact('data', 'category', 'startDate', 'endDate', 'specializations', 'specializationId', 'keyword'));
     }
 
     public function project(Request $request)
@@ -51,6 +74,7 @@ class ReportController extends Controller
         $statusId = $request->get('status_id');
         $startDate = $request->get('start_date');
         $endDate = $request->get('end_date');
+        $keyword = $request->get('keyword');
 
         $clients = Client::all();
         $statuses = \App\Models\ProjectStatus::all();
@@ -61,10 +85,19 @@ class ReportController extends Controller
         if ($statusId) $query->where('project_status_id', $statusId);
         if ($startDate) $query->whereDate('start_date', '>=', $startDate);
         if ($endDate) $query->whereDate('end_date', '<=', $endDate);
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                  ->orWhere('code', 'like', "%{$keyword}%")
+                  ->orWhereHas('client', function ($cq) use ($keyword) {
+                      $cq->where('company_name', 'like', "%{$keyword}%");
+                  });
+            });
+        }
 
         $data = $query->latest()->get();
 
-        return view('pages.report.project', compact('data', 'clients', 'statuses', 'clientId', 'statusId', 'startDate', 'endDate'));
+        return view('pages.report.project', compact('data', 'clients', 'statuses', 'clientId', 'statusId', 'startDate', 'endDate', 'keyword'));
     }
 
     public function task(Request $request)
@@ -72,6 +105,7 @@ class ReportController extends Controller
         $projectId = $request->get('project_id');
         $assigneeId = $request->get('assigned_to');
         $statusId = $request->get('status_id');
+        $keyword = $request->get('keyword');
 
         $projects = Project::all();
         $developers = Developer::with('user')->get();
@@ -82,10 +116,22 @@ class ReportController extends Controller
         if ($projectId) $query->where('project_id', $projectId);
         if ($assigneeId) $query->where('assigned_to', $assigneeId);
         if ($statusId) $query->where('task_status_id', $statusId);
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('title', 'like', "%{$keyword}%")
+                  ->orWhere('code', 'like', "%{$keyword}%")
+                  ->orWhereHas('project', function ($pq) use ($keyword) {
+                      $pq->where('name', 'like', "%{$keyword}%");
+                  })
+                  ->orWhereHas('assignee', function ($aq) use ($keyword) {
+                      $aq->where('name', 'like', "%{$keyword}%");
+                  });
+            });
+        }
 
         $data = $query->latest()->get();
 
-        return view('pages.report.task', compact('data', 'projects', 'developers', 'statuses', 'projectId', 'assigneeId', 'statusId'));
+        return view('pages.report.task', compact('data', 'projects', 'developers', 'statuses', 'projectId', 'assigneeId', 'statusId', 'keyword'));
     }
 
     public function repository(Request $request)
@@ -93,6 +139,7 @@ class ReportController extends Controller
         $projectId = $request->get('project_id');
         $visibility = $request->get('visibility');
         $status = $request->get('status');
+        $keyword = $request->get('keyword');
 
         $projects = Project::all();
 
@@ -101,10 +148,18 @@ class ReportController extends Controller
         if ($projectId) $query->where('project_id', $projectId);
         if ($visibility) $query->where('is_public', $visibility == 'public');
         if ($status) $query->where('is_active', $status == 'active');
+        if ($keyword) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                  ->orWhereHas('project', function ($pq) use ($keyword) {
+                      $pq->where('name', 'like', "%{$keyword}%");
+                  });
+            });
+        }
 
         $data = $query->latest()->get();
 
-        return view('pages.report.repository', compact('data', 'projects', 'projectId', 'visibility', 'status'));
+        return view('pages.report.repository', compact('data', 'projects', 'projectId', 'visibility', 'status', 'keyword'));
     }
 
     public function exportPdf(Request $request)
@@ -174,11 +229,34 @@ class ReportController extends Controller
     private function getFilteredData($request, $type, $category = null)
     {
         if ($type == 'master') {
+            $keyword = $request->get('keyword');
             if ($category == 'client') {
                 $query = Client::with('user');
+                if ($keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('company_name', 'like', "%{$keyword}%")
+                          ->orWhere('main_contact', 'like', "%{$keyword}%")
+                          ->orWhereHas('user', function ($uq) use ($keyword) {
+                              $uq->where('email', 'like', "%{$keyword}%");
+                          });
+                    });
+                }
             } else {
                 $query = Developer::with(['user', 'specialization']);
                 if ($request->specialization_id) $query->where('specialization_id', $request->specialization_id);
+                if ($keyword) {
+                    $query->where(function ($q) use ($keyword) {
+                        $q->where('phone', 'like', "%{$keyword}%")
+                          ->orWhere('address', 'like', "%{$keyword}%")
+                          ->orWhereHas('user', function ($uq) use ($keyword) {
+                              $uq->where('name', 'like', "%{$keyword}%")
+                                ->orWhere('email', 'like', "%{$keyword}%");
+                          })
+                          ->orWhereHas('specialization', function ($sq) use ($keyword) {
+                              $sq->where('name', 'like', "%{$keyword}%");
+                          });
+                    });
+                }
             }
             if ($request->start_date) $query->whereDate('created_at', '>=', $request->start_date);
             if ($request->end_date) $query->whereDate('created_at', '<=', $request->end_date);
@@ -186,27 +264,59 @@ class ReportController extends Controller
         }
 
         if ($type == 'project') {
+            $keyword = $request->get('keyword');
             $query = Project::with(['client', 'status']);
             if ($request->client_id) $query->where('client_id', $request->client_id);
             if ($request->status_id) $query->where('project_status_id', $request->status_id);
             if ($request->start_date) $query->whereDate('start_date', '>=', $request->start_date);
             if ($request->end_date) $query->whereDate('end_date', '<=', $request->end_date);
+            if ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('name', 'like', "%{$keyword}%")
+                      ->orWhere('code', 'like', "%{$keyword}%")
+                      ->orWhereHas('client', function ($cq) use ($keyword) {
+                          $cq->where('company_name', 'like', "%{$keyword}%");
+                      });
+                });
+            }
             return $query->latest()->get();
         }
 
         if ($type == 'task') {
+            $keyword = $request->get('keyword');
             $query = Task::with(['project', 'assignee', 'status']);
             if ($request->project_id) $query->where('project_id', $request->project_id);
             if ($request->assigned_to) $query->where('assigned_to', $request->assigned_to);
             if ($request->status_id) $query->where('task_status_id', $request->status_id);
+            if ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('title', 'like', "%{$keyword}%")
+                      ->orWhere('code', 'like', "%{$keyword}%")
+                      ->orWhereHas('project', function ($pq) use ($keyword) {
+                          $pq->where('name', 'like', "%{$keyword}%");
+                      })
+                      ->orWhereHas('assignee', function ($aq) use ($keyword) {
+                          $aq->where('name', 'like', "%{$keyword}%");
+                      });
+                });
+            }
             return $query->latest()->get();
         }
 
         if ($type == 'repository') {
+            $keyword = $request->get('keyword');
             $query = Repository::with('project');
             if ($request->project_id) $query->where('project_id', $request->project_id);
             if ($request->visibility) $query->where('is_public', $request->visibility == 'public');
             if ($request->status) $query->where('is_active', $request->status == 'active');
+            if ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('name', 'like', "%{$keyword}%")
+                      ->orWhereHas('project', function ($pq) use ($keyword) {
+                          $pq->where('name', 'like', "%{$keyword}%");
+                      });
+                });
+            }
             return $query->latest()->get();
         }
 

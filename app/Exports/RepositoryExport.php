@@ -25,6 +25,15 @@ class RepositoryExport implements FromCollection, WithHeadings, WithMapping, Sho
         if (!empty($this->filters['project_id'])) $query->where('project_id', $this->filters['project_id']);
         if (!empty($this->filters['visibility'])) $query->where('is_public', $this->filters['visibility'] == 'public');
         if (!empty($this->filters['status'])) $query->where('is_active', $this->filters['status'] == 'active');
+        if (!empty($this->filters['keyword'])) {
+            $keyword = $this->filters['keyword'];
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                  ->orWhereHas('project', function ($pq) use ($keyword) {
+                      $pq->where('name', 'like', "%{$keyword}%");
+                  });
+            });
+        }
         
         return $query->latest()->get();
     }
