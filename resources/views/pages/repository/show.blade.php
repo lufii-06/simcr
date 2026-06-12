@@ -186,8 +186,7 @@
 @push('modals')
     <!-- Google Font Fira Code -->
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" />
+    <link rel="stylesheet" href="{{ asset('assets/css/prism.css') }}" />
 
     <style>
         .code-viewer-container::-webkit-scrollbar {
@@ -364,6 +363,8 @@
 @endpush
 
 @push('scripts')
+    <script src="{{ asset('assets/js/prism.js') }}"></script>
+
     <script>
         function openFileViewer(path) {
             const branch = '{{ $selectedBranch }}';
@@ -371,7 +372,8 @@
                 encodeURIComponent(branch);
 
             // Show loading state
-            $('#file-content-area').text('Loading file content...');
+            $('#file-meta-info').html('<i class="fas fa-spinner fa-spin me-1.5 text-info"></i>Loading file details...');
+            $('#file-code-block').attr('class', 'language-none').text('Loading file content...');
             $('#fileViewerTitle').text(path);
             $('#fileViewerModal').modal('show');
 
@@ -380,48 +382,86 @@
                 url: url,
                 method: 'GET',
                 success: function(data) {
-                    $('#file-content-area').text(data.content);
+                    // 1. Determine Language class for Prism
+                    const extension = path.split('.').pop().toLowerCase();
+                    const langMap = {
+                        'php': 'php',
+                        'js': 'javascript',
+                        'ts': 'typescript',
+                        'json': 'json',
+                        'html': 'html',
+                        'css': 'css',
+                        'md': 'markdown',
+                        'py': 'python',
+                        'sh': 'bash',
+                        'sql': 'sql',
+                        'xml': 'xml',
+                        'yml': 'yaml',
+                        'yaml': 'yaml',
+                        'rb': 'ruby',
+                        'go': 'go',
+                        'rs': 'rust',
+                        'java': 'java',
+                        'c': 'c',
+                        'cpp': 'cpp',
+                        'cs': 'csharp',
+                        'blade': 'html'
+                    };
+                    const lang = langMap[extension] || 'none';
+                    
+                    // 2. Put raw content in code block and set language class
+                    const codeBlock = document.getElementById('file-code-block');
+                    codeBlock.className = 'language-' + lang;
+                    codeBlock.textContent = data.content;
+
+                    // 3. Trigger Prism syntax highlighting
+                    if (typeof Prism !== 'undefined') {
+                        Prism.highlightElement(codeBlock);
+                    }
+
+                    // 4. Calculate file size and line counts
+                    const linesCount = data.content.split('\n').length;
+                    const byteSize = new Blob([data.content]).size;
+                    let sizeStr = byteSize + ' B';
+                    if (byteSize > 1024 * 1024) {
+                        sizeStr = (byteSize / (1024 * 1024)).toFixed(2) + ' MB';
+                    } else if (byteSize > 1024) {
+                        sizeStr = (byteSize / 1024).toFixed(2) + ' KB';
+                    }
+                    
+                    $('#file-meta-info').html(`
+                        <span class="me-3"><i class="fas fa-list-ol me-1.5 text-primary"></i><strong>${linesCount}</strong> lines</span>
+                        <span class="me-3"><i class="fas fa-hdd me-1.5 text-success"></i><strong>${sizeStr}</strong></span>
+                        <span><i class="fas fa-code me-1.5 text-warning"></i>Type: <strong>${extension.toUpperCase()}</strong></span>
+                    `);
+
+                    // 5. Update download link
                     $('#btn-download-file').attr('href',
                         '{{ route('repository.download-file', $repository) }}?path=' +
                         encodeURIComponent(path) + '&branch=' + encodeURIComponent(branch));
                 },
                 error: function(xhr) {
-                    $('#file-content-area').html('<span class="text-danger">Error: ' + (xhr.responseJSON ? xhr
+                    $('#file-code-block').attr('class', 'language-none').html('<span class="text-danger">Error: ' + (xhr.responseJSON ? xhr
                         .responseJSON.error : 'Could not load file') + '</span>');
+                    $('#file-meta-info').html('<span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Failed to load file details.</span>');
                 }
             });
         }
 
-        function copyToClipboard(elementId) {
-            var copyText = document.getElementById(elementId);
-            var textToCopy = "";
+        function copyFileContent() {
+            const codeBlock = document.getElementById('file-code-block');
+            const textToCopy = codeBlock.textContent || codeBlock.innerText;
 
-            if (copyText.tagName === 'INPUT' || copyText.tagName === 'TEXTAREA') {
-                copyText.select();
-                copyText.setSelectionRange(0, 99999);
-                textToCopy = copyText.value;
-            } else {
-                textToCopy = copyText.innerText || copyText.textContent;
-            }
-
-            // Using modern Clipboard API
             navigator.clipboard.writeText(textToCopy).then(function() {
-                $.notify({
-                    icon: 'fa fa-check',
-                    title: 'Copied!',
-                    message: 'Copied to clipboard successfully',
-                }, {
-                    type: 'success',
-                    placement: {
-                        from: "top",
-                        align: "right"
-                    },
-                    time: 1000,
-                });
+                // Change copy button UI temporarily to show success
+                const btn = $('#btn-copy-code');
+                const originalHtml = btn.html();
+                btn.html('<i class="fas fa-check me-1.5 text-success"></i><strong>Copied!</strong>').addClass('text-success');
+                setTimeout(() => {
+                    btn.html(originalHtml).removeClass('text-success');
+                }, 2000);
             }).catch(function(err) {
                 console.error('Could not copy text: ', err);
-                // Fallback for older browsers
-                document.execCommand("copy");
             });
         }
 
