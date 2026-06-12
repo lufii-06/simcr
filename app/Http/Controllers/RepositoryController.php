@@ -212,6 +212,68 @@ class RepositoryController extends Controller
         return back()->with('error', 'Failed to create branch. Ensure the repository has at least one commit.');
     }
 
+    public function createTag(Request $request, Repository $repository)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        if ($user->role === 'client') {
+            return back()->with('error', 'Clients are not allowed to create tags.');
+        }
+
+        $request->validate([
+            'tag_name' => 'required|string|max:100',
+            'target' => 'required|string|max:100',
+            'message' => 'nullable|string|max:255',
+        ]);
+
+        $tagName = trim($request->input('tag_name'));
+        $target = trim($request->input('target'));
+        $message = trim($request->input('message', ''));
+
+        if (preg_match('/[^a-zA-Z0-9_\-\.\/]/', $tagName) || str_starts_with($tagName, '-') || str_ends_with($tagName, '/')) {
+            return back()->with('error', 'Invalid tag name. Use alphanumeric characters, dashes, underscores, dots, or slashes.');
+        }
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return back()->with('error', 'Repository physical folder not found.');
+        }
+
+        $tags = $this->showGetTags($repoPath);
+        if (in_array($tagName, $tags)) {
+            return back()->with('error', 'Tag name already exists.');
+        }
+
+        $branches = $this->showGetBranches($repoPath, $repository);
+        if (!in_array($target, $branches)) {
+            $revParseCmd = 'rev-parse --verify '.escapeshellarg($target);
+            $revRes = $this->runGitCommand($repoPath, $revParseCmd);
+            if (!$revRes['success']) {
+                return back()->with('error', 'Target branch or commit does not exist.');
+            }
+        }
+
+        if ($message !== '') {
+            $cmd = 'tag -a '.escapeshellarg($tagName).' -m '.escapeshellarg($message).' '.escapeshellarg($target);
+        } else {
+            $cmd = 'tag '.escapeshellarg($tagName).' '.escapeshellarg($target);
+        }
+
+        $res = $this->runGitCommand($repoPath, $cmd);
+
+        if ($res['success']) {
+            return redirect()->route('repository.show', [
+                'repository' => $repository->name,
+                'tab' => 'tags'
+            ])->with('success', "Tag '{$tagName}' created successfully pointing to '{$target}'.");
+        }
+
+        return back()->with('error', 'Failed to create tag. Ensure the repository has at least one commit.');
+    }
+
     public function show(Request $request, Repository $repository)
     {
         $user = auth()->user();

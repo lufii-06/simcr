@@ -184,14 +184,66 @@
     </div> @endsection
 
 @push('modals')
+    <!-- Google Font Fira Code -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/line-numbers/prism-line-numbers.min.css" />
+
+    <style>
+        .code-viewer-container::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .code-viewer-container::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        .code-viewer-container::-webkit-scrollbar-thumb {
+            background: #3c3c3c;
+            border-radius: 4px;
+        }
+        .code-viewer-container::-webkit-scrollbar-thumb:hover {
+            background: #4f4f4f;
+        }
+        pre[class*="language-"] {
+            margin: 0 !important;
+            padding: 1.5rem 1.5rem 1.5rem 4.5rem !important;
+            background: #1e1e1e !important;
+            border-radius: 0 !important;
+            font-family: 'Fira Code', 'JetBrains Mono', Consolas, Monaco, monospace !important;
+            font-size: 13.5px !important;
+            line-height: 1.6 !important;
+        }
+        code[class*="language-"] {
+            font-family: inherit !important;
+            font-size: inherit !important;
+            line-height: inherit !important;
+        }
+        .line-numbers .line-numbers-rows {
+            border-right: 1px solid #3c3c3c !important;
+            padding-right: 10px !important;
+            left: -3.5rem !important;
+            width: 3rem !important;
+        }
+        .line-numbers-rows > span:before {
+            color: #757575 !important;
+        }
+        .file-toolbar {
+            background-color: #151515 !important;
+            border-bottom: 1px solid #2d2d2d !important;
+        }
+    </style>
+
     <!-- File Viewer Modal -->
     <div class="modal fade" id="fileViewerModal" tabindex="-1" role="dialog" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered" role="document" style="max-width: 90%;">
-            <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="fileViewerTitle">File Viewer</h5>
-                    <div class="ms-auto">
-                        <a href="#" id="btn-download-file" class="btn btn-sm btn-outline-light me-2">
+        <div class="modal-dialog modal-xl modal-dialog-centered" role="document" style="max-width: 90%;">
+            <div class="modal-content border-0 shadow-lg overflow-hidden" style="border-radius: 12px;">
+                <div class="modal-header bg-dark text-white border-0 py-3 px-4 d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-file-code text-warning me-2 fa-lg"></i>
+                        <h5 class="modal-title fw-bold" id="fileViewerTitle" style="font-size: 1.1rem; letter-spacing: 0.5px;">File Viewer</h5>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <a href="#" id="btn-download-file" class="btn btn-sm btn-outline-light me-3 px-3 py-1.5" style="border-radius: 6px;">
                             <i class="fas fa-download me-1"></i> Download
                         </a>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
@@ -199,8 +251,22 @@
                     </div>
                 </div>
                 <div class="modal-body p-0 bg-dark">
-                    <pre id="file-content-area" class="m-0 p-3 text-light"
-                        style="max-height: 70vh; overflow-y: auto; font-family: 'Courier New', Courier, monospace; font-size: 14px; line-height: 1.5; white-space: pre-wrap;"></pre>
+                    <!-- File Metadata Toolbar -->
+                    <div class="file-toolbar d-flex align-items-center justify-content-between px-4 py-2 text-white-50" style="font-size: 0.85rem;">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-info-circle me-1.5 text-info"></i>
+                            <span id="file-meta-info">Loading file information...</span>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-link text-white-50 p-0 text-decoration-none" id="btn-copy-code" onclick="copyFileContent()">
+                                <i class="far fa-copy me-1.5"></i>Copy Code
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Code viewer area -->
+                    <div class="code-viewer-container" style="max-height: 70vh; overflow-y: auto;">
+                        <pre class="line-numbers"><code id="file-code-block" class="language-none"></code></pre>
+                    </div>
                 </div>
             </div>
         </div>
@@ -242,6 +308,54 @@
                     <div class="modal-footer border-0">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary">Create Branch</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Tag Modal -->
+    <div class="modal fade" id="createTagModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <form action="{{ route('repository.create-tag', $repository) }}" method="POST">
+                    @csrf
+                    <div class="modal-header bg-warning text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-tag me-2"></i> Create New Tag
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group mb-3">
+                            <label for="tag_name" class="required fw-bold">Tag Name</label>
+                            <input type="text" class="form-control" id="tag_name" name="tag_name" required 
+                                placeholder="e.g. v1.0.0" pattern="^[a-zA-Z0-9_\-\.\/]+$"
+                                title="Tag name can only contain alphanumeric characters, dashes, underscores, dots, or slashes.">
+                            <small class="form-text text-muted">No spaces or special characters allowed.</small>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="target" class="required fw-bold">Target (Branch or Commit SHA)</label>
+                            <select class="form-select form-control" id="target" name="target" required>
+                                @foreach ($branches as $branch)
+                                    <option value="{{ $branch }}" {{ $selectedBranch == $branch ? 'selected' : '' }}>
+                                        {{ $branch }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">The tag will point to the latest commit on this branch.</small>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="message" class="fw-bold">Message (Optional)</label>
+                            <textarea class="form-control" id="message" name="message" rows="3" 
+                                placeholder="Enter tag description/annotation..."></textarea>
+                            <small class="form-text text-muted">Optional description for annotated tag.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning text-white">Create Tag</button>
                     </div>
                 </form>
             </div>
@@ -477,6 +591,13 @@
                     }
                 }
             });
+
+            // 5. Open tab from URL query parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+            if (tabParam) {
+                showTab('pills-' + tabParam);
+            }
         });
     </script>
 @endpush
