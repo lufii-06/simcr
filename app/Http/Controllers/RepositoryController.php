@@ -161,6 +161,57 @@ class RepositoryController extends Controller
         ]);
     }
 
+    public function createBranch(Request $request, Repository $repository)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        if ($user->role === 'client') {
+            return back()->with('error', 'Clients are not allowed to create branches.');
+        }
+
+        $request->validate([
+            'branch_name' => 'required|string|max:100',
+            'from_branch' => 'required|string|max:100',
+        ]);
+
+        $newBranch = trim($request->input('branch_name'));
+        $fromBranch = trim($request->input('from_branch'));
+
+        if (preg_match('/[^a-zA-Z0-9_\-\.\/]/', $newBranch) || str_starts_with($newBranch, '-') || str_ends_with($newBranch, '/')) {
+            return back()->with('error', 'Invalid branch name. Use alphanumeric characters, dashes, underscores, dots, or slashes.');
+        }
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return back()->with('error', 'Repository physical folder not found.');
+        }
+
+        $branches = $this->showGetBranches($repoPath, $repository);
+
+        if (!in_array($fromBranch, $branches)) {
+            return back()->with('error', 'Source branch does not exist.');
+        }
+
+        if (in_array($newBranch, $branches)) {
+            return back()->with('error', 'Branch name already exists.');
+        }
+
+        $cmd = 'branch '.escapeshellarg($newBranch).' '.escapeshellarg($fromBranch);
+        $res = $this->runGitCommand($repoPath, $cmd);
+
+        if ($res['success']) {
+            return redirect()->route('repository.show', [
+                'repository' => $repository->name,
+                'branch' => $newBranch
+            ])->with('success', "Branch '{$newBranch}' created successfully from '{$fromBranch}'.");
+        }
+
+        return back()->with('error', 'Failed to create branch. Ensure the repository has at least one commit.');
+    }
+
     public function show(Request $request, Repository $repository)
     {
         $user = auth()->user();

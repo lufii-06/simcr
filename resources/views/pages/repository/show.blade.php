@@ -205,6 +205,48 @@
             </div>
         </div>
     </div>
+
+    <!-- Create Branch Modal -->
+    <div class="modal fade" id="createBranchModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <form action="{{ route('repository.create-branch', $repository) }}" method="POST">
+                    @csrf
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-code-branch me-2"></i> Create New Branch
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group mb-3">
+                            <label for="branch_name" class="required fw-bold">Branch Name</label>
+                            <input type="text" class="form-control" id="branch_name" name="branch_name" required 
+                                placeholder="e.g. feature/new-login" pattern="^[a-zA-Z0-9_\-\.\/]+$"
+                                title="Branch name can only contain alphanumeric characters, dashes, underscores, dots, or slashes.">
+                            <small class="form-text text-muted">No spaces or special characters allowed.</small>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="from_branch" class="required fw-bold">Source Branch</label>
+                            <select class="form-select form-control" id="from_branch" name="from_branch" required>
+                                @foreach ($branches as $branch)
+                                    <option value="{{ $branch }}" {{ $selectedBranch == $branch ? 'selected' : '' }}>
+                                        {{ $branch }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="form-text text-muted">The new branch will copy files and commits from this branch.</small>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Create Branch</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 @endpush
 
 @push('scripts')
