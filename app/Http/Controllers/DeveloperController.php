@@ -80,4 +80,108 @@ class DeveloperController extends Controller
 
         return redirect()->route('developer.index')->with('success', 'Developer and associated User account deleted successfully.');
     }
+
+    public function performance(Developer $developer)
+    {
+        $developer->load(['user', 'specialization']);
+        $user = $developer->user;
+
+        if (!$user) {
+            return back()->with('error', 'Developer does not have an associated user account.');
+        }
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $doneStatusName = 'Done';
+
+        // Get all projects this developer is assigned to
+        $projectDeveloperEntries = \App\Models\ProjectDeveloper::with(['project.repository', 'role'])
+            ->where('user_id', $user->id)
+            ->get()
+            ->unique('project_id'); // deduplicate if multiple roles in same project
+
+        $projectStats = [];
+        $totalTasksAll = 0;
+        $totalDoneAll = 0;
+        $totalCommitsAll = 0;
+
+        foreach ($projectDeveloperEntries as $entry) {
+            $project = $entry->project;
+            if (!$project) continue;
+
+            // --- Task stats ---
+            $tasks = \App\Models\Task::with('status')
+                ->where('project_id', $project->id)
+                ->where('assigned_to', $user->id)
+                ->get();
+
+            $totalTasks = $tasks->count();
+            $doneTasks  = $tasks->filter(fn($t) => strtolower($t->status->name ?? '') === strtolower($doneStatusName))->count();
+            $pendingTasks = $totalTasks - $doneTasks;
+            $completionRate = $totalTasks > 0 ? round(($doneTasks / $totalTasks) * 100) : 0;
+
+            // --- Git commit stats ---
+            $commitCount = 0;
+            $repoPath = null;
+            if ($project->repository) {
+                $repoPath = $basePath . '/' . $project->repository->name . '.git';
+                if (file_exists($repoPath)) {
+                    $nullDevice = DIRECTORY_SEPARATOR === '\\' ? 'NUL' : '/dev/null';
+                    $cmd = 'git --git-dir=' . escapeshellarg($repoPath)
+                        . ' shortlog -sn --all 2>' . $nullDevice;
+                    exec($cmd, $gitOutput);
+
+                    foreach ($gitOutput as $line) {
+                        $line = trim($line);
+                        if (preg_match('/^(\d+)\t(.+)$/', $line, $m)) {
+                            if (stripos($m[2], $user->name) !== false) {
+                                $commitCount = (int) $m[1];
+                                break;
+                            }
+                        }
+                    }
+                    unset($gitOutput);
+                }
+            }
+
+            $totalTasksAll   += $totalTasks;
+            $totalDoneAll    += $doneTasks;
+            $totalCommitsAll += $commitCount;
+
+            // Build per-project task list for the "By Task" tab detail
+            $taskList = $tasks->map(function ($t) use ($doneStatusName) {
+                return [
+                    'code'    => $t->code,
+                    'title'   => $t->title,
+                    'status'  => $t->status->name ?? '-',
+                    'is_done' => strtolower($t->status->name ?? '') === strtolower($doneStatusName),
+                ];
+            })->values()->toArray();
+
+            $projectStats[] = [
+                'project'         => $project,
+                'role'            => $entry->role->name ?? '-',
+                'total_tasks'     => $totalTasks,
+                'done_tasks'      => $doneTasks,
+                'pending_tasks'   => $pendingTasks,
+                'completion_rate' => $completionRate,
+                'commit_count'    => $commitCount,
+                'has_repo'        => $project->repository !== null,
+                'task_list'       => $taskList,
+            ];
+        }
+
+        $globalCompletionRate = $totalTasksAll > 0
+            ? round(($totalDoneAll / $totalTasksAll) * 100)
+            : 0;
+
+        return view('pages.developer.performance', compact(
+            'developer',
+            'user',
+            'projectStats',
+            'totalTasksAll',
+            'totalDoneAll',
+            'totalCommitsAll',
+            'globalCompletionRate'
+        ));
+    }
 }

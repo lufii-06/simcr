@@ -46,6 +46,11 @@
                                                     title="View Details">
                                                     <i class="fa fa-eye"></i>
                                                 </button>
+                                                <a href="{{ route('developer.performance', $developer) }}"
+                                                    class="btn btn-link btn-success btn-lg" data-bs-toggle="tooltip"
+                                                    title="View Performance">
+                                                    <i class="fa fa-chart-bar"></i>
+                                                </a>
                                                 <a href="{{ route('developer.edit', $developer) }}"
                                                     class="btn btn-link btn-primary btn-lg" data-bs-toggle="tooltip"
                                                     title="Edit Profile">
