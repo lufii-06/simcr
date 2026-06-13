@@ -105,6 +105,11 @@ Route::middleware('auth')->group(function () {
     Route::delete('repository/{repository}/delete-tag', [RepositoryController::class, 'deleteTag'])->name('repository.delete-tag');
     Route::get('repository/{repository}/commit-detail', [RepositoryController::class, 'commitDetail'])->name('repository.commit-detail');
     Route::get('repository/{repository}/compare', [RepositoryController::class, 'compareBranches'])->name('repository.compare');
+    Route::get('repository/{repository}/merge-requests/create', [RepositoryController::class, 'mergeRequestsCreate'])->name('repository.merge-requests.create');
+    Route::post('repository/{repository}/merge-requests', [RepositoryController::class, 'mergeRequestsStore'])->name('repository.merge-requests.store');
+    Route::get('repository/{repository}/merge-requests/{pullRequest}', [RepositoryController::class, 'mergeRequestsShow'])->name('repository.merge-requests.show');
+    Route::post('repository/{repository}/merge-requests/{pullRequest}/merge', [RepositoryController::class, 'mergeRequestsMerge'])->name('repository.merge-requests.merge');
+    Route::post('repository/{repository}/merge-requests/{pullRequest}/close', [RepositoryController::class, 'mergeRequestsClose'])->name('repository.merge-requests.close');
 
     Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');

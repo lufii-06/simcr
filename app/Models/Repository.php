@@ -33,6 +33,11 @@ class Repository extends Model
         return $this->belongsTo(Project::class);
     }
 
+    public function pullRequests()
+    {
+        return $this->hasMany(PullRequest::class);
+    }
+
     public function getRouteKeyName()
     {
         return 'name';

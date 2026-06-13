@@ -164,6 +164,12 @@
                                 <i class="fas fa-project-diagram me-1"></i> Network
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="pills-pulls-tab" data-bs-toggle="pill" onclick="showTab('pills-pulls')" href="#pills-pulls"
+                                role="tab" aria-controls="pills-pulls" aria-selected="false">
+                                <i class="fas fa-code-branch me-1"></i> Merge Requests
+                            </a>
+                        </li>
                         {{-- Hidden Triggers for Kebab Menu --}}
                         <li class="nav-item d-none">
                             <a class="nav-link" id="pills-insights-tab" data-bs-toggle="pill" onclick="showTab('pills-insights')"href="#pills-insights"
@@ -194,6 +200,7 @@
                         @include('pages.repository.partials._guide')
                         @include('pages.repository.partials._settings')
                         @include('pages.repository.partials._compare')
+                        @include('pages.repository.partials._merge_requests')
                     </div>
                 </div>
             </div>

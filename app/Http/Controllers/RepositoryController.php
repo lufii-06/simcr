@@ -709,6 +709,7 @@ class RepositoryController extends Controller
         $dayActivityData = ['labels' => [], 'data' => []];
         $httpUrl = '';
         $gitGraph = '';
+        $pullRequests = [];
 
         if (file_exists($repoPath)) {
             $branches = $this->showGetBranches($repoPath, $repository);
@@ -723,6 +724,7 @@ class RepositoryController extends Controller
             $dayActivityData = $this->showGetDayActivityData($repoPath);
             $httpUrl = $this->showGetHttpUrl($repository);
             $gitGraph = $this->showGetGitGraph($repoPath);
+            $pullRequests = $repository->pullRequests()->with('user')->orderBy('created_at', 'desc')->get();
         } else {
             $error = 'Repository physical folder not found. Please ensure the repository has been created correctly on the server.';
         }
@@ -743,7 +745,8 @@ class RepositoryController extends Controller
             'error',
             'files',
             'readme',
-            'languages'
+            'languages',
+            'pullRequests'
         ));
     }
 
@@ -1354,5 +1357,265 @@ class RepositoryController extends Controller
                 }
             }
         }
+    }
+
+    public function mergeRequestsCreate(Repository $repository)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return back()->with('error', 'Repository physical folder not found.');
+        }
+
+        $branches = $this->showGetBranches($repoPath, $repository);
+
+        return view('pages.repository.merge_requests.create', compact('repository', 'branches'));
+    }
+
+    public function mergeRequestsStore(Request $request, Repository $repository)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'source_branch' => 'required|string|max:100',
+            'target_branch' => 'required|string|max:100',
+        ]);
+
+        $source = trim($request->input('source_branch'));
+        $target = trim($request->input('target_branch'));
+        $title = trim($request->input('title'));
+        $description = trim($request->input('description'));
+
+        if ($source === $target) {
+            return back()->withInput()->with('error', 'Source branch and target branch cannot be the same.');
+        }
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return back()->with('error', 'Repository physical folder not found.');
+        }
+
+        $branches = $this->showGetBranches($repoPath, $repository);
+        if (!in_array($source, $branches) || !in_array($target, $branches)) {
+            return back()->withInput()->with('error', 'One or both branches do not exist in the repository.');
+        }
+
+        // Check if there is already an open merge request with the same source and target branches
+        $existing = $repository->pullRequests()
+            ->where('source_branch', $source)
+            ->where('target_branch', $target)
+            ->where('status', 'open')
+            ->first();
+
+        if ($existing) {
+            return back()->withInput()->with('error', 'An open Merge Request already exists for these branches.');
+        }
+
+        $repository->pullRequests()->create([
+            'user_id' => $user->id,
+            'title' => $title,
+            'description' => $description,
+            'source_branch' => $source,
+            'target_branch' => $target,
+            'status' => 'open',
+        ]);
+
+        return redirect()->route('repository.show', [
+            'repository' => $repository->name,
+            'tab' => 'pills-pulls'
+        ])->with('success', 'Merge Request successfully created.');
+    }
+
+    public function mergeRequestsShow(Repository $repository, \App\Models\PullRequest $pullRequest)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        if ($pullRequest->repository_id !== $repository->id) {
+            abort(404);
+        }
+
+        $pullRequest->load('user');
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        $commits = [];
+        $diffs = [];
+        $error = null;
+
+        if (file_exists($repoPath)) {
+            // Get commits between target and source
+            $cmdCommits = 'log '.escapeshellarg($pullRequest->target_branch).'..'.escapeshellarg($pullRequest->source_branch).' --pretty=format:"%h|%s|%an|%ad" --date=short';
+            $resCommits = $this->runGitCommand($repoPath, $cmdCommits);
+            if ($resCommits['success']) {
+                foreach ($resCommits['output'] as $line) {
+                    $parts = explode('|', $line);
+                    if (count($parts) === 4) {
+                        $commits[] = [
+                            'hash' => $parts[0],
+                            'message' => $parts[1],
+                            'author' => $parts[2],
+                            'date' => $parts[3],
+                        ];
+                    }
+                }
+            }
+
+            // Get code diff between target and source
+            $cmdDiff = 'diff '.escapeshellarg($pullRequest->target_branch).'..'.escapeshellarg($pullRequest->source_branch);
+            $resDiff = $this->runGitCommand($repoPath, $cmdDiff);
+            if ($resDiff['success']) {
+                $lines = $resDiff['output'];
+                $currentFile = null;
+
+                foreach ($lines as $line) {
+                    if (strpos($line, 'diff --git') === 0) {
+                        if ($currentFile) {
+                            $diffs[] = $currentFile;
+                        }
+                        $filename = '';
+                        if (preg_match('/b\/(.+)$/', $line, $matches)) {
+                            $filename = $matches[1];
+                        }
+                        $currentFile = [
+                            'filename' => $filename,
+                            'lines' => []
+                        ];
+                    } elseif ($currentFile) {
+                        $type = 'normal';
+                        if (strpos($line, '+') === 0 && strpos($line, '+++') !== 0) {
+                            $type = 'addition';
+                        } elseif (strpos($line, '-') === 0 && strpos($line, '---') !== 0) {
+                            $type = 'deletion';
+                        } elseif (strpos($line, '@@') === 0) {
+                            $type = 'info';
+                        }
+
+                        $currentFile['lines'][] = [
+                            'type' => $type,
+                            'content' => $line
+                        ];
+                    }
+                }
+                if ($currentFile) {
+                    $diffs[] = $currentFile;
+                }
+            }
+        } else {
+            $error = 'Repository physical folder not found.';
+        }
+
+        return view('pages.repository.merge_requests.show', compact('repository', 'pullRequest', 'commits', 'diffs', 'error'));
+    }
+
+    public function mergeRequestsMerge(Repository $repository, \App\Models\PullRequest $pullRequest)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        if ($user->role === 'client' || $user->role === 'developer') {
+            return back()->with('error', 'You are not authorized to merge Merge Requests.');
+        }
+
+        if ($pullRequest->repository_id !== $repository->id) {
+            abort(404);
+        }
+
+        if ($pullRequest->status !== 'open') {
+            return back()->with('error', 'This Merge Request is not open.');
+        }
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return back()->with('error', 'Repository physical folder not found.');
+        }
+
+        $tempPath = storage_path('app/temp_git_pr_merge_'.uniqid());
+        try {
+            \File::makeDirectory($tempPath, 0755, true);
+
+            // Clone bare repository to temporary directory
+            $output = [];
+            $result = 0;
+            exec('git clone '.escapeshellarg($repoPath).' '.escapeshellarg($tempPath), $output, $result);
+            if ($result !== 0) {
+                throw new \Exception('Failed to clone repository.');
+            }
+
+            // Configure temporary Git user (attributing to merging user)
+            exec('git -C '.escapeshellarg($tempPath).' config user.name '.escapeshellarg($user->name));
+            exec('git -C '.escapeshellarg($tempPath).' config user.email '.escapeshellarg($user->email));
+
+            // Checkout target branch
+            exec('git -C '.escapeshellarg($tempPath).' checkout '.escapeshellarg($pullRequest->target_branch), $output, $result);
+            if ($result !== 0) {
+                throw new \Exception("Failed to checkout target branch '{$pullRequest->target_branch}'.");
+            }
+
+            // Merge source branch into target
+            $mergeMsg = "Merge request #{$pullRequest->id} from {$pullRequest->source_branch}\n\n{$pullRequest->title}";
+            exec('git -C '.escapeshellarg($tempPath).' merge '.escapeshellarg($pullRequest->source_branch).' -m '.escapeshellarg($mergeMsg), $output, $result);
+            if ($result !== 0) {
+                // Conflict detected!
+                exec('git -C '.escapeshellarg($tempPath).' merge --abort');
+                return back()->with('error', "Conflict detected! Gagal menggabungkan cabang '{$pullRequest->source_branch}' ke '{$pullRequest->target_branch}' secara otomatis. Selesaikan konflik di lokal repositori Anda, selesaikan, lalu push kembali.");
+            }
+
+            // Push back to bare repository
+            exec('git -C '.escapeshellarg($tempPath).' push origin '.escapeshellarg($pullRequest->target_branch), $output, $result);
+            if ($result !== 0) {
+                throw new \Exception("Failed to push merged changes back to the repository.");
+            }
+
+            // Successfully merged! Update status
+            $pullRequest->update(['status' => 'merged']);
+
+            return redirect()->route('repository.merge-requests.show', [$repository->name, $pullRequest->id])
+                ->with('success', "Merge Request #{$pullRequest->id} successfully merged!");
+
+        } catch (\Exception $e) {
+            \Log::error("Git merge MR failed: " . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat memproses merge: ' . $e->getMessage());
+        } finally {
+            if (\File::exists($tempPath)) {
+                \File::deleteDirectory($tempPath);
+            }
+        }
+    }
+
+    public function mergeRequestsClose(Repository $repository, \App\Models\PullRequest $pullRequest)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        if ($pullRequest->repository_id !== $repository->id) {
+            abort(404);
+        }
+
+        if ($pullRequest->status !== 'open') {
+            return back()->with('error', 'This Merge Request is not open.');
+        }
+
+        // Author of MR, PM, Owner, or Admin can close
+        if ($user->id !== $pullRequest->user_id && $user->role !== 'pm' && $user->role !== 'owner' && $user->role !== 'admin') {
+            return back()->with('error', 'You are not authorized to close this Merge Request.');
+        }
+
+        $pullRequest->update(['status' => 'closed']);
+
+        return redirect()->route('repository.merge-requests.show', [$repository->name, $pullRequest->id])
+            ->with('success', "Merge Request #{$pullRequest->id} has been closed.");
     }
 }
