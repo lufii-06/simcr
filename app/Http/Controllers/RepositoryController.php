@@ -274,6 +274,123 @@ class RepositoryController extends Controller
         return back()->with('error', 'Failed to create tag. Ensure the repository has at least one commit.');
     }
 
+    public function mergeRebase(Request $request, Repository $repository)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        if ($user->role === 'client') {
+            return back()->with('error', 'Clients are not allowed to merge or rebase branches.');
+        }
+
+        $request->validate([
+            'action_type' => 'required|in:merge,rebase',
+            'source_branch' => 'required|string|max:100',
+            'target_branch' => 'required|string|max:100',
+        ]);
+
+        $actionType = $request->input('action_type');
+        $sourceBranch = trim($request->input('source_branch'));
+        $targetBranch = trim($request->input('target_branch'));
+
+        if ($sourceBranch === $targetBranch) {
+            return back()->with('error', 'Source and target branch cannot be the same.');
+        }
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return back()->with('error', 'Repository physical folder not found.');
+        }
+
+        $branches = $this->showGetBranches($repoPath, $repository);
+        if (!in_array($sourceBranch, $branches) || !in_array($targetBranch, $branches)) {
+            return back()->with('error', 'One or both of the specified branches do not exist.');
+        }
+
+        // Clone to a temporary directory
+        $tempPath = storage_path('app/temp_git_op_'.uniqid());
+        try {
+            \File::makeDirectory($tempPath, 0755, true);
+
+            // Clone bare repository to temporary directory
+            $output = [];
+            $result = 0;
+            exec('git clone '.escapeshellarg($repoPath).' '.escapeshellarg($tempPath), $output, $result);
+            if ($result !== 0) {
+                throw new \Exception('Failed to clone repository to temporary folder.');
+            }
+
+            // Configure temporary Git user
+            exec('git -C '.escapeshellarg($tempPath).' config user.name "SIMCR System"');
+            exec('git -C '.escapeshellarg($tempPath).' config user.email "system@simcr.com"');
+
+            if ($actionType === 'merge') {
+                // Checkout target branch
+                exec('git -C '.escapeshellarg($tempPath).' checkout '.escapeshellarg($targetBranch), $output, $result);
+                if ($result !== 0) {
+                    throw new \Exception("Failed to checkout target branch '{$targetBranch}'.");
+                }
+
+                // Merge source branch into target
+                exec('git -C '.escapeshellarg($tempPath).' merge '.escapeshellarg($sourceBranch), $output, $result);
+                if ($result !== 0) {
+                    // Conflict occurred! Abort merge and direct user to local
+                    exec('git -C '.escapeshellarg($tempPath).' merge --abort');
+                    return back()->with('error', "Conflict detected! Gagal menggabungkan cabang '{$sourceBranch}' ke '{$targetBranch}' secara otomatis. Silakan lakukan merge secara manual di repositori lokal Anda, selesaikan konflik, lalu push kembali.");
+                }
+
+                // Push back to bare repository
+                exec('git -C '.escapeshellarg($tempPath).' push origin '.escapeshellarg($targetBranch), $output, $result);
+                if ($result !== 0) {
+                    throw new \Exception("Failed to push merged changes back to the repository.");
+                }
+
+                $message = "Branch '{$sourceBranch}' successfully merged into '{$targetBranch}'.";
+                $redirectBranch = $targetBranch;
+
+            } else {
+                // Rebase source branch onto target branch
+                // Checkout source branch (the one being rebased)
+                exec('git -C '.escapeshellarg($tempPath).' checkout '.escapeshellarg($sourceBranch), $output, $result);
+                if ($result !== 0) {
+                    throw new \Exception("Failed to checkout source branch '{$sourceBranch}'.");
+                }
+
+                // Rebase onto target branch
+                exec('git -C '.escapeshellarg($tempPath).' rebase '.escapeshellarg($targetBranch), $output, $result);
+                if ($result !== 0) {
+                    // Conflict occurred! Abort rebase and direct user to local
+                    exec('git -C '.escapeshellarg($tempPath).' rebase --abort');
+                    return back()->with('error', "Conflict detected! Gagal melakukan rebase cabang '{$sourceBranch}' di atas '{$targetBranch}' secara otomatis. Silakan lakukan rebase secara manual di repositori lokal Anda, selesaikan konflik, lalu push kembali.");
+                }
+
+                // Push back to bare repository (must force push because rebase rewrites commits history)
+                exec('git -C '.escapeshellarg($tempPath).' push -f origin '.escapeshellarg($sourceBranch), $output, $result);
+                if ($result !== 0) {
+                    throw new \Exception("Failed to push rebased changes back to the repository.");
+                }
+
+                $message = "Branch '{$sourceBranch}' successfully rebased onto '{$targetBranch}'.";
+                $redirectBranch = $sourceBranch;
+            }
+
+            return redirect()->route('repository.show', [
+                'repository' => $repository->name,
+                'branch' => $redirectBranch
+            ])->with('success', $message);
+
+        } catch (\Exception $e) {
+            \Log::error("Git operation failed: " . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat memproses aksi Git: ' . $e->getMessage());
+        } finally {
+            if (\File::exists($tempPath)) {
+                \File::deleteDirectory($tempPath);
+            }
+        }
+    }
+
     public function show(Request $request, Repository $repository)
     {
         $user = auth()->user();

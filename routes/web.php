@@ -100,6 +100,7 @@ Route::middleware('auth')->group(function () {
     Route::get('repository/{repository}/download-archive', [RepositoryController::class, 'downloadArchive'])->name('repository.download-archive');
     Route::post('repository/{repository}/create-branch', [RepositoryController::class, 'createBranch'])->name('repository.create-branch');
     Route::post('repository/{repository}/create-tag', [RepositoryController::class, 'createTag'])->name('repository.create-tag');
+    Route::post('repository/{repository}/merge-rebase', [RepositoryController::class, 'mergeRebase'])->name('repository.merge-rebase');
 
     Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');

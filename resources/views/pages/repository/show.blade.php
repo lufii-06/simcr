@@ -271,6 +271,67 @@
         </div>
     </div>
 
+    <!-- Merge / Rebase Modal -->
+    <div class="modal fade" id="mergeBranchModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <form action="{{ route('repository.merge-rebase', $repository) }}" method="POST">
+                    @csrf
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-code-branch me-2"></i> Git Merge / Rebase Branch
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group mb-3">
+                            <label class="fw-bold required">Action Type</label>
+                            <div class="d-flex gap-3 mt-1">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="action_type" id="action_merge" value="merge" checked>
+                                    <label class="form-check-label fw-semibold" for="action_merge">
+                                        Merge Branch
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="action_type" id="action_rebase" value="rebase">
+                                    <label class="form-check-label fw-semibold" for="action_rebase">
+                                        Rebase Branch
+                                    </label>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted d-block mt-2">
+                                <b>Merge:</b> Combines changes and updates the Target branch.<br>
+                                <b>Rebase:</b> Re-applies commits and updates the Source branch.
+                            </small>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="source_branch" class="required fw-bold">Source Branch (Cabang Asal)</label>
+                            <select class="form-select form-control" id="source_branch" name="source_branch" required>
+                                @foreach ($branches as $branch)
+                                    <option value="{{ $branch }}">{{ $branch }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label for="target_branch" class="required fw-bold">Target Branch (Cabang Tujuan)</label>
+                            <select class="form-select form-control" id="target_branch" name="target_branch" required>
+                                @foreach ($branches as $branch)
+                                    <option value="{{ $branch }}" {{ $selectedBranch == $branch ? 'selected' : '' }}>{{ $branch }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-info text-white">Execute Action</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Create Branch Modal -->
     <div class="modal fade" id="createBranchModal" tabindex="-1" role="dialog" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">

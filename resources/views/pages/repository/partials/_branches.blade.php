@@ -1,6 +1,9 @@
 <div class="tab-pane fade" id="pills-branches" role="tabpanel" aria-labelledby="pills-branches-tab">
     @if (auth()->user()->role !== 'client')
         <div class="d-flex justify-content-end mb-3">
+            <button type="button" class="btn btn-info text-white btn-sm btn-round me-2" data-bs-toggle="modal" data-bs-target="#mergeBranchModal">
+                <i class="fas fa-code-branch me-1"></i> Merge / Rebase
+            </button>
             <button type="button" class="btn btn-primary btn-sm btn-round" data-bs-toggle="modal" data-bs-target="#createBranchModal">
                 <i class="fas fa-plus me-1"></i> Create Branch
             </button>
