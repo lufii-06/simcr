@@ -469,6 +469,113 @@ class RepositoryController extends Controller
         return back()->with('error', 'Failed to delete tag.');
     }
 
+    public function commitDetail(Request $request, Repository $repository)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        $request->validate([
+            'hash' => 'required|string|min:7|max:40',
+        ]);
+
+        $hash = $request->input('hash');
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return response()->json(['error' => 'Repository physical folder not found.'], 404);
+        }
+
+        // Run git show command to fetch full details & diff
+        $cmd = 'show '.escapeshellarg($hash);
+        $res = $this->runGitCommand($repoPath, $cmd);
+
+        if (!$res['success']) {
+            return response()->json(['error' => 'Failed to retrieve commit details.'], 500);
+        }
+
+        $lines = $res['output'];
+        $author = '';
+        $date = '';
+        $message = '';
+        $diffs = [];
+        $currentFile = null;
+        $inMessage = false;
+
+        foreach ($lines as $line) {
+            // Find Author
+            if (strpos($line, 'Author: ') === 0) {
+                $author = substr($line, 8);
+                $inMessage = false;
+                continue;
+            }
+            // Find Date
+            if (strpos($line, 'Date: ') === 0) {
+                $date = substr($line, 6);
+                $inMessage = true;
+                continue;
+            }
+            // Parse Commit Message
+            if ($inMessage) {
+                if (strpos($line, 'diff --git') === 0) {
+                    $inMessage = false;
+                } else {
+                    // Lines in git commit message output are usually indented by 4 spaces
+                    $message .= (strpos($line, '    ') === 0 ? substr($line, 4) : $line) . "\n";
+                    continue;
+                }
+            }
+
+            // Parse Diffs
+            if (strpos($line, 'diff --git') === 0) {
+                if ($currentFile) {
+                    $diffs[] = $currentFile;
+                }
+                $filename = '';
+                if (preg_match('/b\/(.+)$/', $line, $m)) {
+                    $filename = $m[1];
+                }
+                $currentFile = [
+                    'filename' => $filename,
+                    'lines' => []
+                ];
+                continue;
+            }
+
+            if ($currentFile) {
+                if (strpos($line, '--- a/') === 0 || strpos($line, '+++ b/') === 0 || strpos($line, 'index ') === 0 || strpos($line, 'new file mode ') === 0 || strpos($line, 'deleted file mode ') === 0) {
+                    continue; // skip headers
+                }
+
+                $type = 'normal';
+                if (strpos($line, '+') === 0) {
+                    $type = 'addition';
+                } elseif (strpos($line, '-') === 0) {
+                    $type = 'deletion';
+                } elseif (strpos($line, '@@') === 0) {
+                    $type = 'info';
+                }
+
+                $currentFile['lines'][] = [
+                    'type' => $type,
+                    'content' => $line
+                ];
+            }
+        }
+        if ($currentFile) {
+            $diffs[] = $currentFile;
+        }
+
+        return response()->json([
+            'hash' => $hash,
+            'author' => trim($author),
+            'date' => trim($date),
+            'message' => trim($message),
+            'diffs' => $diffs
+        ]);
+    }
+
     public function show(Request $request, Repository $repository)
     {
         $user = auth()->user();

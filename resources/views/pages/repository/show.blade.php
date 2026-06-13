@@ -3,6 +3,15 @@
 @section('title', 'Repository Detail')
 
 @section('content')
+    <style>
+        .bg-success-light { background-color: #e6ffec !important; }
+        .text-success-dark { color: #22863a !important; }
+        .bg-danger-light { background-color: #ffeef0 !important; }
+        .text-danger-dark { color: #cb2431 !important; }
+        .bg-info-light { background-color: #f1f8ff !important; }
+        .text-info-dark { color: #032f62 !important; }
+        .text-monospace { font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; }
+    </style>
 
     @if ($repository->status === 'inactive')
         <div class="alert alert-warning">
@@ -266,6 +275,55 @@
                     <div class="code-viewer-container" style="max-height: 70vh; overflow-y: auto;">
                         <pre class="line-numbers"><code id="file-code-block" class="language-none"></code></pre>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Commit Detail Modal -->
+    <div class="modal fade" id="commitDetailModal" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-history me-2"></i> Commit Detail: <span id="modal-commit-hash-title"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4" id="commit-modal-body-container">
+                    <!-- Loading Spinner -->
+                    <div class="text-center py-5" id="commit-loading">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Fetching commit details...</p>
+                    </div>
+                    <!-- Content (Initially hidden) -->
+                    <div id="commit-content" style="display: none;">
+                        <div class="card border mb-3">
+                            <div class="card-body bg-light">
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <strong>Author:</strong> <span id="commit-author"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-2 text-md-end">
+                                        <strong>Date:</strong> <span id="commit-date"></span>
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <strong>Message:</strong>
+                                        <p class="mb-0 bg-white p-2 border rounded text-monospace" id="commit-message" style="white-space: pre-wrap; font-family: monospace;"></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="fw-bold mb-3"><i class="fas fa-file-signature me-1 text-primary"></i> Changes / Diff:</h6>
+                        <div id="commit-diffs"></div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -762,6 +820,69 @@
                 }).then((willDelete) => {
                     if (willDelete) {
                         form.submit();
+                    }
+                });
+            });
+
+            // 8. Commit Detail AJAX Viewer
+            $(document).on('click', '.commit-hash-link', function(e) {
+                e.preventDefault();
+                var hash = $(this).data('hash');
+                $('#modal-commit-hash-title').text(hash.substring(0, 7));
+                $('#commit-loading').show();
+                $('#commit-content').hide();
+                $('#commitDetailModal').modal('show');
+
+                $.ajax({
+                    url: "{{ route('repository.commit-detail', $repository) }}",
+                    method: 'GET',
+                    data: { hash: hash },
+                    success: function(response) {
+                        $('#commit-author').text(response.author);
+                        $('#commit-date').text(response.date);
+                        $('#commit-message').text(response.message);
+
+                        var diffsHtml = '';
+                        if (response.diffs.length === 0) {
+                            diffsHtml = '<div class="alert alert-info">No file changes detected in this commit.</div>';
+                        } else {
+                            response.diffs.forEach(function(file) {
+                                diffsHtml += '<div class="card border mb-3">';
+                                diffsHtml += '  <div class="card-header bg-dark text-white py-2 fw-semibold d-flex align-items-center justify-content-between">';
+                                diffsHtml += '    <span><i class="far fa-file me-2"></i>' + file.filename + '</span>';
+                                diffsHtml += '  </div>';
+                                diffsHtml += '  <div class="card-body p-0">';
+                                diffsHtml += '    <pre class="mb-0" style="font-family: monospace; font-size: 13px; line-height: 1.5; overflow-x: auto; max-height: 400px; white-space: pre;">';
+                                
+                                file.lines.forEach(function(line) {
+                                    var lineClass = 'px-3 d-block';
+                                    if (line.type === 'addition') {
+                                        lineClass += ' bg-success-light text-success-dark';
+                                    } else if (line.type === 'deletion') {
+                                        lineClass += ' bg-danger-light text-danger-dark';
+                                    } else if (line.type === 'info') {
+                                        lineClass += ' bg-info-light text-info-dark';
+                                    }
+                                    
+                                    // Escape HTML
+                                    var escapedContent = $('<div>').text(line.content).html();
+                                    diffsHtml += '<span class="' + lineClass + '">' + escapedContent + '</span>';
+                                });
+
+                                diffsHtml += '    </pre>';
+                                diffsHtml += '  </div>';
+                                diffsHtml += '</div>';
+                            });
+                        }
+
+                        $('#commit-diffs').html(diffsHtml);
+                        $('#commit-loading').hide();
+                        $('#commit-content').show();
+                    },
+                    error: function() {
+                        $('#commit-loading').hide();
+                        $('#commit-diffs').html('<div class="alert alert-danger mb-0">Failed to load commit details.</div>');
+                        $('#commit-content').show();
                     }
                 });
             });

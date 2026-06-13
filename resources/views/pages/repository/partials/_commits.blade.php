@@ -15,7 +15,11 @@
             <tbody>
                 @forelse ($recentCommits as $commit)
                     <tr>
-                        <td><code class="text-primary">{{ $commit['hash'] }}</code></td>
+                        <td>
+                            <a href="#" class="commit-hash-link" data-hash="{{ $commit['hash'] }}" title="View Commit Details">
+                                <code class="text-primary fw-bold">{{ substr($commit['hash'], 0, 7) }}</code>
+                            </a>
+                        </td>
                         <td style="max-width: 300px;" class="text-truncate">
                             {{ $commit['message'] }}</td>
                         <td>{{ $commit['author'] }}</td>
