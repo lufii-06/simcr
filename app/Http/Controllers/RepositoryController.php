@@ -576,6 +576,113 @@ class RepositoryController extends Controller
         ]);
     }
 
+    public function compareBranches(Request $request, Repository $repository)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        $request->validate([
+            'source' => 'required|string|max:100',
+            'target' => 'required|string|max:100',
+        ]);
+
+        $source = trim($request->input('source'));
+        $target = trim($request->input('target'));
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return response()->json(['error' => 'Repository physical folder not found.'], 404);
+        }
+
+        // Get ahead count (commits in source but not in target)
+        $cmdAhead = 'rev-list --count '.escapeshellarg($target).'..'.escapeshellarg($source);
+        $resAhead = $this->runGitCommand($repoPath, $cmdAhead);
+        $aheadCount = $resAhead['success'] ? (int)trim(implode('', $resAhead['output'])) : 0;
+
+        // Get behind count (commits in target but not in source)
+        $cmdBehind = 'rev-list --count '.escapeshellarg($source).'..'.escapeshellarg($target);
+        $resBehind = $this->runGitCommand($repoPath, $cmdBehind);
+        $behindCount = $resBehind['success'] ? (int)trim(implode('', $resBehind['output'])) : 0;
+
+        // Get commits in source but not in target
+        $cmdCommits = 'log '.escapeshellarg($target).'..'.escapeshellarg($source).' --pretty=format:"%h|%s|%an|%ad" --date=short';
+        $resCommits = $this->runGitCommand($repoPath, $cmdCommits);
+        $commits = [];
+        if ($resCommits['success']) {
+            foreach ($resCommits['output'] as $line) {
+                $parts = explode('|', $line);
+                if (count($parts) === 4) {
+                    $commits[] = [
+                        'hash' => $parts[0],
+                        'message' => $parts[1],
+                        'author' => $parts[2],
+                        'date' => $parts[3],
+                    ];
+                }
+            }
+        }
+
+        // Get code diff
+        $cmdDiff = 'diff '.escapeshellarg($target).'..'.escapeshellarg($source);
+        $resDiff = $this->runGitCommand($repoPath, $cmdDiff);
+        
+        $diffs = [];
+        if ($resDiff['success']) {
+            $lines = $resDiff['output'];
+            $currentFile = null;
+            foreach ($lines as $line) {
+                if (strpos($line, 'diff --git') === 0) {
+                    if ($currentFile) {
+                        $diffs[] = $currentFile;
+                    }
+                    $filename = '';
+                    if (preg_match('/b\/(.+)$/', $line, $m)) {
+                        $filename = $m[1];
+                    }
+                    $currentFile = [
+                        'filename' => $filename,
+                        'lines' => []
+                    ];
+                    continue;
+                }
+
+                if ($currentFile) {
+                    if (strpos($line, '--- a/') === 0 || strpos($line, '+++ b/') === 0 || strpos($line, 'index ') === 0 || strpos($line, 'new file mode ') === 0 || strpos($line, 'deleted file mode ') === 0) {
+                        continue;
+                    }
+
+                    $type = 'normal';
+                    if (strpos($line, '+') === 0) {
+                        $type = 'addition';
+                    } elseif (strpos($line, '-') === 0) {
+                        $type = 'deletion';
+                    } elseif (strpos($line, '@@') === 0) {
+                        $type = 'info';
+                    }
+
+                    $currentFile['lines'][] = [
+                        'type' => $type,
+                        'content' => $line
+                    ];
+                }
+            }
+            if ($currentFile) {
+                $diffs[] = $currentFile;
+            }
+        }
+
+        return response()->json([
+            'source' => $source,
+            'target' => $target,
+            'ahead_count' => $aheadCount,
+            'behind_count' => $behindCount,
+            'commits' => $commits,
+            'diffs' => $diffs
+        ]);
+    }
+
     public function show(Request $request, Repository $repository)
     {
         $user = auth()->user();

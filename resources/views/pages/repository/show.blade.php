@@ -115,6 +115,9 @@
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="showTab('pills-insights')">
                                     <i class="fas fa-chart-pie me-2 text-info"></i> Insights & Analytics
                                 </a>
+                                <a class="dropdown-item" href="javascript:void(0)" onclick="showTab('pills-compare')">
+                                    <i class="fas fa-balance-scale me-2 text-primary"></i> Compare Branches/Commits
+                                </a>
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="showTab('pills-tags')">
                                     <i class="fas fa-tags me-2 text-warning"></i> Tags / Releases
                                 </a>
@@ -174,6 +177,10 @@
                             <a class="nav-link" id="pills-settings-tab" data-bs-toggle="pill" onclick="showTab('pills-settings')"href="#pills-settings"
                                 role="tab">Settings</a>
                         </li>
+                        <li class="nav-item d-none">
+                            <a class="nav-link" id="pills-compare-tab" data-bs-toggle="pill" onclick="showTab('pills-compare')" href="#pills-compare"
+                                role="tab">Compare</a>
+                        </li>
                     </ul>
                     <div class="tab-content mt-2 mb-3" id="pills-without-border-tabContent">
                         {{-- Tab contents extracted to partials --}}
@@ -186,6 +193,7 @@
                         @include('pages.repository.partials._members')
                         @include('pages.repository.partials._guide')
                         @include('pages.repository.partials._settings')
+                        @include('pages.repository.partials._compare')
                     </div>
                 </div>
             </div>
@@ -883,6 +891,130 @@
                         $('#commit-loading').hide();
                         $('#commit-diffs').html('<div class="alert alert-danger mb-0">Failed to load commit details.</div>');
                         $('#commit-content').show();
+                    }
+                });
+            });
+
+            window.setCompareMode = function(mode) {
+                $('#compare-mode').val(mode);
+                if (mode === 'branch') {
+                    $('#btn-mode-branch').addClass('btn-primary').removeClass('btn-outline-primary');
+                    $('#btn-mode-commit').addClass('btn-outline-primary').removeClass('btn-primary');
+                    $('#compare-branch-inputs').show();
+                    $('#compare-commit-inputs').hide();
+                } else {
+                    $('#btn-mode-commit').addClass('btn-primary').removeClass('btn-outline-primary');
+                    $('#btn-mode-branch').addClass('btn-outline-primary').removeClass('btn-primary');
+                    $('#compare-commit-inputs').show();
+                    $('#compare-branch-inputs').hide();
+                }
+            };
+
+            // 9. Compare Click Handler (supporting both branches and commits)
+            $(document).on('click', '.btn-compare-action', function(e) {
+                e.preventDefault();
+                var mode = $('#compare-mode').val();
+                var base, head;
+
+                if (mode === 'branch') {
+                    base = $('#compare-base').val();
+                    head = $('#compare-head').val();
+                    if (base === head) {
+                        swal("Perhatian!", "Base branch dan Compare branch tidak boleh sama.", "warning");
+                        return;
+                    }
+                } else {
+                    base = $('#compare-base-commit').val().trim();
+                    head = $('#compare-head-commit').val().trim();
+                    if (!base || !head) {
+                        swal("Perhatian!", "Harap isi kedua hash commit.", "warning");
+                        return;
+                    }
+                    if (base === head) {
+                        swal("Perhatian!", "Base commit dan Compare commit tidak boleh sama.", "warning");
+                        return;
+                    }
+                }
+
+                $('#compare-loading').show();
+                $('#compare-results').hide();
+
+                $.ajax({
+                    url: "{{ route('repository.compare', $repository) }}",
+                    method: 'GET',
+                    data: {
+                        source: head,
+                        target: base
+                    },
+                    success: function(response) {
+                        $('#compare-loading').hide();
+
+                        // 1. Set summary text
+                        var typeLabel = (mode === 'branch') ? "Branch" : "Commit";
+                        var summaryText = typeLabel + " '" + response.source.substring(0, 8) + "' is " + response.ahead_count + " commits ahead and " + response.behind_count + " commits behind '" + response.target.substring(0, 8) + "'.";
+                        $('#compare-summary-text').text(summaryText);
+
+                        // 2. Set tab counts
+                        $('#compare-commits-count').text(response.ahead_count);
+                        $('#compare-files-count').text(response.diffs.length);
+
+                        // 3. Render Commits List
+                        var commitsHtml = '';
+                        if (response.commits.length === 0) {
+                            commitsHtml = '<tr><td colspan="4" class="text-center py-4 text-muted">No unique commits found in ' + response.source.substring(0, 8) + '.</td></tr>';
+                        } else {
+                            response.commits.forEach(function(commit) {
+                                commitsHtml += '<tr>';
+                                commitsHtml += '  <td><a href="#" class="commit-hash-link fw-bold" data-hash="' + commit.hash + '"><code class="text-primary">' + commit.hash.substring(0, 7) + '</code></a></td>';
+                                commitsHtml += '  <td>' + commit.message + '</td>';
+                                commitsHtml += '  <td>' + commit.author + '</td>';
+                                commitsHtml += '  <td class="text-nowrap">' + commit.date + '</td>';
+                                commitsHtml += '</tr>';
+                            });
+                        }
+                        $('#compare-commits-list').html(commitsHtml);
+
+                        // 4. Render Diffs List
+                        var diffsHtml = '';
+                        if (response.diffs.length === 0) {
+                            diffsHtml = '<div class="alert alert-info py-4 text-center mt-3 mb-0">No file changes detected.</div>';
+                        } else {
+                            response.diffs.forEach(function(file) {
+                                diffsHtml += '<div class="card border mt-3 mb-0">';
+                                diffsHtml += '  <div class="card-header bg-dark text-white py-2 fw-semibold">';
+                                diffsHtml += '    <i class="far fa-file me-2"></i>' + file.filename;
+                                diffsHtml += '  </div>';
+                                diffsHtml += '  <div class="card-body p-0">';
+                                diffsHtml += '    <pre class="mb-0" style="font-family: monospace; font-size: 13px; line-height: 1.5; overflow-x: auto; max-height: 400px; white-space: pre;">';
+                                
+                                file.lines.forEach(function(line) {
+                                    var lineClass = 'px-3 d-block';
+                                    if (line.type === 'addition') {
+                                        lineClass += ' bg-success-light text-success-dark';
+                                    } else if (line.type === 'deletion') {
+                                        lineClass += ' bg-danger-light text-danger-dark';
+                                    } else if (line.type === 'info') {
+                                        lineClass += ' bg-info-light text-info-dark';
+                                    }
+                                    
+                                    var escapedContent = $('<div>').text(line.content).html();
+                                    diffsHtml += '<span class="' + lineClass + '">' + escapedContent + '</span>';
+                                });
+
+                                diffsHtml += '    </pre>';
+                                diffsHtml += '  </div>';
+                                diffsHtml += '</div>';
+                            });
+                        }
+                        $('#compare-files-diffs').html(diffsHtml);
+
+                        // Show Results
+                        $('#compare-results').show();
+                    },
+                    error: function() {
+                        $('#compare-loading').hide();
+                        var errLabel = (mode === 'branch') ? "branch" : "commit hash";
+                        swal("Gagal!", "Gagal membandingkan. Pastikan kedua " + errLabel + " valid.", "error");
                     }
                 });
             });
