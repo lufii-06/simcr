@@ -391,6 +391,84 @@ class RepositoryController extends Controller
         }
     }
 
+    public function deleteBranch(Request $request, Repository $repository)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        if ($user->role === 'client') {
+            return back()->with('error', 'Clients are not allowed to delete branches.');
+        }
+
+        $request->validate([
+            'branch_name' => 'required|string|max:100',
+        ]);
+
+        $branchName = trim($request->input('branch_name'));
+
+        if ($branchName === $repository->default_branch) {
+            return back()->with('error', 'Cannot delete the default branch.');
+        }
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return back()->with('error', 'Repository physical folder not found.');
+        }
+
+        $branches = $this->showGetBranches($repoPath, $repository);
+        if (!in_array($branchName, $branches)) {
+            return back()->with('error', 'Branch does not exist.');
+        }
+
+        $cmd = 'branch -D '.escapeshellarg($branchName);
+        $res = $this->runGitCommand($repoPath, $cmd);
+
+        if ($res['success']) {
+            return back()->with('success', "Branch '{$branchName}' has been successfully deleted.");
+        }
+
+        return back()->with('error', 'Failed to delete branch.');
+    }
+
+    public function deleteTag(Request $request, Repository $repository)
+    {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
+        if ($user->role === 'client') {
+            return back()->with('error', 'Clients are not allowed to delete tags.');
+        }
+
+        $request->validate([
+            'tag_name' => 'required|string|max:100',
+        ]);
+
+        $tagName = trim($request->input('tag_name'));
+
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $repoPath = $basePath.'/'.$repository->name.'.git';
+
+        if (!file_exists($repoPath)) {
+            return back()->with('error', 'Repository physical folder not found.');
+        }
+
+        $tags = $this->showGetTags($repoPath);
+        if (!in_array($tagName, $tags)) {
+            return back()->with('error', 'Tag does not exist.');
+        }
+
+        $cmd = 'tag -d '.escapeshellarg($tagName);
+        $res = $this->runGitCommand($repoPath, $cmd);
+
+        if ($res['success']) {
+            return back()->with('success', "Tag '{$tagName}' has been successfully deleted.");
+        }
+
+        return back()->with('error', 'Failed to delete tag.');
+    }
+
     public function show(Request $request, Repository $repository)
     {
         $user = auth()->user();

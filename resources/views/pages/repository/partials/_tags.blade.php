@@ -9,9 +9,21 @@
     <div class="list-group list-group-messages list-group-flush">
         @forelse ($tags as $tag)
             <div class="list-group-item">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center w-100">
                     <i class="fas fa-tag text-warning me-3"></i>
                     <span class="fw-bold">{{ $tag }}</span>
+                    @if (auth()->user()->role !== 'client')
+                        <div class="ms-auto">
+                            <form action="{{ route('repository.delete-tag', $repository) }}" method="POST" class="d-inline form-delete-tag" data-tag="{{ $tag }}">
+                                @csrf
+                                @method('DELETE')
+                                <input type="hidden" name="tag_name" value="{{ $tag }}">
+                                <button type="submit" class="btn btn-xs btn-link text-danger p-0" title="Delete Tag" style="line-height: 1;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    @endif
                 </div>
             </div>
         @empty

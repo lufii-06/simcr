@@ -101,6 +101,8 @@ Route::middleware('auth')->group(function () {
     Route::post('repository/{repository}/create-branch', [RepositoryController::class, 'createBranch'])->name('repository.create-branch');
     Route::post('repository/{repository}/create-tag', [RepositoryController::class, 'createTag'])->name('repository.create-tag');
     Route::post('repository/{repository}/merge-rebase', [RepositoryController::class, 'mergeRebase'])->name('repository.merge-rebase');
+    Route::delete('repository/{repository}/delete-branch', [RepositoryController::class, 'deleteBranch'])->name('repository.delete-branch');
+    Route::delete('repository/{repository}/delete-tag', [RepositoryController::class, 'deleteTag'])->name('repository.delete-tag');
 
     Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');

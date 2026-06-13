@@ -699,6 +699,72 @@
             if (tabParam) {
                 showTab('pills-' + tabParam);
             }
+
+            // 6. Delete Branch SweetAlert Confirmation
+            $('.form-delete-branch').on('submit', function(e) {
+                e.preventDefault();
+                var form = this;
+                var branchName = $(this).data('branch');
+                swal({
+                    title: "Apakah Anda yakin?",
+                    text: "Branch '" + branchName + "' akan dihapus permanen dari repositori ini!",
+                    icon: "warning",
+                    buttons: {
+                        cancel: {
+                            text: "Batal",
+                            value: null,
+                            visible: true,
+                            className: "btn btn-secondary",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Ya, Hapus!",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-danger",
+                            closeModal: true
+                        }
+                    },
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) {
+                        form.submit();
+                    }
+                });
+            });
+
+            // 7. Delete Tag SweetAlert Confirmation
+            $('.form-delete-tag').on('submit', function(e) {
+                e.preventDefault();
+                var form = this;
+                var tagName = $(this).data('tag');
+                swal({
+                    title: "Apakah Anda yakin?",
+                    text: "Tag '" + tagName + "' akan dihapus permanen dari repositori ini!",
+                    icon: "warning",
+                    buttons: {
+                        cancel: {
+                            text: "Batal",
+                            value: null,
+                            visible: true,
+                            className: "btn btn-secondary",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Ya, Hapus!",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-danger",
+                            closeModal: true
+                        }
+                    },
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) {
+                        form.submit();
+                    }
+                });
+            });
         });
     </script>
 @endpush

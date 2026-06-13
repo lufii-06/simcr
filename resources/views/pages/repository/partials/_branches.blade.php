@@ -12,13 +12,25 @@
     <div class="list-group list-group-messages list-group-flush">
         @forelse ($branches as $branch)
             <div class="list-group-item">
-                <div class="d-flex align-items-center">
+                <div class="d-flex align-items-center w-100">
                     <i class="fas fa-code-branch text-info me-3"></i>
                     <span class="fw-bold">{{ $branch }}</span>
                     @if ($branch === $repository->default_branch)
                         <span class="badge badge-primary badge-xs ms-2">Default</span>
                     @endif
-                    <a href="?branch={{ $branch }}" class="btn btn-xs btn-link ms-auto">View Files</a>
+                    <div class="ms-auto d-flex align-items-center">
+                        <a href="?branch={{ $branch }}" class="btn btn-xs btn-link">View Files</a>
+                        @if ($branch !== $repository->default_branch && auth()->user()->role !== 'client')
+                            <form action="{{ route('repository.delete-branch', $repository) }}" method="POST" class="d-inline ms-2 form-delete-branch" data-branch="{{ $branch }}">
+                                @csrf
+                                @method('DELETE')
+                                <input type="hidden" name="branch_name" value="{{ $branch }}">
+                                <button type="submit" class="btn btn-xs btn-link text-danger p-0" title="Delete Branch" style="line-height: 1;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        @endif
+                    </div>
                 </div>
             </div>
         @empty
