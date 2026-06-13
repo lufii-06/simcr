@@ -102,6 +102,17 @@
             $('#detailModalBody').html(
                 '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>'
             );
+
+            // Ensure the export pdf button exists in footer
+            var printBtn = $('#btn-export-project-pdf');
+            if (printBtn.length === 0) {
+                $('#detailModal .modal-footer').prepend(
+                    '<a id="btn-export-project-pdf" href="#" class="btn btn-primary" target="_blank"><i class="fas fa-print me-1"></i> Cetak Project</a>'
+                );
+                printBtn = $('#btn-export-project-pdf');
+            }
+            printBtn.hide();
+
             modal.modal('show');
 
             $.get("{{ url('project') }}/" + id, function(data) {
@@ -159,6 +170,10 @@
                     </div>
                 `;
                 $('#detailModalBody').html(html);
+
+                // Set the PDF export link in modal footer
+                var pdfUrl = "{{ url('project') }}/" + id + "/export-pdf";
+                $('#btn-export-project-pdf').attr('href', pdfUrl).show();
             });
         }
 

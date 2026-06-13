@@ -69,6 +69,7 @@ Route::middleware('auth')->group(function () {
     // Projects
     Route::get('project/search', [ProjectController::class, 'search'])->name('project.search');
     Route::get('project/{project}/analytics', [ProjectController::class, 'analytics'])->name('project.analytics');
+    Route::get('project/{project}/export-pdf', [ProjectController::class, 'exportProjectPdf'])->name('project.export-pdf');
     
     // Restriction for Project Creation (PM only)
     Route::middleware('role:pm')->group(function () {

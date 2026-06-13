@@ -392,4 +392,92 @@ class ProjectController extends Controller
 
         return view('pages.project.analytics', compact('project', 'teamStats', 'projectLogs'));
     }
+
+    public function exportProjectPdf(Project $project)
+    {
+        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $doneStatusName = 'Done';
+
+        $project->load([
+            'client.user',
+            'status',
+            'owner',
+            'developers.user',
+            'developers.role',
+            'repository',
+            'tasks.status',
+            'tasks.assignee',
+            'tasks.checklists',
+        ]);
+
+        // Build per-developer task stats & commit count
+        $developerStats = [];
+
+        // Unique user entries in this project
+        $assignedUsers = $project->developers
+            ->map(fn($d) => $d->user)
+            ->filter()
+            ->unique('id');
+
+        foreach ($assignedUsers as $devUser) {
+            $userTasks = $project->tasks->where('assigned_to', $devUser->id);
+            $totalTasks  = $userTasks->count();
+            $doneTasks   = $userTasks->filter(fn($t) => strtolower($t->status->name ?? '') === strtolower($doneStatusName))->count();
+            $pendingTasks = $totalTasks - $doneTasks;
+            $completionRate = $totalTasks > 0 ? round(($doneTasks / $totalTasks) * 100) : 0;
+
+            // Git commits
+            $commitCount = 0;
+            if ($project->repository) {
+                $repoPath = $basePath . '/' . $project->repository->name . '.git';
+                if (file_exists($repoPath)) {
+                    $nullDevice = DIRECTORY_SEPARATOR === '\\' ? 'NUL' : '/dev/null';
+                    exec('git --git-dir=' . escapeshellarg($repoPath) . ' shortlog -sn --all 2>' . $nullDevice, $gitOutput);
+                    foreach ($gitOutput as $line) {
+                        $line = trim($line);
+                        if (preg_match('/^(\d+)\t(.+)$/', $line, $m)) {
+                            if (stripos($m[2], $devUser->name) !== false) {
+                                $commitCount = (int) $m[1];
+                                break;
+                            }
+                        }
+                    }
+                    unset($gitOutput);
+                }
+            }
+
+            // Get role in this project
+            $roleEntry = $project->developers->firstWhere('user_id', $devUser->id);
+            $developerStats[] = [
+                'name'            => $devUser->name,
+                'role'            => $roleEntry?->role?->name ?? '-',
+                'total_tasks'     => $totalTasks,
+                'done_tasks'      => $doneTasks,
+                'pending_tasks'   => $pendingTasks,
+                'completion_rate' => $completionRate,
+                'commit_count'    => $commitCount,
+            ];
+        }
+
+        // Summary task totals
+        $totalTasks  = $project->tasks->count();
+        $doneTasks   = $project->tasks->filter(fn($t) => strtolower($t->status->name ?? '') === strtolower($doneStatusName))->count();
+        $pendingTasks = $totalTasks - $doneTasks;
+        $globalRate  = $totalTasks > 0 ? round(($doneTasks / $totalTasks) * 100) : 0;
+        $generatedAt = now()->format('d M Y H:i');
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pages.project.pdf_report', compact(
+            'project',
+            'developerStats',
+            'totalTasks',
+            'doneTasks',
+            'pendingTasks',
+            'globalRate',
+            'generatedAt'
+        ))->setPaper('a4', 'portrait');
+
+        $filename = 'Project_Report_' . \Illuminate\Support\Str::slug($project->name) . '_' . now()->format('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
+    }
 }

@@ -102,6 +102,10 @@
                   darkMenu: false
               });
           }
+
+          $('#detailModal').on('show.bs.modal', function () {
+              $('#btn-export-project-pdf').hide();
+          });
       });
  </script>
  @stack('scripts')
