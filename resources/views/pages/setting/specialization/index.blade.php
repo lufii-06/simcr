@@ -45,8 +45,7 @@
                                                     <i class="fa fa-edit"></i>
                                                 </a>
                                                 <form action="{{ route('specialization.destroy', $item) }}"
-                                                    method="POST" class="d-inline"
-                                                    onsubmit="return confirm('Are you sure?')">
+                                                    method="POST" class="d-inline form-delete">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-link btn-danger"
@@ -76,7 +75,7 @@
         $(document).ready(function() {
             $('#specialization-datatables').DataTable({});
 
-            $('.btn-detail').on('click', function() {
+            $(document).on('click', '.btn-detail', function() {
                 var id = $(this).data('id');
                 var modal = $('#detailModal');
                 $('#detailModalBody').html(
@@ -93,6 +92,23 @@
                         </table>
                     `;
                     $('#detailModalBody').html(html);
+                });
+            });
+
+            // Delete Confirmation
+            $(document).on('submit', '.form-delete', function(e) {
+                e.preventDefault();
+                var form = this;
+                swal({
+                    title: "Are you sure?",
+                    text: "Once deleted, you will not be able to recover this specialization!",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) {
+                        form.submit();
+                    }
                 });
             });
         });

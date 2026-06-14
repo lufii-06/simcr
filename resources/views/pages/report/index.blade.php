@@ -82,7 +82,7 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        $('.btn-detail').on('click', function() {
+        $(document).on('click', '.btn-detail', function() {
             const id = $(this).data('id');
             // Reuse existing global detail modal logic
             if (typeof window.showDetail === 'function') {

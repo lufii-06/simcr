@@ -201,14 +201,6 @@
                                 @endif
 
                                 @if(auth()->user()->role == 'pm')
-                                    <a class="col-6 col-md-4 p-0" href="{{ route('client.create') }}">
-                                        <div class="quick-actions-item">
-                                            <div class="avatar-item bg-success rounded-circle">
-                                                <i class="fas fa-user-plus"></i>
-                                            </div>
-                                            <span class="text">New Client</span>
-                                        </div>
-                                    </a>
                                     <a class="col-6 col-md-4 p-0" href="{{ route('report.index') }}">
                                         <div class="quick-actions-item">
                                             <div class="avatar-item bg-secondary rounded-circle">
@@ -243,17 +235,6 @@
                                                 <i class="fas fa-project-diagram"></i>
                                             </div>
                                             <span class="text">My Projects</span>
-                                        </div>
-                                    </a>
-                                @endif
-                                
-                                @if(auth()->user()->role == 'pm')
-                                    <a class="col-6 col-md-4 p-0" href="{{ route('task-status.index') }}">
-                                        <div class="quick-actions-item">
-                                            <div class="avatar-item bg-dark rounded-circle">
-                                                <i class="fas fa-cogs"></i>
-                                            </div>
-                                            <span class="text">Settings</span>
                                         </div>
                                     </a>
                                 @endif

@@ -57,8 +57,7 @@
                                                     <i class="fa fa-edit"></i>
                                                 </a>
                                                 <form action="{{ route('developer.destroy', $developer) }}"
-                                                    method="POST" class="d-inline"
-                                                    onsubmit="return confirm('Deleting the developer will also delete the associated user account. Are you sure?')">
+                                                    method="POST" class="d-inline form-delete">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-link btn-danger"
@@ -88,7 +87,7 @@
         $(document).ready(function() {
             $('#developer-datatables').DataTable({});
 
-            $('.btn-detail').on('click', function() {
+            $(document).on('click', '.btn-detail', function() {
                 var id = $(this).data('id');
                 var modal = $('#detailModal');
                 $('#detailModalBody').html(
@@ -119,6 +118,23 @@
                         </div>
                     `;
                     $('#detailModalBody').html(html);
+                });
+            });
+
+            // Delete Confirmation
+            $(document).on('submit', '.form-delete', function(e) {
+                e.preventDefault();
+                var form = this;
+                swal({
+                    title: "Are you sure?",
+                    text: "Deleting the developer will also delete the associated user account. Once deleted, you will not be able to recover this developer!",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) {
+                        form.submit();
+                    }
                 });
             });
         });

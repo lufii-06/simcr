@@ -69,8 +69,7 @@
                                                     <i class="fa fa-edit"></i>
                                                 </a>
                                                 <form action="{{ route('project.destroy', $project) }}" method="POST"
-                                                    class="d-inline"
-                                                    onsubmit="return confirm('Are you sure you want to delete this project?')">
+                                                    class="d-inline form-delete">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-link btn-danger"
@@ -196,6 +195,23 @@
             if (showId) {
                 openProjectModal(showId);
             }
+
+            // Delete Confirmation
+            $(document).on('submit', '.form-delete', function(e) {
+                e.preventDefault();
+                var form = this;
+                swal({
+                    title: "Are you sure?",
+                    text: "Once deleted, you will not be able to recover this project!",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) {
+                        form.submit();
+                    }
+                });
+            });
         });
     </script>
 @endpush

@@ -193,7 +193,7 @@
             });
 
             // Show Task Detail
-            $('.btn-detail').on('click', function() {
+            $(document).on('click', '.btn-detail', function() {
                 const id = $(this).data('id');
                 const modal = $('#taskDetailModal');
                 

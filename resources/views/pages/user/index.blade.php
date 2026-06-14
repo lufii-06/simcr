@@ -113,7 +113,7 @@
             $('#user-datatables').DataTable({});
 
             // Detail Modal Logic
-            $('.btn-detail').on('click', function() {
+            $(document).on('click', '.btn-detail', function() {
                 var id = $(this).data('id');
                 var modal = $('#detailModal');
                 $('#detailModalBody').html(
@@ -143,7 +143,7 @@
             });
 
             // Delete Confirmation
-            $('.form-delete').on('submit', function(e) {
+            $(document).on('submit', '.form-delete', function(e) {
                 e.preventDefault();
                 var form = this;
                 swal({
@@ -160,7 +160,7 @@
             });
 
             // Reset Password Confirmation
-            $('.form-reset-password').on('submit', function(e) {
+            $(document).on('submit', '.form-reset-password', function(e) {
                 e.preventDefault();
                 var form = this;
                 swal({
