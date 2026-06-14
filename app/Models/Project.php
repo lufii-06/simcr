@@ -57,4 +57,33 @@ class Project extends Model
     {
         return $this->hasMany(Task::class);
     }
+
+    public function updateStatusBasedOnTasks()
+    {
+        $totalTasks = $this->tasks()->count();
+        $doneStatus = \App\Models\TaskStatus::where('name', 'Done')->first();
+        
+        if ($totalTasks > 0 && $doneStatus) {
+            $doneTasks = $this->tasks()->where('task_status_id', $doneStatus->id)->count();
+            
+            if ($doneTasks === $totalTasks) {
+                $testingStatus = \App\Models\ProjectStatus::where('name', 'Testing')->first();
+                if ($testingStatus && $this->project_status_id !== $testingStatus->id) {
+                    $this->update([
+                        'project_status_id' => $testingStatus->id
+                    ]);
+                }
+            } else {
+                $inProgressStatus = \App\Models\ProjectStatus::where('name', 'In Progress')->first();
+                if ($inProgressStatus && $this->project_status_id !== $inProgressStatus->id) {
+                    $currentStatusName = $this->status?->name;
+                    if (in_array($currentStatusName, ['Planning', 'Testing'])) {
+                        $this->update([
+                            'project_status_id' => $inProgressStatus->id
+                        ]);
+                    }
+                }
+            }
+        }
+    }
 }

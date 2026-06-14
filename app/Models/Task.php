@@ -24,6 +24,14 @@ class Task extends Model
             $task->code = 'T-' . str_pad($task->id, 4, '0', STR_PAD_LEFT);
             $task->save();
         });
+
+        static::saved(function ($task) {
+            $task->project?->updateStatusBasedOnTasks();
+        });
+
+        static::deleted(function ($task) {
+            $task->project?->updateStatusBasedOnTasks();
+        });
     }
 
     public function project()
