@@ -19,11 +19,14 @@
                             <div class="col-md-6">
                                 <div class="form-group @error('project_id') has-error @enderror">
                                     <label for="project_id" class="required">Project</label>
-                                    <select class="form-control" id="project_id" name="project_id" required>
+                                    @if(isset($selectedProjectId))
+                                        <input type="hidden" name="project_id" value="{{ $selectedProjectId }}">
+                                    @endif
+                                    <select class="form-control" id="project_id" name="{{ isset($selectedProjectId) ? '' : 'project_id' }}" required {{ isset($selectedProjectId) ? 'disabled' : '' }}>
                                         <option value="">Select Project</option>
                                         @foreach ($projects as $project)
                                             <option value="{{ $project->id }}" data-route-key="{{ $project->getRouteKey() }}"
-                                                {{ old('project_id', $task->project_id ?? '') == $project->id ? 'selected' : '' }}>
+                                                {{ old('project_id', $selectedProjectId ?? $task->project_id ?? '') == $project->id ? 'selected' : '' }}>
                                                 {{ $project->name }}
                                             </option>
                                         @endforeach
@@ -98,7 +101,16 @@
                     </div>
                     <div class="card-action">
                         <button type="submit" class="btn btn-success">Save Task</button>
-                        <a href="{{ route('task.index') }}" class="btn btn-danger">Cancel</a>
+                        @php
+                            $cancelUrl = route('task.index');
+                            if (isset($selectedProjectId)) {
+                                $selectedProjectModel = $projects->firstWhere('id', $selectedProjectId);
+                                if ($selectedProjectModel) {
+                                    $cancelUrl = route('task.index', ['project_id' => $selectedProjectModel->getRouteKey()]);
+                                }
+                            }
+                        @endphp
+                        <a href="{{ $cancelUrl }}" class="btn btn-danger">Cancel</a>
                     </div>
                 </form>
             </div>

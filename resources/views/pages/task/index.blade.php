@@ -1,6 +1,6 @@
 @extends('dashboard')
 
-@section('title', $type == 'my' ? 'My Tasks' : 'All Project Tasks')
+@section('title', isset($project) ? 'Tasks - ' . $project->name : ($type == 'my' ? 'My Tasks' : 'All Project Tasks'))
 
 @section('content')
     <div class="row">
@@ -8,13 +8,30 @@
             <div class="card">
                 <div class="card-header">
                     <div class="d-flex align-items-center">
-                        <h4 class="card-title">{{ $type == 'my' ? 'My Tasks List' : 'All Project Tasks List' }}</h4>
-                        @if ($type !== 'my')
-                            <a href="{{ route('task.create') }}" class="btn btn-primary btn-round ms-auto">
-                                <i class="fa fa-plus"></i>
-                                Create Task
-                            </a>
-                        @endif
+                        <h4 class="card-title">
+                            @if(isset($project))
+                                Tasks for Project: <span class="text-primary">{{ $project->name }}</span>
+                            @else
+                                {{ $type == 'my' ? 'My Tasks List' : 'All Project Tasks List' }}
+                            @endif
+                        </h4>
+                        <div class="ms-auto d-flex align-items-center">
+                            @if(isset($project))
+                                <a href="{{ route('project.index') }}" class="btn btn-outline-secondary btn-round me-2">
+                                    <i class="fa fa-arrow-left me-1"></i>
+                                    Back to Projects
+                                </a>
+                            @endif
+                            @if ($type !== 'my')
+                                @php
+                                    $createUrl = isset($project) ? route('task.create', ['project_id' => $project->getRouteKey()]) : route('task.create');
+                                @endphp
+                                <a href="{{ $createUrl }}" class="btn btn-primary btn-round">
+                                    <i class="fa fa-plus me-1"></i>
+                                    Create Task
+                                </a>
+                            @endif
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">

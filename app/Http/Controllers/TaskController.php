@@ -17,6 +17,7 @@ class TaskController extends Controller
     {
         $user = auth()->user();
         $type = $request->get('type', 'all'); // 'all' or 'my'
+        $project = null;
 
         $query = Task::with(['project', 'status', 'creator', 'assignee', 'checklists']);
 
@@ -33,9 +34,39 @@ class TaskController extends Controller
             });
         }
 
+        if ($request->has('project_id')) {
+            $projId = $request->get('project_id');
+            try {
+                $decrypted = \Illuminate\Support\Facades\Crypt::decryptString(strtr($projId, '-_', '+/'));
+                $project = Project::find($decrypted);
+            } catch (\Exception $e) {
+                if (is_numeric($projId)) {
+                    $project = Project::find($projId);
+                }
+            }
+
+            if (!$project) {
+                abort(404, 'Project not found.');
+            }
+
+            // Authorization security check
+            if ($user->role === 'client') {
+                if ($project->client_id !== ($user->client->id ?? 0)) {
+                    abort(403, 'Unauthorized.');
+                }
+            } elseif ($user->role === 'developer') {
+                $isDeveloperInProject = $project->developers()->where('user_id', $user->id)->exists();
+                if (!$isDeveloperInProject) {
+                    abort(403, 'Unauthorized.');
+                }
+            }
+
+            $query->where('project_id', $project->id);
+        }
+
         $tasks = $query->latest()->get();
 
-        return view('pages.task.index', compact('tasks', 'type'));
+        return view('pages.task.index', compact('tasks', 'type', 'project'));
     }
 
     public function log(Request $request)
@@ -83,7 +114,7 @@ class TaskController extends Controller
         return view('pages.task.log', compact('logs', 'projects', 'users', 'projectId', 'userId', 'action'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $user = auth()->user();
         
@@ -95,7 +126,23 @@ class TaskController extends Controller
 
         $statuses = TaskStatus::all();
 
-        return view('pages.task.form', compact('projects', 'statuses'));
+        $selectedProjectId = null;
+        if ($request->has('project_id')) {
+            $projId = $request->get('project_id');
+            try {
+                $decrypted = \Illuminate\Support\Facades\Crypt::decryptString(strtr($projId, '-_', '+/'));
+                $resolvedProject = Project::find($decrypted);
+                if ($resolvedProject) {
+                    $selectedProjectId = $resolvedProject->id;
+                }
+            } catch (\Exception $e) {
+                if (is_numeric($projId)) {
+                    $selectedProjectId = (int)$projId;
+                }
+            }
+        }
+
+        return view('pages.task.form', compact('projects', 'statuses', 'selectedProjectId'));
     }
 
     public function getProjectUsers(Project $project)

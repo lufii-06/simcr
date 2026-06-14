@@ -63,6 +63,11 @@
                                                     title="View Details">
                                                     <i class="fa fa-eye"></i>
                                                 </button>
+                                                <a href="{{ route('task.index', ['project_id' => $project->getRouteKey()]) }}"
+                                                    class="btn btn-link btn-success btn-lg" data-bs-toggle="tooltip"
+                                                    title="View Tasks">
+                                                    <i class="fa fa-tasks"></i>
+                                                </a>
                                                 <a href="{{ route('project.edit', $project) }}"
                                                     class="btn btn-link btn-primary btn-lg" data-bs-toggle="tooltip"
                                                     title="Edit Project">
@@ -148,6 +153,14 @@
                                                 <i class="fas fa-code me-1"></i> Go to Repository
                                             </a>
                                         ` : '<span class="text-muted">-</span>'}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Tasks</th>
+                                    <td>
+                                        <a href="{{ url('task') }}?project_id=${id}" class="btn btn-success btn-sm btn-round text-white">
+                                            <i class="fas fa-tasks me-1"></i> View Project Tasks
+                                        </a>
                                     </td>
                                 </tr>
                             </table>
