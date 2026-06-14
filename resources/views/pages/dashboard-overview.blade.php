@@ -152,7 +152,20 @@
                                         <td><strong>{{ Str::limit($task->title, 25) }}</strong></td>
                                         <td>{{ $task->project->name }}</td>
                                         <td>{{ $task->assignee->name }}</td>
-                                        <td><span class="badge badge-info">{{ $task->status->name }}</span></td>
+                                        <td>
+                                            @php
+                                                $statusName = $task->status->name ?? '';
+                                                $badgeClass = 'badge-info';
+                                                if ($statusName === 'To Do') {
+                                                    $badgeClass = 'badge-primary';
+                                                } elseif ($statusName === 'In Progress') {
+                                                    $badgeClass = 'badge-warning';
+                                                } elseif ($statusName === 'Done') {
+                                                    $badgeClass = 'badge-success';
+                                                }
+                                            @endphp
+                                            <span class="badge {{ $badgeClass }}">{{ $statusName }}</span>
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr>

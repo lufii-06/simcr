@@ -261,9 +261,12 @@
                                                         <td class="text-center">
                                                             @php
                                                                 $statusLower = strtolower($task['status']);
-                                                                $badgeClass = 'status-badge-todo';
-                                                                if ($statusLower === 'done') $badgeClass = 'status-badge-done';
-                                                                elseif (str_contains($statusLower, 'progress')) $badgeClass = 'status-badge-progress';
+                                                                $badgeClass = 'badge-primary';
+                                                                if ($statusLower === 'done') {
+                                                                    $badgeClass = 'badge-success';
+                                                                } elseif (str_contains($statusLower, 'progress')) {
+                                                                    $badgeClass = 'badge-warning';
+                                                                }
                                                             @endphp
                                                             <span class="badge {{ $badgeClass }}">{{ $task['status'] }}</span>
                                                         </td>
