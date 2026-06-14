@@ -41,10 +41,28 @@
                                         <td>{{ $user->email ?? 'N/A' }}</td>
                                         <td>
                                             <span class="badge badge-info">{{ ucfirst($user->role ?? 'user') }}</span>
+                                            @if ($user->role === 'client' && !$user->client)
+                                                <span class="badge badge-danger d-block mt-1">Incomplete Profile</span>
+                                            @elseif ($user->role === 'developer' && !$user->developer)
+                                                <span class="badge badge-danger d-block mt-1">Incomplete Profile</span>
+                                            @endif
                                         </td>
                                         <td>{{ optional($user->created_at)->format('d M Y') ?? '-' }}</td>
                                         <td>
                                             <div class="form-button-action">
+                                                @if ($user->role === 'client' && !$user->client)
+                                                    <a href="{{ route('client.create', ['user_id' => $user->id]) }}"
+                                                        class="btn btn-link btn-warning btn-lg" data-bs-toggle="tooltip"
+                                                        title="Complete Client Profile">
+                                                        <i class="fa fa-user-plus text-warning"></i>
+                                                    </a>
+                                                @elseif ($user->role === 'developer' && !$user->developer)
+                                                    <a href="{{ route('developer.create', ['user_id' => $user->id]) }}"
+                                                        class="btn btn-link btn-warning btn-lg" data-bs-toggle="tooltip"
+                                                        title="Complete Developer Profile">
+                                                        <i class="fa fa-user-plus text-warning"></i>
+                                                    </a>
+                                                @endif
                                                 <button type="button" class="btn btn-link btn-info btn-lg btn-detail"
                                                     data-id="{{ $user->getRouteKey() }}" data-type="user" data-bs-toggle="tooltip"
                                                     title="View Details">
