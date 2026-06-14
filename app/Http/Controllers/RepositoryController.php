@@ -33,6 +33,11 @@ class RepositoryController extends Controller
 
     public function toggleStatus(Repository $repository)
     {
+        $user = auth()->user();
+        if ($user->id !== ($repository->project?->user_id ?? 0) && $user->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $newStatus = $repository->status === 'active' ? 'inactive' : 'active';
         $repository->update([
             'status' => $newStatus,
@@ -43,6 +48,11 @@ class RepositoryController extends Controller
 
     public function toggleVisibility(Repository $repository)
     {
+        $user = auth()->user();
+        if ($user->id !== ($repository->project?->user_id ?? 0) && $user->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
         $isPublic = $repository->is_public;
         $repository->update([
             'is_public' => ! $isPublic,
@@ -58,6 +68,11 @@ class RepositoryController extends Controller
 
     public function generateToken(Repository $repository)
     {
+        $user = auth()->user();
+        if ($user->id !== ($repository->project?->user_id ?? 0) && $user->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+
         if ($repository->is_public) {
             $repository->update([
                 'access_token' => null,
@@ -75,6 +90,9 @@ class RepositoryController extends Controller
 
     public function viewFile(Request $request, Repository $repository)
     {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
         $path = $request->input('path');
         $branch = $request->input('branch', $repository->default_branch);
 
@@ -101,6 +119,9 @@ class RepositoryController extends Controller
 
     public function downloadFile(Request $request, Repository $repository)
     {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
         $path = $request->input('path');
         $branch = $request->input('branch', $repository->default_branch);
 
@@ -125,6 +146,9 @@ class RepositoryController extends Controller
 
     public function downloadArchive(Request $request, Repository $repository)
     {
+        $user = auth()->user();
+        $this->showAuthorize($repository, $user);
+
         $branch = $request->input('branch', $repository->default_branch ?? 'main');
         $format = $request->input('format', 'zip'); // zip or tar.gz
 

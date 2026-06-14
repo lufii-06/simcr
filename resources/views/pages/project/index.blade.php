@@ -145,6 +145,7 @@
                                 <tr><th>Start Date</th><td>${data.start_date || '-'}</td></tr>
                                 <tr><th>End Date</th><td>${data.end_date || '-'}</td></tr>
                                 <tr><th>Description</th><td>${data.description ? data.description.replace(/\n/g, '<br>') : '-'}</td></tr>
+                                @if (auth()->user()->role !== 'client')
                                 <tr>
                                     <th>Repository</th>
                                     <td>
@@ -155,6 +156,7 @@
                                         ` : '<span class="text-muted">-</span>'}
                                     </td>
                                 </tr>
+                                @endif
                                 <tr>
                                     <th>Tasks</th>
                                     <td>

@@ -84,11 +84,13 @@
                                         <span class="sub-item">List Project</span>
                                     </a>
                                 </li>
+                                @if (auth()->user()->role !== 'client')
                                 <li class="{{ Request::is('repository*') ? 'active' : '' }}">
                                     <a href="{{ route('repository.index') }}">
                                         <span class="sub-item">Repository</span>
                                     </a>
                                 </li>
+                                @endif
                                 <li class="{{ Request::routeIs('project.analytics') || Request::get('view') == 'analytics' ? 'active' : '' }}">
                                     <a href="{{ route('project.index') }}?view=analytics">
                                         <span class="sub-item">Project Analytics</span>

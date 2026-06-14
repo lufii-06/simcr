@@ -101,25 +101,27 @@ Route::middleware('auth')->group(function () {
             Route::post('task/{task}/status', [TaskController::class, 'updateStatus'])->name('task.update-status');
         });
 
-        Route::resource('repository', RepositoryController::class)->only(['index', 'show']);
-        Route::post('repository/{repository}/toggle-visibility', [RepositoryController::class, 'toggleVisibility'])->name('repository.toggle-visibility');
-        Route::post('repository/{repository}/toggle-status', [RepositoryController::class, 'toggleStatus'])->name('repository.toggle-status');
-        Route::post('repository/{repository}/generate-token', [RepositoryController::class, 'generateToken'])->name('repository.generate-token');
-        Route::get('repository/{repository}/view-file', [RepositoryController::class, 'viewFile'])->name('repository.view-file');
-        Route::get('repository/{repository}/download-file', [RepositoryController::class, 'downloadFile'])->name('repository.download-file');
-        Route::get('repository/{repository}/download-archive', [RepositoryController::class, 'downloadArchive'])->name('repository.download-archive');
-        Route::post('repository/{repository}/create-branch', [RepositoryController::class, 'createBranch'])->name('repository.create-branch');
-        Route::post('repository/{repository}/create-tag', [RepositoryController::class, 'createTag'])->name('repository.create-tag');
-        Route::post('repository/{repository}/merge-rebase', [RepositoryController::class, 'mergeRebase'])->name('repository.merge-rebase');
-        Route::delete('repository/{repository}/delete-branch', [RepositoryController::class, 'deleteBranch'])->name('repository.delete-branch');
-        Route::delete('repository/{repository}/delete-tag', [RepositoryController::class, 'deleteTag'])->name('repository.delete-tag');
-        Route::get('repository/{repository}/commit-detail', [RepositoryController::class, 'commitDetail'])->name('repository.commit-detail');
-        Route::get('repository/{repository}/compare', [RepositoryController::class, 'compareBranches'])->name('repository.compare');
-        Route::get('repository/{repository}/merge-requests/create', [RepositoryController::class, 'mergeRequestsCreate'])->name('repository.merge-requests.create');
-        Route::post('repository/{repository}/merge-requests', [RepositoryController::class, 'mergeRequestsStore'])->name('repository.merge-requests.store');
-        Route::get('repository/{repository}/merge-requests/{pullRequest}', [RepositoryController::class, 'mergeRequestsShow'])->name('repository.merge-requests.show');
-        Route::post('repository/{repository}/merge-requests/{pullRequest}/merge', [RepositoryController::class, 'mergeRequestsMerge'])->name('repository.merge-requests.merge');
-        Route::post('repository/{repository}/merge-requests/{pullRequest}/close', [RepositoryController::class, 'mergeRequestsClose'])->name('repository.merge-requests.close');
+        Route::middleware('role:pm,developer')->group(function () {
+            Route::resource('repository', RepositoryController::class)->only(['index', 'show']);
+            Route::post('repository/{repository}/toggle-visibility', [RepositoryController::class, 'toggleVisibility'])->name('repository.toggle-visibility');
+            Route::post('repository/{repository}/toggle-status', [RepositoryController::class, 'toggleStatus'])->name('repository.toggle-status');
+            Route::post('repository/{repository}/generate-token', [RepositoryController::class, 'generateToken'])->name('repository.generate-token');
+            Route::get('repository/{repository}/view-file', [RepositoryController::class, 'viewFile'])->name('repository.view-file');
+            Route::get('repository/{repository}/download-file', [RepositoryController::class, 'downloadFile'])->name('repository.download-file');
+            Route::get('repository/{repository}/download-archive', [RepositoryController::class, 'downloadArchive'])->name('repository.download-archive');
+            Route::post('repository/{repository}/create-branch', [RepositoryController::class, 'createBranch'])->name('repository.create-branch');
+            Route::post('repository/{repository}/create-tag', [RepositoryController::class, 'createTag'])->name('repository.create-tag');
+            Route::post('repository/{repository}/merge-rebase', [RepositoryController::class, 'mergeRebase'])->name('repository.merge-rebase');
+            Route::delete('repository/{repository}/delete-branch', [RepositoryController::class, 'deleteBranch'])->name('repository.delete-branch');
+            Route::delete('repository/{repository}/delete-tag', [RepositoryController::class, 'deleteTag'])->name('repository.delete-tag');
+            Route::get('repository/{repository}/commit-detail', [RepositoryController::class, 'commitDetail'])->name('repository.commit-detail');
+            Route::get('repository/{repository}/compare', [RepositoryController::class, 'compareBranches'])->name('repository.compare');
+            Route::get('repository/{repository}/merge-requests/create', [RepositoryController::class, 'mergeRequestsCreate'])->name('repository.merge-requests.create');
+            Route::post('repository/{repository}/merge-requests', [RepositoryController::class, 'mergeRequestsStore'])->name('repository.merge-requests.store');
+            Route::get('repository/{repository}/merge-requests/{pullRequest}', [RepositoryController::class, 'mergeRequestsShow'])->name('repository.merge-requests.show');
+            Route::post('repository/{repository}/merge-requests/{pullRequest}/merge', [RepositoryController::class, 'mergeRequestsMerge'])->name('repository.merge-requests.merge');
+            Route::post('repository/{repository}/merge-requests/{pullRequest}/close', [RepositoryController::class, 'mergeRequestsClose'])->name('repository.merge-requests.close');
+        });
     });
 
     Route::get('profile', [ProfileController::class, 'index'])->name('profile.index');
