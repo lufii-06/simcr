@@ -86,8 +86,19 @@
                                         <td class="fw-bold">{{ $item->title }}</td>
                                         <td>{{ $item->assignee?->name ?? 'Unassigned' }}</td>
                                         <td>
-                                            <span class="badge" style="background-color: {{ $item->status?->color ?? '#eee' }}; color: #fff;">
-                                                {{ $item->status?->name ?? '-' }}
+                                            @php
+                                                $statusName = $item->status?->name ?? '';
+                                                $badgeClass = 'badge-info';
+                                                if ($statusName === 'To Do') {
+                                                    $badgeClass = 'badge-primary';
+                                                } elseif ($statusName === 'In Progress') {
+                                                    $badgeClass = 'badge-warning';
+                                                } elseif ($statusName === 'Done') {
+                                                    $badgeClass = 'badge-success';
+                                                }
+                                            @endphp
+                                            <span class="badge {{ $badgeClass }}">
+                                                {{ $statusName }}
                                             </span>
                                         </td>
                                         <td>

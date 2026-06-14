@@ -207,7 +207,19 @@
                             {{ $status->tasks_count }},
                         @endforeach
                     ],
-                    backgroundColor: ['#1d7af3', '#f3545d', '#fdaf4b', '#59d05d', '#177dff'],
+                    backgroundColor: [
+                        @foreach($statusChart as $status)
+                            @if($status->name == 'To Do')
+                                '#1572E8',
+                            @elseif($status->name == 'In Progress')
+                                '#FFAD46',
+                            @elseif($status->name == 'Done')
+                                '#31CE36',
+                            @else
+                                '#177dff',
+                            @endif
+                        @endforeach
+                    ],
                 }],
                 labels: [
                     @foreach($statusChart as $status)

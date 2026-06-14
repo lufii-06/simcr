@@ -78,7 +78,7 @@
                     <div class="collapse {{ Request::is('project*') || Request::is('repository*') ? 'show' : '' }}"
                         id="projectNav">
                         <ul class="nav nav-collapse">
-                            <li class="{{ Request::is('project*') ? 'active' : '' }}">
+                            <li class="{{ Request::is('project*') && !Request::routeIs('project.analytics') && Request::get('view') != 'analytics' ? 'active' : '' }}">
                                 <a href="{{ route('project.index') }}">
                                     <span class="sub-item">List Project</span>
                                 </a>
@@ -88,7 +88,7 @@
                                     <span class="sub-item">Repository</span>
                                 </a>
                             </li>
-                            <li class="{{ Request::routeIs('project.analytics') ? 'active' : '' }}">
+                            <li class="{{ Request::routeIs('project.analytics') || Request::get('view') == 'analytics' ? 'active' : '' }}">
                                 <a href="{{ route('project.index') }}?view=analytics">
                                     <span class="sub-item">Project Analytics</span>
                                 </a>

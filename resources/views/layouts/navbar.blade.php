@@ -63,7 +63,7 @@
                              id="notif-count">{{ auth()->user()->unreadNotifications->count() }}</span>
                      @endif
                  </a>
-                 <ul class="dropdown-menu notif-box animated fadeIn" aria-labelledby="notifDropdown">
+                 <ul class="dropdown-menu notif-box animated fadeIn" aria-labelledby="notifDropdown" style="width: 380px; max-width: calc(100vw - 30px);">
                      <li>
                          <div class="dropdown-title">
                              You have <span
