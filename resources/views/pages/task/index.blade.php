@@ -47,6 +47,17 @@
                                 @endforeach
                             </select>
                         </div>
+                        <div class="col-md-3">
+                            <label for="task-project-filter">Filter by Project:</label>
+                            <select id="task-project-filter" class="form-control">
+                                <option value="">All Projects</option>
+                                @foreach($tasks->pluck('project.name')->unique() as $projectName)
+                                    @if($projectName)
+                                        <option value="{{ $projectName }}">{{ $projectName }}</option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table id="task-datatables" class="display table table-striped table-hover">
@@ -166,6 +177,11 @@
             $('#task-status-filter').on('change', function() {
                 var val = $(this).val();
                 table.column(3).search(val ? '^' + val + '$' : '', true, false).draw();
+            });
+
+            $('#task-project-filter').on('change', function() {
+                var val = $(this).val();
+                table.column(0).search(val ? '^' + val + '$' : '', true, false).draw();
             });
 
             // Toggle Checklist Item

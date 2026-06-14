@@ -63,66 +63,70 @@
                     </li>
                 @endif
 
-                <li class="nav-section">
-                    <span class="sidebar-mini-icon">
-                        <i class="fa fa-ellipsis-h"></i>
-                    </span>
-                    <h4 class="text-section">Transaction</h4>
-                </li>
-                <li class="nav-item {{ Request::is('project*') || Request::is('repository*') ? 'active' : '' }}">
-                    <a data-bs-toggle="collapse" href="#projectNav">
-                        <i class="fas fa-project-diagram"></i>
-                        <p>Projects</p>
-                        <span class="caret"></span>
-                    </a>
-                    <div class="collapse {{ Request::is('project*') || Request::is('repository*') ? 'show' : '' }}"
-                        id="projectNav">
-                        <ul class="nav nav-collapse">
-                            <li class="{{ Request::is('project*') && !Request::routeIs('project.analytics') && Request::get('view') != 'analytics' ? 'active' : '' }}">
-                                <a href="{{ route('project.index') }}">
-                                    <span class="sub-item">List Project</span>
-                                </a>
-                            </li>
-                            <li class="{{ Request::is('repository*') ? 'active' : '' }}">
-                                <a href="{{ route('repository.index') }}">
-                                    <span class="sub-item">Repository</span>
-                                </a>
-                            </li>
-                            <li class="{{ Request::routeIs('project.analytics') || Request::get('view') == 'analytics' ? 'active' : '' }}">
-                                <a href="{{ route('project.index') }}?view=analytics">
-                                    <span class="sub-item">Project Analytics</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+                @if (auth()->user()->role != 'owner')
+                    <li class="nav-section">
+                        <span class="sidebar-mini-icon">
+                            <i class="fa fa-ellipsis-h"></i>
+                        </span>
+                        <h4 class="text-section">Transaction</h4>
+                    </li>
+                    <li class="nav-item {{ Request::is('project*') || Request::is('repository*') ? 'active' : '' }}">
+                        <a data-bs-toggle="collapse" href="#projectNav">
+                            <i class="fas fa-project-diagram"></i>
+                            <p>Projects</p>
+                            <span class="caret"></span>
+                        </a>
+                        <div class="collapse {{ Request::is('project*') || Request::is('repository*') ? 'show' : '' }}"
+                            id="projectNav">
+                            <ul class="nav nav-collapse">
+                                <li class="{{ Request::is('project*') && !Request::routeIs('project.analytics') && Request::get('view') != 'analytics' ? 'active' : '' }}">
+                                    <a href="{{ route('project.index') }}">
+                                        <span class="sub-item">List Project</span>
+                                    </a>
+                                </li>
+                                <li class="{{ Request::is('repository*') ? 'active' : '' }}">
+                                    <a href="{{ route('repository.index') }}">
+                                        <span class="sub-item">Repository</span>
+                                    </a>
+                                </li>
+                                <li class="{{ Request::routeIs('project.analytics') || Request::get('view') == 'analytics' ? 'active' : '' }}">
+                                    <a href="{{ route('project.index') }}?view=analytics">
+                                        <span class="sub-item">Project Analytics</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
 
-                <li class="nav-item {{ Request::is('task*') ? 'active' : '' }}">
-                    <a data-bs-toggle="collapse" href="#taskNav">
-                        <i class="fas fa-tasks"></i>
-                        <p>Tasks</p>
-                        <span class="caret"></span>
-                    </a>
-                    <div class="collapse {{ Request::is('task*') ? 'show' : '' }}" id="taskNav">
-                        <ul class="nav nav-collapse">
-                            <li class="{{ Request::is('task') && Request::get('type') != 'my' ? 'active' : '' }}">
-                                <a href="{{ route('task.index') }}">
-                                    <span class="sub-item">All Task</span>
-                                </a>
-                            </li>
-                            <li class="{{ Request::get('type') == 'my' ? 'active' : '' }}">
-                                <a href="{{ route('task.index', ['type' => 'my']) }}">
-                                    <span class="sub-item">My Task</span>
-                                </a>
-                            </li>
-                            <li class="{{ Request::is('task/log') ? 'active' : '' }}">
-                                <a href="{{ route('task.log') }}">
-                                    <span class="sub-item">Task Log</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
+                    <li class="nav-item {{ Request::is('task*') ? 'active' : '' }}">
+                        <a data-bs-toggle="collapse" href="#taskNav">
+                            <i class="fas fa-tasks"></i>
+                            <p>Tasks</p>
+                            <span class="caret"></span>
+                        </a>
+                        <div class="collapse {{ Request::is('task*') ? 'show' : '' }}" id="taskNav">
+                            <ul class="nav nav-collapse">
+                                <li class="{{ Request::is('task') && Request::get('type') != 'my' ? 'active' : '' }}">
+                                    <a href="{{ route('task.index') }}">
+                                        <span class="sub-item">All Task</span>
+                                    </a>
+                                </li>
+                                @if (auth()->user()->role != 'client')
+                                    <li class="{{ Request::get('type') == 'my' ? 'active' : '' }}">
+                                        <a href="{{ route('task.index', ['type' => 'my']) }}">
+                                            <span class="sub-item">My Task</span>
+                                        </a>
+                                    </li>
+                                    <li class="{{ Request::is('task/log') ? 'active' : '' }}">
+                                        <a href="{{ route('task.log') }}">
+                                            <span class="sub-item">Task Log</span>
+                                        </a>
+                                    </li>
+                                @endif
+                            </ul>
+                        </div>
+                    </li>
+                @endif
 
                 @if (auth()->user()->role == 'pm' || auth()->user()->role == 'owner')
                     <li class="nav-section">

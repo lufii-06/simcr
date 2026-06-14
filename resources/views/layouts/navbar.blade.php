@@ -189,7 +189,7 @@
                                     </a>
                                 @endif
 
-                                @if(auth()->user()->role != 'client')
+                                @if(auth()->user()->role != 'client' && auth()->user()->role != 'owner')
                                     <a class="col-6 col-md-4 p-0" href="{{ route('task.create') }}">
                                         <div class="quick-actions-item">
                                             <div class="avatar-item bg-info rounded-circle">
@@ -200,7 +200,7 @@
                                     </a>
                                 @endif
 
-                                @if(auth()->user()->role == 'pm')
+                                @if(auth()->user()->role == 'pm' || auth()->user()->role == 'owner')
                                     <a class="col-6 col-md-4 p-0" href="{{ route('report.index') }}">
                                         <div class="quick-actions-item">
                                             <div class="avatar-item bg-secondary rounded-circle">
