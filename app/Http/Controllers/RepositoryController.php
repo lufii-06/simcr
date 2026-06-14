@@ -1420,7 +1420,7 @@ class RepositoryController extends Controller
             return back()->withInput()->with('error', 'An open Merge Request already exists for these branches.');
         }
 
-        $repository->pullRequests()->create([
+        $pullRequest = $repository->pullRequests()->create([
             'user_id' => $user->id,
             'title' => $title,
             'description' => $description,
@@ -1428,6 +1428,12 @@ class RepositoryController extends Controller
             'target_branch' => $target,
             'status' => 'open',
         ]);
+
+        // Notify project owner
+        $owner = $repository->project?->owner;
+        if ($owner && $owner->id !== $user->id) {
+            $owner->notify(new \App\Notifications\MergeRequestNotification($repository, $pullRequest, 'created'));
+        }
 
         return redirect()->route('repository.show', [
             'repository' => $repository->name,
@@ -1582,6 +1588,12 @@ class RepositoryController extends Controller
             // Successfully merged! Update status
             $pullRequest->update(['status' => 'merged']);
 
+            // Notify MR creator
+            $mrCreator = $pullRequest->user;
+            if ($mrCreator && $mrCreator->id !== $user->id) {
+                $mrCreator->notify(new \App\Notifications\MergeRequestNotification($repository, $pullRequest, 'merged'));
+            }
+
             return redirect()->route('repository.merge-requests.show', [$repository->name, $pullRequest->id])
                 ->with('success', "Merge Request #{$pullRequest->id} successfully merged!");
 
@@ -1614,6 +1626,12 @@ class RepositoryController extends Controller
         }
 
         $pullRequest->update(['status' => 'closed']);
+
+        // Notify MR creator
+        $mrCreator = $pullRequest->user;
+        if ($mrCreator && $mrCreator->id !== $user->id) {
+            $mrCreator->notify(new \App\Notifications\MergeRequestNotification($repository, $pullRequest, 'closed'));
+        }
 
         return redirect()->route('repository.merge-requests.show', [$repository->name, $pullRequest->id])
             ->with('success', "Merge Request #{$pullRequest->id} has been closed.");

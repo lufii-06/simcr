@@ -137,9 +137,10 @@
 
             // Toggle Checklist Item
             $(document).on('change', '.checklist-item-checkbox', function() {
-                const id = $(this).data('id');
-                const taskId = $(this).data('task-id');
-                const isChecked = $(this).is(':checked');
+                const checkbox = $(this);
+                const id = checkbox.data('id');
+                const taskId = checkbox.data('task-id');
+                const isChecked = checkbox.is(':checked');
                 
                 $.post(`/task/checklist/${id}/toggle`, {
                     _token: '{{ csrf_token() }}'
@@ -153,11 +154,11 @@
                         // Update status on table and modal
                         let badgeClass = 'badge-info';
                         if (data.status_name === 'To Do') {
-                            badgeClass = 'badge-primary';
+                             badgeClass = 'badge-primary';
                         } else if (data.status_name === 'In Progress') {
-                            badgeClass = 'badge-warning';
+                             badgeClass = 'badge-warning';
                         } else if (data.status_name === 'Done') {
-                            badgeClass = 'badge-success';
+                             badgeClass = 'badge-success';
                         }
 
                         $(`.task-status-${taskId}`)
@@ -179,8 +180,15 @@
                         });
                     }
                 }).fail(function(xhr) {
-                    alert('Error toggling checklist item');
-                    $(this).prop('checked', !isChecked); // revert
+                    $.notify({
+                        icon: 'fa fa-times',
+                        title: 'Error',
+                        message: xhr.responseJSON?.error || 'Error toggling checklist item',
+                    }, {
+                        type: 'danger',
+                        time: 1000,
+                    });
+                    checkbox.prop('checked', !isChecked); // revert
                 });
             });
 

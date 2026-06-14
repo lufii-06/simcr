@@ -97,6 +97,14 @@ class ProjectController extends Controller
             $data['user_id'] = auth()->id();
             $project = Project::create($data);
 
+            // Notify client if client is set and has an associated user
+            if ($project->client && $project->client->user) {
+                $clientUser = $project->client->user;
+                if ($clientUser->id !== auth()->id()) {
+                    $clientUser->notify(new \App\Notifications\ProjectAssignedNotification($project, 'Client'));
+                }
+            }
+
             if ($request->has('developers')) {
                 foreach ($request->developers as $developer) {
                     ProjectDeveloper::create([
@@ -157,7 +165,16 @@ class ProjectController extends Controller
         try {
             DB::beginTransaction();
             $oldName = $project->name;
+            $oldClientId = $project->client_id;
             $project->update($request->except('developers'));
+
+            // Notify client if client changed or was updated
+            if ($project->client && $project->client->user) {
+                $clientUser = $project->client->user;
+                if ($oldClientId !== $project->client_id && $clientUser->id !== auth()->id()) {
+                    $clientUser->notify(new \App\Notifications\ProjectAssignedNotification($project, 'Client'));
+                }
+            }
 
             if ($oldName !== $request->name) {
                 $this->renameRepository($project, $request->name);

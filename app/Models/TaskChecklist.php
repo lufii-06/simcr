@@ -49,6 +49,22 @@ class TaskChecklist extends Model
                             'action' => 'status_changed',
                             'details' => "System automatically updated status from '{$oldStatusName}' to '{$statusName}' due to checklist updates.",
                         ]);
+
+                        // Notify creator if updated by someone else
+                        $currentUserId = auth()->id();
+                        if ($task->created_by && $task->created_by !== $currentUserId) {
+                            $creator = \App\Models\User::find($task->created_by);
+                            if ($creator) {
+                                $creator->notify(new \App\Notifications\TaskStatusChangedNotification($task, $oldStatusName, $statusName));
+                            }
+                        }
+                        // Notify assignee if updated by someone else
+                        if ($task->assigned_to && $task->assigned_to !== $currentUserId) {
+                            $assignee = \App\Models\User::find($task->assigned_to);
+                            if ($assignee) {
+                                $assignee->notify(new \App\Notifications\TaskStatusChangedNotification($task, $oldStatusName, $statusName));
+                            }
+                        }
                     }
                 }
             }

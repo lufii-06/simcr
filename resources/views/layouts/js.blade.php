@@ -37,6 +37,22 @@
  <!-- Kaiadmin JS -->
  <script src="{{ asset('assets/js/kaiadmin.min.js') }}"></script>
  <script>
+     @if ($errors->any())
+         @foreach ($errors->all() as $error)
+             $.notify({
+                 icon: 'fa fa-exclamation-triangle',
+                 title: 'Validation Error',
+                 message: "{{ $error }}",
+             }, {
+                 type: 'danger',
+                 placement: {
+                     from: "top",
+                     align: "right"
+                 },
+                 time: 3000,
+             });
+         @endforeach
+     @endif
      @if (Session::has('success'))
          $.notify({
              icon: 'fa fa-check',

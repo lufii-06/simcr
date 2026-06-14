@@ -150,6 +150,11 @@ class TaskController extends Controller
                 'details' => "Task '{$task->title}' created.",
             ]);
 
+            $userToNotify = User::find($task->assigned_to);
+            if ($userToNotify && $userToNotify->id !== auth()->id()) {
+                $userToNotify->notify(new \App\Notifications\TaskAssignedNotification($task));
+            }
+
             DB::commit();
             return redirect()->route('task.index')->with('success', 'Task created successfully.');
         } catch (\Exception $e) {
@@ -208,6 +213,21 @@ class TaskController extends Controller
             'action' => 'status_changed',
             'details' => "Changed status from '{$oldStatus}' to '{$newStatus}'",
         ]);
+
+        // Notify creator if updated by someone else
+        if ($task->created_by && $task->created_by !== auth()->id()) {
+            $creator = User::find($task->created_by);
+            if ($creator) {
+                $creator->notify(new \App\Notifications\TaskStatusChangedNotification($task, $oldStatus, $newStatus));
+            }
+        }
+        // Notify assignee if updated by someone else
+        if ($task->assigned_to && $task->assigned_to !== auth()->id()) {
+            $assignee = User::find($task->assigned_to);
+            if ($assignee) {
+                $assignee->notify(new \App\Notifications\TaskStatusChangedNotification($task, $oldStatus, $newStatus));
+            }
+        }
         
         return response()->json(['success' => true]);
     }

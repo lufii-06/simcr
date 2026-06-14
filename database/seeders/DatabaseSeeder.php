@@ -22,8 +22,12 @@ class DatabaseSeeder extends Seeder
             TaskStatusSeeder::class,
         ]);
 
-        User::factory(5)->create();
+        // Create clients and developers (which automatically creates their associated user accounts)
         Client::factory(3)->create();
         Developer::factory(7)->create();
+
+        // Create some additional users with roles that do not require profile entries
+        User::factory(2)->create(['role' => 'pm']);
+        User::factory(1)->create(['role' => 'owner']);
     }
 }

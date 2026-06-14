@@ -44,7 +44,6 @@ class ProfileController extends Controller
                 'portfolio_url' => 'nullable|url|max:255',
             ];
         }
-
         $request->validate($rules);
 
         $userData = $request->only('name', 'email');
@@ -59,7 +58,6 @@ class ProfileController extends Controller
             $request->avatar->storeAs('avatars', $filename);
             $userData['avatar'] = $filename;
         }
-
         $user->update($userData);
 
         // Update role-specific profile
