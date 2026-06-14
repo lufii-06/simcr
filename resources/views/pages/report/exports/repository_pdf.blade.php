@@ -44,7 +44,7 @@
     </div>
 
     <div class="year-info">
-        @if(isset($project_name) && $project_name) Project : {{ $projectName }} @endif
+        @if(isset($project_name) && $project_name) Project : {{ $project_name }} @endif
         @if(isset($filters['visibility']) && $filters['visibility']) | Visibilitas : {{ strtoupper($filters['visibility']) }} @endif
         @if(isset($filters['status']) && $filters['status']) | Status : {{ strtoupper($filters['status']) }} @endif
     </div>

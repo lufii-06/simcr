@@ -278,4 +278,119 @@ class TaskController extends Controller
         
         return response()->json(['success' => true]);
     }
+
+    public function edit(Task $task)
+    {
+        // Check if there are any completed checklists
+        if ($task->checklists()->where('is_completed', true)->exists()) {
+            return redirect()->route('task.index')->with('error', 'Task cannot be edited because some checklist items are already completed.');
+        }
+
+        $user = auth()->user();
+
+        // Projects user is involved in
+        $projects = Project::where('user_id', $user->id)
+            ->orWhereHas('developers', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->get();
+
+        $statuses = TaskStatus::all();
+
+        return view('pages.task.form', compact('task', 'projects', 'statuses'));
+    }
+
+    public function update(Request $request, Task $task)
+    {
+        // Check if there are any completed checklists
+        if ($task->checklists()->where('is_completed', true)->exists()) {
+            return redirect()->route('task.index')->with('error', 'Task cannot be updated because some checklist items are already completed.');
+        }
+
+        $request->validate([
+            'project_id' => 'required|exists:projects,id',
+            'task_status_id' => 'required|exists:task_statuses,id',
+            'assigned_to' => 'required|exists:users,id',
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'checklists' => 'nullable|array',
+            'checklists.*' => 'required|string|max:255',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $task->update([
+                'project_id' => $request->project_id,
+                'task_status_id' => $request->task_status_id,
+                'assigned_to' => $request->assigned_to,
+                'title' => $request->title,
+                'description' => $request->description,
+            ]);
+
+            // Handle checklist updates:
+            // Delete all unchecked checklists and recreate them
+            $task->checklists()->delete();
+
+            if ($request->has('checklists')) {
+                foreach ($request->checklists as $item) {
+                    TaskChecklist::create([
+                        'task_id' => $task->id,
+                        'item_text' => $item,
+                        'is_completed' => false,
+                    ]);
+                }
+            }
+
+            TaskLog::create([
+                'task_id' => $task->id,
+                'user_id' => auth()->id(),
+                'action' => 'updated',
+                'details' => "Task '{$task->title}' updated.",
+            ]);
+
+            // Notify assignee if changed or if they need to be notified
+            $userToNotify = User::find($task->assigned_to);
+            if ($userToNotify && $userToNotify->id !== auth()->id()) {
+                $userToNotify->notify(new \App\Notifications\TaskAssignedNotification($task));
+            }
+
+            DB::commit();
+            return redirect()->route('task.index')->with('success', 'Task updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Error: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    public function destroy(Task $task)
+    {
+        // Check if there are any completed checklists
+        if ($task->checklists()->where('is_completed', true)->exists()) {
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Task cannot be deleted because some checklist items are already completed.'], 400);
+            }
+            return redirect()->route('task.index')->with('error', 'Task cannot be deleted because some checklist items are already completed.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $task->checklists()->delete();
+            TaskLog::where('task_id', $task->id)->delete();
+            $task->delete();
+
+            DB::commit();
+
+            if (request()->ajax()) {
+                return response()->json(['success' => true, 'message' => 'Task deleted successfully.']);
+            }
+            return redirect()->route('task.index')->with('success', 'Task deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            if (request()->ajax()) {
+                return response()->json(['success' => false, 'message' => 'Error: ' . $e->getMessage()], 500);
+            }
+            return back()->with('error', 'Error: ' . $e->getMessage());
+        }
+    }
 }

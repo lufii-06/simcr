@@ -88,10 +88,19 @@
                             <div class="col-md-12">
                                 <label class="fw-bold mb-2">Checklist Items</label>
                                 <div id="checklist-wrapper">
-                                    <div class="input-group mb-2 checklist-item">
-                                        <input type="text" name="checklists[]" class="form-control" placeholder="Checklist item description...">
-                                        <button class="btn btn-danger remove-checklist" type="button"><i class="fa fa-minus"></i></button>
-                                    </div>
+                                    @if(isset($task) && $task->checklists->count() > 0)
+                                        @foreach($task->checklists as $checklist)
+                                            <div class="input-group mb-2 checklist-item">
+                                                <input type="text" name="checklists[]" value="{{ old('checklists.' . $loop->index, $checklist->item_text) }}" class="form-control" placeholder="Checklist item description...">
+                                                <button class="btn btn-danger remove-checklist" type="button"><i class="fa fa-minus"></i></button>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <div class="input-group mb-2 checklist-item">
+                                            <input type="text" name="checklists[]" class="form-control" placeholder="Checklist item description...">
+                                            <button class="btn btn-danger remove-checklist" type="button"><i class="fa fa-minus"></i></button>
+                                        </div>
+                                    @endif
                                 </div>
                                 <button type="button" class="btn btn-sm btn-info mt-2" id="add-checklist">
                                     <i class="fa fa-plus"></i> Add Checklist Item

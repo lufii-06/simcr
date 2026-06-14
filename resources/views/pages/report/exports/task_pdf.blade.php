@@ -44,7 +44,7 @@
     </div>
 
     <div class="year-info">
-        @if(isset($project_name) && $project_name) Project : {{ $projectName }} @endif
+        @if(isset($project_name) && $project_name) Project : {{ $project_name }} @endif
         @if(isset($assignee_name) && $assignee_name) | Assignee : {{ $assignee_name }} @endif
         @if(isset($status_name) && $status_name) | Status : {{ $status_name }} @endif
     </div>

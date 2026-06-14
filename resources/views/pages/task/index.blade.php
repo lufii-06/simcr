@@ -98,6 +98,22 @@
                                                     title="View Detail & Checklists">
                                                     <i class="fa fa-eye"></i>
                                                 </button>
+                                                @php
+                                                    $hasCompletedChecklist = $task->checklists->where('is_completed', true)->isNotEmpty();
+                                                @endphp
+                                                @if(!$hasCompletedChecklist)
+                                                    <a href="{{ route('task.edit', $task) }}" class="btn btn-link btn-primary btn-lg" data-bs-toggle="tooltip"
+                                                        title="Edit Task">
+                                                        <i class="fa fa-edit"></i>
+                                                    </a>
+                                                    <form action="{{ route('task.destroy', $task) }}" method="POST" class="d-inline form-delete">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-link btn-danger btn-lg" data-bs-toggle="tooltip" title="Remove Task">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
@@ -271,6 +287,38 @@
                     }
                     checklistHtml += '</ul>';
                     $('#checklist-container').html(checklistHtml);
+                });
+            });
+
+            // Delete Confirmation
+            $(document).on('submit', '.form-delete', function(e) {
+                e.preventDefault();
+                var form = this;
+                swal({
+                    title: "Are you sure?",
+                    text: "Once deleted, you will not be able to recover this task!",
+                    icon: "warning",
+                    buttons: {
+                        cancel: {
+                            text: "Cancel",
+                            value: null,
+                            visible: true,
+                            className: "btn btn-secondary",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Yes, delete it!",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-danger",
+                            closeModal: true
+                        }
+                    },
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) {
+                        form.submit();
+                    }
                 });
             });
         });
