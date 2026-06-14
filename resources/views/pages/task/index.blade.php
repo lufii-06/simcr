@@ -46,21 +46,21 @@
                             <tbody>
                                 @forelse ($tasks as $task)
                                     <tr>
-                                        <td>{{ $task->project->name }}</td>
+                                        <td>{{ $task->project?->name ?? '-' }}</td>
                                         <td>{{ $task->title }}</td>
-                                        <td>{{ $task->assignee->name }}</td>
+                                        <td>{{ $task->assignee?->name ?? 'Unassigned' }}</td>
                                         <td>
                                             @php
                                                 $badgeClass = 'badge-info';
-                                                if ($task->status->name === 'To Do') {
+                                                if (($task->status?->name ?? '') === 'To Do') {
                                                     $badgeClass = 'badge-primary';
-                                                } elseif ($task->status->name === 'In Progress') {
+                                                } elseif (($task->status?->name ?? '') === 'In Progress') {
                                                     $badgeClass = 'badge-warning';
-                                                } elseif ($task->status->name === 'Done') {
+                                                } elseif (($task->status?->name ?? '') === 'Done') {
                                                     $badgeClass = 'badge-success';
                                                 }
                                             @endphp
-                                            <span class="badge {{ $badgeClass }} task-status-{{ $task->id }}">{{ $task->status->name }}</span>
+                                            <span class="badge {{ $badgeClass }} task-status-{{ $task->id }}">{{ $task->status?->name ?? 'N/A' }}</span>
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center">

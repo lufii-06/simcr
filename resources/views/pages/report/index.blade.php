@@ -49,9 +49,9 @@
                                     <tr>
                                         <td>{{ ($projects->currentPage() - 1) * $projects->perPage() + $loop->iteration }}</td>
                                         <td>{{ $project->name }}</td>
-                                        <td>{{ $project->client->user->name ?? 'N/A' }}</td>
+                                        <td>{{ $project->client?->user?->name ?? 'N/A' }}</td>
                                         <td>
-                                            <span class="badge badge-info">{{ $project->status->name ?? 'N/A' }}</span>
+                                            <span class="badge badge-info">{{ $project->status?->name ?? 'N/A' }}</span>
                                         </td>
                                         <td>{{ $project->start_date }}</td>
                                         <td>{{ $project->end_date ?? '-' }}</td>

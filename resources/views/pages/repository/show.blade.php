@@ -128,7 +128,7 @@
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="showTab('pills-guide')">
                                     <i class="fas fa-book me-2"></i> Clone Guide
                                 </a>
-                                @if (auth()->id() == ($repository->project->user_id ?? 0) || auth()->user()->role == 'admin')
+                                @if (auth()->id() == ($repository->project?->user_id ?? 0) || auth()->user()->role == 'admin')
                                     <div class="dropdown-divider"></div>
                                     <a class="dropdown-item" href="javascript:void(0)"
                                         onclick="showTab('pills-settings')">

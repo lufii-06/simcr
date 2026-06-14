@@ -48,7 +48,7 @@
                      class="rounded-circle border border-3 mb-3"
                      style="width:100px;height:100px;object-fit:cover;">
                 <h5 class="fw-bold mb-1 text-dark">{{ $user->name }}</h5>
-                <span class="badge badge-primary mb-2">{{ $developer->specialization->name ?? 'General' }}</span>
+                <span class="badge badge-primary mb-2">{{ $developer->specialization?->name ?? 'General' }}</span>
                 <p class="text-muted small mb-0">
                     <i class="fas fa-calendar-alt me-1"></i>
                     Joined {{ $developer->created_at->format('d M Y') }}

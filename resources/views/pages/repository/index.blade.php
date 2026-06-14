@@ -39,7 +39,7 @@
                                 @forelse ($repositories as $repo)
                                     <tr>
                                         <td><strong>{{ $repo->name ?? 'Unknown' }}</strong></td>
-                                        <td>{{ $repo->project->name ?? 'No Project' }}</td>
+                                        <td>{{ $repo->project?->name ?? 'No Project' }}</td>
                                         <td><span class="badge badge-secondary">{{ $repo->default_branch ?? 'main' }}</span></td>
                                         <td>
                                             @if (($repo->status ?? '') === 'active')

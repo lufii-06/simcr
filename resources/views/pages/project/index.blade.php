@@ -45,9 +45,9 @@
                                 @forelse ($projects as $project)
                                     <tr>
                                         <td>{{ Str::limit($project->name ?? 'Untitled Project', 30) }}</td>
-                                        <td>{{ $project->client->user->name ?? 'N/A' }}</td>
+                                        <td>{{ $project->client?->user?->name ?? 'N/A' }}</td>
                                         <td>{{ $project->owner->name ?? 'N/A' }}</td>
-                                        <td><span class="badge badge-info">{{ $project->status->name ?? 'N/A' }}</span></td>
+                                        <td><span class="badge badge-info">{{ $project->status?->name ?? 'N/A' }}</span></td>
                                         <td>
                                             @if (($project->start_date ?? false) && ($project->end_date ?? false))
                                                 {{ \Carbon\Carbon::parse($project->start_date)->format('d M y') }} -

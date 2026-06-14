@@ -150,8 +150,8 @@
                                 @forelse($recentTasks as $task)
                                     <tr>
                                         <td><strong>{{ Str::limit($task->title, 25) }}</strong></td>
-                                        <td>{{ $task->project->name }}</td>
-                                        <td>{{ $task->assignee->name }}</td>
+                                        <td>{{ $task->project?->name ?? '-' }}</td>
+                                        <td>{{ $task->assignee?->name ?? 'Unassigned' }}</td>
                                         <td>
                                             @php
                                                 $statusName = $task->status->name ?? '';

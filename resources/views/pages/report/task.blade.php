@@ -82,12 +82,12 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td><code>{{ $item->code }}</code></td>
-                                        <td>{{ $item->project->name }}</td>
+                                        <td>{{ $item->project?->name ?? '-' }}</td>
                                         <td class="fw-bold">{{ $item->title }}</td>
-                                        <td>{{ $item->assignee->name ?? 'Unassigned' }}</td>
+                                        <td>{{ $item->assignee?->name ?? 'Unassigned' }}</td>
                                         <td>
-                                            <span class="badge" style="background-color: {{ $item->status->color ?? '#eee' }}; color: #fff;">
-                                                {{ $item->status->name }}
+                                            <span class="badge" style="background-color: {{ $item->status?->color ?? '#eee' }}; color: #fff;">
+                                                {{ $item->status?->name ?? '-' }}
                                             </span>
                                         </td>
                                         <td>

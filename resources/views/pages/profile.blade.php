@@ -64,7 +64,7 @@
                                             <label for="company_name" class="required">Company Name</label>
                                             <input type="text" class="form-control" id="company_name" name="company_name"
                                                 placeholder="Enter company name"
-                                                value="{{ old('company_name', $user->client->company_name ?? '') }}"
+                                                value="{{ old('company_name', $user->client?->company_name ?? '') }}"
                                                 required>
                                             @error('company_name')
                                                 <small class="text-danger">{{ $message }}</small>
@@ -76,7 +76,7 @@
                                                     <label for="phone" class="required">Company Phone</label>
                                                     <input type="text" class="form-control" id="phone" name="phone"
                                                         placeholder="e.g. 0812345678"
-                                                        value="{{ old('phone', $user->client->phone ?? '') }}" required>
+                                                        value="{{ old('phone', $user->client?->phone ?? '') }}" required>
                                                     @error('phone')
                                                         <small class="text-danger">{{ $message }}</small>
                                                     @enderror
@@ -86,7 +86,7 @@
                                         <div class="form-group @error('address') has-error @enderror">
                                             <label for="address" class="required">Company Address</label>
                                             <textarea class="form-control" id="address" name="address" rows="3" placeholder="Enter full company address"
-                                                required>{{ old('address', $user->client->address ?? '') }}</textarea>
+                                                required>{{ old('address', $user->client?->address ?? '') }}</textarea>
                                             @error('address')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror
@@ -95,7 +95,7 @@
                                         <div class="form-group">
                                             <label>Role</label>
                                             <input type="text" class="form-control"
-                                                value="{{ strtoupper($user->developer->specialization->name) }}" disabled>
+                                                value="{{ strtoupper($user->developer?->specialization?->name ?? 'General') }}" disabled>
                                             <small class="text-muted">Specialization cannot be changed by user.</small>
                                         </div>
                                         <div class="row">
@@ -104,7 +104,7 @@
                                                     <label for="phone" class="required">Phone Number</label>
                                                     <input type="text" class="form-control" id="phone"
                                                         name="phone" placeholder="e.g. 0812345678"
-                                                        value="{{ old('phone', $user->developer->phone ?? '') }}"
+                                                        value="{{ old('phone', $user->developer?->phone ?? '') }}"
                                                         required>
                                                     @error('phone')
                                                         <small class="text-danger">{{ $message }}</small>
@@ -116,7 +116,7 @@
                                                     <label for="portfolio_url">Portfolio URL</label>
                                                     <input type="url" class="form-control" id="portfolio_url"
                                                         name="portfolio_url" placeholder="https://github.com/yourprofile"
-                                                        value="{{ old('portfolio_url', $user->developer->portfolio_url ?? '') }}">
+                                                        value="{{ old('portfolio_url', $user->developer?->portfolio_url ?? '') }}">
                                                     @error('portfolio_url')
                                                         <small class="text-danger">{{ $message }}</small>
                                                     @enderror
@@ -126,7 +126,7 @@
                                         <div class="form-group @error('address') has-error @enderror">
                                             <label for="address" class="required">Address</label>
                                             <textarea class="form-control" id="address" name="address" rows="3" placeholder="Enter your full address"
-                                                required>{{ old('address', $user->developer->address ?? '') }}</textarea>
+                                                required>{{ old('address', $user->developer?->address ?? '') }}</textarea>
                                             @error('address')
                                                 <small class="text-danger">{{ $message }}</small>
                                             @enderror

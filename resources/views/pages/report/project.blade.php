@@ -84,10 +84,10 @@
                                         <td>{{ $loop->iteration }}</td>
                                         <td><code>{{ $item->code }}</code></td>
                                         <td class="fw-bold">{{ $item->name }}</td>
-                                        <td>{{ $item->client->company_name }}</td>
+                                        <td>{{ $item->client?->company_name ?? '-' }}</td>
                                         <td>
-                                            <span class="badge" style="background-color: {{ $item->status->color ?? '#eee' }}; color: #fff;">
-                                                {{ $item->status->name }}
+                                            <span class="badge" style="background-color: {{ $item->status?->color ?? '#eee' }}; color: #fff;">
+                                                {{ $item->status?->name ?? '-' }}
                                             </span>
                                         </td>
                                         <td>{{ $item->start_date ? date('d/m/Y', strtotime($item->start_date)) : '-' }}</td>

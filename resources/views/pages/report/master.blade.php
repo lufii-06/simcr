@@ -103,17 +103,17 @@
                                             <td>{{ $loop->iteration }}</td>
                                             <td class="fw-bold">{{ $item->company_name }}</td>
                                             <td>{{ $item->main_contact }}</td>
-                                            <td>{{ $item->user->email }}</td>
+                                            <td>{{ $item->user?->email ?? '-' }}</td>
                                             <td>{{ $item->phone }}</td>
                                             <td>{{ $item->address }}</td>
                                         </tr>
                                     @else
                                         <tr>
                                             <td>{{ $loop->iteration }}</td>
-                                            <td class="fw-bold">{{ $item->user->name }}</td>
-                                            <td><span class="badge badge-info">{{ $item->specialization->name ?? 'N/A' }}</span>
+                                            <td class="fw-bold">{{ $item->user?->name ?? '-' }}</td>
+                                            <td><span class="badge badge-info">{{ $item->specialization?->name ?? 'N/A' }}</span>
                                             </td>
-                                            <td>{{ $item->user->email }}</td>
+                                            <td>{{ $item->user?->email ?? '-' }}</td>
                                             <td>{{ $item->phone }}</td>
                                             <td>{{ $item->address }}</td>
                                         </tr>

@@ -112,7 +112,7 @@
                     <td align="center">{{ $loop->iteration }}</td>
                     <td>{{ $client->company_name }}</td>
                     <td>{{ $client->main_contact }}</td>
-                    <td>{{ $client->user->email }}</td>
+                    <td>{{ $client->user?->email ?? '-' }}</td>
                     <td>{{ $client->phone }}</td>
                     <td>{{ $client->address }}</td>
                 </tr>

@@ -69,8 +69,8 @@
                                 @forelse ($logs as $log)
                                     <tr>
                                         <td>{{ $log->created_at->format('d/m/Y H:i') }}</td>
-                                        <td>{{ $log->task->project->name ?? 'N/A' }}</td>
-                                        <td><strong>{{ $log->user->name }}</strong></td>
+                                        <td>{{ $log->task?->project?->name ?? 'N/A' }}</td>
+                                        <td><strong>{{ $log->user?->name ?? 'N/A' }}</strong></td>
                                         <td>
                                             @if($log->action == 'created')
                                                 <span class="badge badge-primary">Created</span>

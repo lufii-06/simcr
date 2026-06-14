@@ -66,10 +66,10 @@
                 <tr>
                     <td align="center">{{ $loop->iteration }}</td>
                     <td align="center">{{ $row->code }}</td>
-                    <td>{{ $row->project->name }}</td>
+                    <td>{{ $row->project?->name ?? '-' }}</td>
                     <td>{{ $row->title }}</td>
-                    <td>{{ $row->assignee->name ?? '-' }}</td>
-                    <td align="center">{{ strtoupper($row->status->name) }}</td>
+                    <td>{{ $row->assignee?->name ?? '-' }}</td>
+                    <td align="center">{{ strtoupper($row->status?->name ?? '-') }}</td>
                     <td align="center">{{ round($row->progress) }}%</td>
                 </tr>
             @empty

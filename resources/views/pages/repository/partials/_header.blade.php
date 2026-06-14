@@ -12,7 +12,7 @@
                             </div>
                             <div>
                                 <h4 class="fw-bold mb-1">{{ $repository->name ?? 'Unknown Repository' }}</h4>
-                                <div class="text-muted small">Project: {{ $repository->project->name ?? 'No Project' }}</div>
+                                <div class="text-muted small">Project: {{ $repository->project?->name ?? 'No Project' }}</div>
                                 <div class="mt-2">
                                     @if ($repository->is_public ?? false)
                                         <span class="badge badge-primary"><i class="fas fa-globe"></i> Public</span>

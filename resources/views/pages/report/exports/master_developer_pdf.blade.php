@@ -113,9 +113,9 @@
             @forelse($data as $dev)
                 <tr>
                     <td align="center">{{ $loop->iteration }}</td>
-                    <td>{{ $dev->user->name }}</td>
-                    <td>{{ $dev->specialization->name ?? 'N/A' }}</td>
-                    <td>{{ $dev->user->email }}</td>
+                    <td>{{ $dev->user?->name ?? '-' }}</td>
+                    <td>{{ $dev->specialization?->name ?? 'N/A' }}</td>
+                    <td>{{ $dev->user?->email ?? '-' }}</td>
                     <td>{{ $dev->phone }}</td>
                     <td>{{ $dev->address }}</td>
                 </tr>

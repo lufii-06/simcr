@@ -67,8 +67,8 @@
                     <td align="center">{{ $loop->iteration }}</td>
                     <td align="center">{{ $row->code }}</td>
                     <td>{{ $row->name }}</td>
-                    <td>{{ $row->client->company_name }}</td>
-                    <td align="center">{{ strtoupper($row->status->name) }}</td>
+                    <td>{{ $row->client?->company_name ?? '-' }}</td>
+                    <td align="center">{{ strtoupper($row->status?->name ?? '-') }}</td>
                     <td align="center">{{ $row->start_date ? date('d/m/Y', strtotime($row->start_date)) : '-' }}</td>
                     <td align="center">{{ $row->end_date ? date('d/m/Y', strtotime($row->end_date)) : '-' }}</td>
                 </tr>

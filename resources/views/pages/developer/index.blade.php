@@ -109,11 +109,11 @@
                                 <table class="table table-bordered">
                                     <tr><th width="30%">Account Name</th><td>${user ? user.name : 'N/A'}</td></tr>
                                     <tr><th>Email</th><td>${user ? user.email : 'N/A'}</td></tr>
-                                    <tr><th>Specialization</th><td><span class="badge badge-primary">${dev.specialization.name}</span></td></tr>
-                                    <tr><th>Phone</th><td>${dev.phone}</td></tr>
-                                    <tr><th>Address</th><td>${dev.address}</td></tr>
+                                    <tr><th>Specialization</th><td><span class="badge badge-primary">${data.specialization ? data.specialization.name : 'General'}</span></td></tr>
+                                    <tr><th>Phone</th><td>${dev.phone || '-'}</td></tr>
+                                    <tr><th>Address</th><td>${dev.address || '-'}</td></tr>
                                     <tr><th>Portfolio</th><td>${dev.portfolio_url ? `<a href="${dev.portfolio_url}" target="_blank">${dev.portfolio_url}</a>` : '-'}</td></tr>
-                                    <tr><th>Joined At</th><td>${new Date(dev.created_at).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'})}</td></tr>
+                                    <tr><th>Joined At</th><td>${dev.created_at ? new Date(dev.created_at).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'}) : '-'}</td></tr>
                                 </table>
                             </div>
                         </div>

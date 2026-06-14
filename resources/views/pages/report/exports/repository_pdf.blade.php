@@ -65,7 +65,7 @@
                 <tr>
                     <td align="center">{{ $loop->iteration }}</td>
                     <td class="fw-bold">{{ $row->name }}</td>
-                    <td>{{ $row->project->name }}</td>
+                    <td>{{ $row->project?->name ?? '-' }}</td>
                     <td align="center">{{ $row->is_public ? 'PUBLIC' : 'PRIVATE' }}</td>
                     <td>{{ config('app.url') }}/git/{{ $row->name }}.git</td>
                     <td align="center">{{ $row->is_active ? 'ACTIVE' : 'ARCHIVED' }}</td>
