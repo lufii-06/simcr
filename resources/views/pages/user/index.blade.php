@@ -150,7 +150,22 @@
                     title: "Are you sure?",
                     text: "Once deleted, you will not be able to recover this user!",
                     icon: "warning",
-                    buttons: true,
+                    buttons: {
+                        cancel: {
+                            text: "Cancel",
+                            value: null,
+                            visible: true,
+                            className: "btn btn-secondary",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Yes, delete it!",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-danger",
+                            closeModal: true
+                        }
+                    },
                     dangerMode: true,
                 }).then((willDelete) => {
                     if (willDelete) {
@@ -168,10 +183,19 @@
                     text: "This will generate a new random password for this user.",
                     icon: "info",
                     buttons: {
-                        cancel: "Cancel",
+                        cancel: {
+                            text: "Cancel",
+                            value: null,
+                            visible: true,
+                            className: "btn btn-secondary",
+                            closeModal: true,
+                        },
                         confirm: {
                             text: "Yes, Reset it!",
-                            className: "btn btn-warning"
+                            value: true,
+                            visible: true,
+                            className: "btn btn-warning",
+                            closeModal: true
                         }
                     },
                 }).then((willReset) => {
@@ -201,7 +225,15 @@
                         },
                     },
                     icon: "success",
-                    button: "Done",
+                    buttons: {
+                        confirm: {
+                            text: "Done",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-success",
+                            closeModal: true
+                        }
+                    }
                 });
             @endif
         });

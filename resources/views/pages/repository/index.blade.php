@@ -31,7 +31,6 @@
                                     <th>Project</th>
                                     <th>Default Branch</th>
                                     <th>Status</th>
-                                    <th>Clone URL</th>
                                     <th style="width: 10%">Action</th>
                                 </tr>
                             </thead>
@@ -46,14 +45,6 @@
                                                 <span class="badge badge-success">Active</span>
                                             @else
                                                 <span class="badge badge-danger">{{ ucfirst($repo->status ?? 'inactive') }}</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @if ($repo->url ?? false)
-                                                <a href="{{ $repo->url }}" target="_blank" class="btn btn-sm btn-link"><i
-                                                         class="fas fa-external-link-alt"></i> Open URL</a>
-                                            @else
-                                                -
                                             @endif
                                         </td>
                                         <td>

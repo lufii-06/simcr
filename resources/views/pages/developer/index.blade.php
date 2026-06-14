@@ -129,7 +129,22 @@
                     title: "Are you sure?",
                     text: "Deleting the developer will also delete the associated user account. Once deleted, you will not be able to recover this developer!",
                     icon: "warning",
-                    buttons: true,
+                    buttons: {
+                        cancel: {
+                            text: "Cancel",
+                            value: null,
+                            visible: true,
+                            className: "btn btn-secondary",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Yes, delete it!",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-danger",
+                            closeModal: true
+                        }
+                    },
                     dangerMode: true,
                 }).then((willDelete) => {
                     if (willDelete) {

@@ -204,7 +204,22 @@
                     title: "Are you sure?",
                     text: "Once deleted, you will not be able to recover this project!",
                     icon: "warning",
-                    buttons: true,
+                    buttons: {
+                        cancel: {
+                            text: "Cancel",
+                            value: null,
+                            visible: true,
+                            className: "btn btn-secondary",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Yes, delete it!",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-danger",
+                            closeModal: true
+                        }
+                    },
                     dangerMode: true,
                 }).then((willDelete) => {
                     if (willDelete) {

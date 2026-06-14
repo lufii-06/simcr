@@ -101,20 +101,18 @@
     <table class="table">
         <thead>
             <tr>
-                <th width="30">NO</th>
                 <th>Nama Developer</th>
-                <th width="120">Peran (Role)</th>
-                <th width="70" style="text-align: center;">Total Task</th>
-                <th width="70" style="text-align: center;">Task Selesai</th>
-                <th width="70" style="text-align: center;">Task Pending</th>
-                <th width="70" style="text-align: center;">Git Commits</th>
-                <th width="80" style="text-align: center;">Completion</th>
+                <th width="70">Peran (Role)</th>
+                <th width="50" style="text-align: center;">Total Task</th>
+                <th width="50" style="text-align: center;">Task Selesai</th>
+                <th width="50" style="text-align: center;">Task Pending</th>
+                <th width="50" style="text-align: center;">Git Commits</th>
+                <th width="60" style="text-align: center;">Completion</th>
             </tr>
         </thead>
         <tbody>
             @forelse ($developerStats as $ds)
                 <tr>
-                    <td align="center">{{ $loop->iteration }}</td>
                     <td>{{ $ds['name'] }}</td>
                     <td>{{ $ds['role'] }}</td>
                     <td align="center">{{ $ds['total_tasks'] }}</td>
@@ -136,7 +134,6 @@
     <table class="table">
         <thead>
             <tr>
-                <th width="30">NO</th>
                 <th width="80">Kode</th>
                 <th>Judul Tugas (Task)</th>
                 <th width="150">Ditugaskan Kepada</th>
@@ -151,7 +148,6 @@
                     $checkComplete = $task->checklists->where('is_completed', true)->count();
                 @endphp
                 <tr>
-                    <td align="center">{{ $loop->iteration }}</td>
                     <td align="center"><code>{{ $task->code }}</code></td>
                     <td>{{ $task->title }}</td>
                     <td>{{ $task->assignee?->name ?? '-' }}</td>
