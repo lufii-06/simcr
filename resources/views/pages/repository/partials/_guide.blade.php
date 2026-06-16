@@ -104,5 +104,112 @@
                 </div>
             </div>
         </div>
+
+        {{-- ========= COMMIT MESSAGE STANDARD ========= --}}
+        <h5 class="fw-bold mb-3 mt-4">Commit Message Standard</h5>
+        <div class="alert alert-warning py-2 small mb-3">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            <b>Wajib!</b> Semua commit yang di-push ke repository ini harus mengikuti format berikut. Push akan <b>ditolak</b> jika format tidak sesuai.
+        </div>
+
+        <div class="accordion accordion-secondary">
+            <div class="card">
+                <div class="card-header" id="headingCommit1" data-bs-toggle="collapse" data-bs-target="#collapseCommit1"
+                    aria-expanded="true" aria-controls="collapseCommit1">
+                    <div class="span-icon">
+                        <div class="fas fa-tag"></div>
+                    </div>
+                    <div class="span-title">
+                        Format Dasar (tanpa checklist)
+                    </div>
+                    <div class="span-mode"></div>
+                </div>
+                <div id="collapseCommit1" class="collapse show" aria-labelledby="headingCommit1">
+                    <div class="card-body">
+                        <p class="small text-muted">Gunakan format ini untuk commit umum yang hanya berhubungan dengan sebuah task, tanpa menyelesaikan checklist item tertentu.</p>
+                        <div class="position-relative">
+                            <pre class="bg-dark text-light p-3 rounded" id="guide-commit-short"><code>[feat|fix] : pesan commit Anda [TASK-XXX]</code></pre>
+                            <button class="btn btn-xs btn-secondary position-absolute" style="top: 10px; right: 10px;"
+                                onclick="copyToClipboard('guide-commit-short')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <h6 class="fw-bold small mt-3">Contoh:</h6>
+                        <pre class="bg-dark text-light p-2 rounded small"><code>git commit -m "[feat] : setup struktur folder project [TASK-001]"
+git commit -m "[fix] : perbaiki bug pada halaman login [TASK-003]"</code></pre>
+                        <h6 class="fw-bold small mt-3">Aturan:</h6>
+                        <ul class="small ps-3">
+                            <li>Type hanya boleh: <code>feat</code> atau <code>fix</code></li>
+                            <li><code>[TASK-XXX]</code> harus berupa kode task yang ada dan ter-assign ke Anda</li>
+                            <li>Pesan commit tidak boleh kosong</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header collapsed" id="headingCommit2" data-bs-toggle="collapse"
+                    data-bs-target="#collapseCommit2" aria-expanded="false" aria-controls="collapseCommit2">
+                    <div class="span-icon">
+                        <div class="fas fa-check-square"></div>
+                    </div>
+                    <div class="span-title">
+                        Format dengan Checklist Item
+                    </div>
+                    <div class="span-mode"></div>
+                </div>
+                <div id="collapseCommit2" class="collapse" aria-labelledby="headingCommit2">
+                    <div class="card-body">
+                        <p class="small text-muted">Gunakan format ini jika commit Anda menyelesaikan atau mengerjakan sebuah checklist item. Status checklist akan otomatis diperbarui di sistem.</p>
+                        <div class="position-relative">
+                            <pre class="bg-dark text-light p-3 rounded" id="guide-commit-full"><code>[feat|fix] : pesan commit Anda [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]</code></pre>
+                            <button class="btn btn-xs btn-secondary position-absolute" style="top: 10px; right: 10px;"
+                                onclick="copyToClipboard('guide-commit-full')">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <h6 class="fw-bold small mt-3">Contoh:</h6>
+                        <pre class="bg-dark text-light p-2 rounded small"><code>git commit -m "[feat] : implementasi form login [TASK-001] [CK-003] [FINISH]"
+git commit -m "[fix] : perbaiki validasi email (WIP) [TASK-001] [CK-003] [UNFINISH]"</code></pre>
+                        <h6 class="fw-bold small mt-3">Aturan:</h6>
+                        <ul class="small ps-3">
+                            <li><code>[CK-XXX]</code> harus berupa kode checklist item yang benar-benar ada di task tersebut</li>
+                            <li><code>[FINISH]</code> → checklist item akan ditandai <b>selesai</b> secara otomatis</li>
+                            <li><code>[UNFINISH]</code> → checklist item akan ditandai <b>belum selesai</b></li>
+                            <li>Jika <code>[CK-XXX]</code> disertakan, maka <code>[FINISH|UNFINISH]</code> <b>wajib ada</b></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header collapsed" id="headingCommit3" data-bs-toggle="collapse"
+                    data-bs-target="#collapseCommit3" aria-expanded="false" aria-controls="collapseCommit3">
+                    <div class="span-icon">
+                        <div class="fas fa-times-circle"></div>
+                    </div>
+                    <div class="span-title">
+                        Alasan Push Bisa Ditolak
+                    </div>
+                    <div class="span-mode"></div>
+                </div>
+                <div id="collapseCommit3" class="collapse" aria-labelledby="headingCommit3">
+                    <div class="card-body">
+                        <p class="small text-muted">Push Anda akan ditolak jika salah satu commit memiliki kondisi berikut:</p>
+                        <ul class="small ps-3">
+                            <li>Format commit tidak sesuai standar (tidak ada type, tidak ada TASK-ID, dll)</li>
+                            <li>Kode <code>[TASK-XXX]</code> tidak ditemukan di sistem</li>
+                            <li>Task tidak termasuk dalam project repository ini</li>
+                            <li>Task tidak ter-assign ke Anda (khusus role Developer)</li>
+                            <li>Kode <code>[CK-XXX]</code> tidak ditemukan atau tidak termasuk dalam task yang disebutkan</li>
+                            <li><code>[CK-XXX]</code> disertakan tapi <code>[FINISH|UNFINISH]</code> tidak ada</li>
+                        </ul>
+                        <div class="bg-light p-2 mt-2 rounded border">
+                            <p class="small mb-0 text-muted"><b>Tip:</b> Cek kode task di halaman <b>My Tasks</b> dan kode checklist di detail task sebelum melakukan commit.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>

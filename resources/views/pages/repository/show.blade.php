@@ -42,13 +42,17 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted small">Download the entire repository source code for the currently selected branch (<b>{{ $selectedBranch }}</b>).</p>
-                    <a href="{{ route('repository.download-archive', [$repository, 'branch' => $selectedBranch, 'format' => 'zip']) }}" class="btn btn-success btn-block text-white">
-                        <i class="fas fa-file-archive me-2"></i> Download as .ZIP
-                    </a>
-                    <a href="{{ route('repository.download-archive', [$repository, 'branch' => $selectedBranch, 'format' => 'tar.gz']) }}" class="btn btn-outline-success btn-block text-success">
-                        <i class="fas fa-file-alt me-2"></i> Download as .TAR.GZ
-                    </a>
+                    <p class="text-muted small mb-3">Download source code untuk branch yang sedang dipilih: <b>{{ $selectedBranch }}</b>.</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ route('repository.download-archive', [$repository, 'branch' => $selectedBranch, 'format' => 'zip']) }}"
+                            class="btn btn-success btn-round">
+                            <i class="fas fa-file-archive me-2"></i> Download as .ZIP
+                        </a>
+                        <a href="{{ route('repository.download-archive', [$repository, 'branch' => $selectedBranch, 'format' => 'tar.gz']) }}"
+                            class="btn btn-outline-success btn-round">
+                            <i class="fas fa-file-alt me-2"></i> Download as .TAR.GZ
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -126,7 +130,7 @@
                                     <i class="fas fa-users me-2"></i> Members
                                 </a>
                                 <a class="dropdown-item" href="javascript:void(0)" onclick="showTab('pills-guide')">
-                                    <i class="fas fa-book me-2"></i> Clone Guide
+                                    <i class="fas fa-clipboard-list me-2"></i> Git Guidelines
                                 </a>
                                 @if (auth()->id() == ($repository->project?->user_id ?? 0) || auth()->user()->role == 'admin')
                                     <div class="dropdown-divider"></div>

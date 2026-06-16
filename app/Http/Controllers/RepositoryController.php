@@ -1240,6 +1240,23 @@ class RepositoryController extends Controller
             return response('Repository physical folder not found', 404);
         }
 
+        // Validate commit messages for receive-pack (git push) before processing
+        if ($service === 'git-receive-pack') {
+            $input = $request->getContent();
+            $username = $request->getUser();
+            $pushingUser = User::where('email', $username)->first();
+
+            $violation = $this->validatePushCommitMessages($input, $repoPath, $repository, $pushingUser);
+            if ($violation) {
+                // Return a pkt-line encoded error response that git client will display
+                $errorMsg = "ERR " . $violation;
+                $pktLen = strlen($errorMsg) + 4;
+                $pktLine = sprintf('%04x', $pktLen) . $errorMsg . "0000";
+                return response($pktLine, 200)
+                    ->header('Content-Type', 'application/x-git-receive-pack-result');
+            }
+        }
+
         // Run git service in stateless-rpc mode, piping request raw body to git's stdin
         $gitService = str_replace('git-', '', $service);
         $gitCmd = "git {$gitService} --stateless-rpc ".escapeshellarg($repoPath);
@@ -1254,8 +1271,8 @@ class RepositoryController extends Controller
         $process = proc_open($gitCmd, $descriptorSpec, $pipes);
 
         if (is_resource($process)) {
-            // Write request raw content to stdin
-            $input = $request->getContent();
+            // Write request raw content to stdin (already read above for validation if receive-pack)
+            $input = $input ?? $request->getContent();
             fwrite($pipes[0], $input);
             fclose($pipes[0]);
 
@@ -1285,6 +1302,113 @@ class RepositoryController extends Controller
         }
 
         return response('Internal Server Error', 500);
+    }
+
+    /**
+     * Validate all commit messages in a push against the SIMCR commit standard.
+     * Format (with checklist): [feat|fix] : message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]
+     * Format (without checklist): [feat|fix] : message [TASK-XXX]
+     * Returns an error string if invalid, or null if all commits are valid.
+     */
+    private function validatePushCommitMessages(string $input, string $repoPath, Repository $repository, ?User $pushingUser): ?string
+    {
+        $updates = [];
+        if (preg_match_all('/([0-9a-f]{40})\s+([0-9a-f]{40})\s+(refs\/[^\s\0\n]+)/', $input, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $updates[] = [
+                    'old' => $match[1],
+                    'new' => $match[2],
+                    'ref' => $match[3],
+                ];
+            }
+        }
+
+        // Patterns
+        // Full pattern with checklist: [feat|fix] : message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]
+        // Short pattern without checklist: [feat|fix] : message [TASK-XXX]
+        $allowedTypes  = ['feat', 'fix'];
+        $fullPattern   = '/^\[(feat|fix)\]\s*:\s*.+\[(TASK-[A-Z0-9-]+)\]\s*\[(CK-[A-Z0-9-]+)\]\s*\[(FINISH|UNFINISH)\]$/i';
+        $shortPattern  = '/^\[(feat|fix)\]\s*:\s*.+\[(TASK-[A-Z0-9-]+)\]$/i';
+
+        foreach ($updates as $update) {
+            if ($update['new'] === '0000000000000000000000000000000000000000') {
+                continue; // Skip deletions
+            }
+
+            if ($update['old'] === '0000000000000000000000000000000000000000') {
+                $gitLogCmd = 'log ' . escapeshellarg($update['new']) . ' --not --all --exclude=' . escapeshellarg($update['ref']) . ' --format=' . escapeshellarg('%H|%ae|%s[COMMIT_DELIMITER]');
+            } else {
+                $gitLogCmd = 'log ' . escapeshellarg($update['old'] . '..' . $update['new']) . ' --format=' . escapeshellarg('%H|%ae|%s[COMMIT_DELIMITER]');
+            }
+
+            $res = $this->runGitCommand($repoPath, $gitLogCmd);
+            if (! $res['success'] || empty($res['output'])) {
+                continue;
+            }
+
+            $rawCommits = implode("\n", $res['output']);
+            $commits    = explode('[COMMIT_DELIMITER]', $rawCommits);
+
+            foreach ($commits as $commitRaw) {
+                $commitRaw = trim($commitRaw);
+                if (empty($commitRaw)) {
+                    continue;
+                }
+
+                $parts = explode('|', $commitRaw, 3);
+                if (count($parts) < 3) {
+                    continue;
+                }
+
+                $hash    = trim($parts[0]);
+                $message = trim($parts[2]);
+
+                // Check format: must match either full or short pattern
+                $isFullMatch  = preg_match($fullPattern, $message, $fullMatches);
+                $isShortMatch = preg_match($shortPattern, $message, $shortMatches);
+
+                if (! $isFullMatch && ! $isShortMatch) {
+                    return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Invalid commit message format.\n"
+                        . "Message: \"" . $message . "\"\n"
+                        . "Required: [feat|fix] : your message [TASK-XXX]\n"
+                        . "With checklist: [feat|fix] : your message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]";
+                }
+
+                // Extract TASK code and validate in DB
+                $taskCode = strtoupper($isFullMatch ? $fullMatches[2] : $shortMatches[2]);
+                $task     = \App\Models\Task::where('code', $taskCode)->first();
+
+                if (! $task) {
+                    return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Task code [{$taskCode}] does not exist in the system.";
+                }
+
+                if ($task->project_id !== $repository->project_id) {
+                    return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Task [{$taskCode}] does not belong to this repository's project.";
+                }
+
+                if ($pushingUser && $task->assigned_to !== null && $task->assigned_to !== $pushingUser->id) {
+                    if ($pushingUser->role === 'developer') {
+                        return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Task [{$taskCode}] is not assigned to you.";
+                    }
+                }
+
+                // If full match (has checklist), validate CK code
+                if ($isFullMatch) {
+                    $ckCode  = strtoupper($fullMatches[3]);
+                    $checklist = \App\Models\TaskChecklist::where('code', $ckCode)->first();
+
+                    if (! $checklist) {
+                        return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Checklist code [{$ckCode}] does not exist in the system.";
+                    }
+
+                    if ($checklist->task_id !== $task->id) {
+                        return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Checklist [{$ckCode}] does not belong to task [{$taskCode}].";
+                    }
+                }
+            }
+        }
+
+        return null; // All commits valid
     }
 
     private function processPushedCommits($input, string $repoPath, Repository $repository)
@@ -1340,44 +1464,32 @@ class RepositoryController extends Controller
 
     private function processCommitMessage(string $message, string $authorEmail, Repository $repository)
     {
-        if (preg_match_all('/\[(CHK-\d+)\]\s*\[(FINISH|UNFINISH)\]/i', $message, $matches, PREG_SET_ORDER)) {
-            foreach ($matches as $match) {
-                $chkCode = strtoupper($match[1]);
-                $status = strtoupper($match[2]);
-                $isCompleted = ($status === 'FINISH');
+        // Full format: [feat|fix] : message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]
+        $fullPattern = '/^\[(feat|fix)\]\s*:\s*(.+)\[(TASK-[A-Z0-9-]+)\]\s*\[(CK-[A-Z0-9-]+)\]\s*\[(FINISH|UNFINISH)\]$/i';
 
-                // Normalize code (e.g. CHK-1 -> CHK-0001)
-                if (preg_match('/CHK-(\d+)/i', $chkCode, $numMatch)) {
-                    $normalizedCode = 'CHK-' . str_pad($numMatch[1], 4, '0', STR_PAD_LEFT);
-                } else {
-                    $normalizedCode = $chkCode;
-                }
+        $user = User::where('email', $authorEmail)->first();
+        if (! $user) {
+            $user = auth()->user() ?? User::where('role', 'pm')->first();
+        }
 
-                $checklist = \App\Models\TaskChecklist::where('code', $normalizedCode)->first();
-                if ($checklist) {
-                    // Security check: must belong to the repository's project
-                    if ($checklist->task->project_id !== $repository->project_id) {
-                        continue;
-                    }
+        if (preg_match($fullPattern, $message, $m)) {
+            $taskCode    = strtoupper(trim($m[3]));
+            $ckCode      = strtoupper(trim($m[4]));
+            $status      = strtoupper(trim($m[5]));
+            $isCompleted = ($status === 'FINISH');
 
-                    if ($checklist->is_completed !== $isCompleted) {
-                        $checklist->update([
-                            'is_completed' => $isCompleted
-                        ]);
+            $checklist = \App\Models\TaskChecklist::where('code', $ckCode)->first();
+            if ($checklist && $checklist->task->project_id === $repository->project_id) {
+                if ($checklist->is_completed !== $isCompleted) {
+                    $checklist->update(['is_completed' => $isCompleted]);
 
-                        // Determine user to log
-                        $user = User::where('email', $authorEmail)->first();
-                        if (!$user) {
-                            $user = auth()->user() ?? User::where('role', 'pm')->first();
-                        }
-
-                        \App\Models\TaskLog::create([
-                            'task_id' => $checklist->task_id,
-                            'user_id' => $user ? $user->id : null,
-                            'action' => 'checklist_toggled',
-                            'details' => "[Auto-Commit] " . ($isCompleted ? 'Checked' : 'Unchecked') . " item: {$checklist->item_text} via commit message",
-                        ]);
-                    }
+                    \App\Models\TaskLog::create([
+                        'task_id' => $checklist->task_id,
+                        'user_id' => $user?->id,
+                        'action'  => 'checklist_toggled',
+                        'details' => '[Auto-Commit] ' . ($isCompleted ? 'Checked' : 'Unchecked')
+                            . " item: {$checklist->item_text} via commit: \"{$message}\"",
+                    ]);
                 }
             }
         }
