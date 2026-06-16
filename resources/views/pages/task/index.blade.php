@@ -22,6 +22,12 @@
                                     Back to Projects
                                 </a>
                             @endif
+                            @if ($type === 'my' && in_array(auth()->user()->role, ['pm', 'developer']))
+                                <a href="{{ route('task.export.my-tasks-pdf') }}" id="btn-export-pdf" class="btn btn-danger btn-round me-2" target="_blank">
+                                    <i class="fa fa-file-pdf me-1"></i>
+                                    Export PDF
+                                </a>
+                            @endif
                             @if ($type !== 'my')
                                 @php
                                     $createUrl = isset($project) ? route('task.create', ['project_id' => $project->getRouteKey()]) : route('task.create');
@@ -174,14 +180,24 @@
         $(document).ready(function() {
             var table = $('#task-datatables').DataTable({});
 
+            function updateExportUrl() {
+                var baseUrl = "{{ route('task.export.my-tasks-pdf') }}";
+                var status = $('#task-status-filter').val() || '';
+                var project = $('#task-project-filter').val() || '';
+                var newUrl = baseUrl + '?status=' + encodeURIComponent(status) + '&project=' + encodeURIComponent(project);
+                $('#btn-export-pdf').attr('href', newUrl);
+            }
+
             $('#task-status-filter').on('change', function() {
                 var val = $(this).val();
                 table.column(3).search(val ? '^' + val + '$' : '', true, false).draw();
+                updateExportUrl();
             });
 
             $('#task-project-filter').on('change', function() {
                 var val = $(this).val();
                 table.column(0).search(val ? '^' + val + '$' : '', true, false).draw();
+                updateExportUrl();
             });
 
             // Toggle Checklist Item

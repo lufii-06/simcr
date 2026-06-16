@@ -78,12 +78,11 @@
                                      @forelse(auth()->user()->notifications()->latest()->take(7)->get() as $notification)
                                          <a href="{{ $notification->data['url'] ?? '#' }}"
                                              class="notif-item {{ $notification->unread() ? 'unread-bg' : '' }}">
-                                             <div
-                                                 class="notif-icon {{ $notification->data['color'] ?? 'notif-primary' }}">
+                                             <div class="notif-icon {{ $notification->data['color'] ?? 'notif-primary' }}" style="flex-shrink: 0;">
                                                  <i class="{{ $notification->data['icon'] ?? 'fa fa-bell' }}"></i>
                                              </div>
-                                             <div class="notif-content">
-                                                 <span class="block">
+                                             <div class="notif-content" style="min-width: 0; flex: 1;">
+                                                 <span class="block" style="white-space: normal; word-break: break-word;">
                                                      {{ $notification->data['message'] ?? 'New Notification' }}
                                                      @if ($notification->unread())
                                                          <span class="badge badge-xs badge-primary ms-1">New</span>

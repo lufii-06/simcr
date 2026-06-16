@@ -10,6 +10,7 @@ use App\Models\TaskStatus;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class TaskController extends Controller
 {
@@ -360,6 +361,50 @@ class TaskController extends Controller
             DB::rollBack();
             return back()->with('error', 'Error: ' . $e->getMessage())->withInput();
         }
+    }
+
+    public function exportMyTasksPdf(Request $request)
+    {
+        $user = auth()->user();
+        $statusFilter = $request->get('status');
+        $projectFilter = $request->get('project');
+
+        $query = Task::with(['project.status', 'status', 'creator', 'assignee', 'checklists'])
+            ->where('assigned_to', $user->id);
+
+        if ($statusFilter) {
+            $query->whereHas('status', function ($q) use ($statusFilter) {
+                $q->where('name', $statusFilter);
+            });
+        }
+
+        if ($projectFilter) {
+            $query->whereHas('project', function ($q) use ($projectFilter) {
+                $q->where('name', $projectFilter);
+            });
+        }
+
+        $tasks = $query->latest()->get();
+
+        $totalTasks   = $tasks->count();
+        $doneTasks    = $tasks->filter(fn($t) => strtolower($t->status->name ?? '') === 'done')->count();
+        $pendingTasks = $totalTasks - $doneTasks;
+        $globalRate   = $totalTasks > 0 ? round(($doneTasks / $totalTasks) * 100) : 0;
+        $generatedAt  = now()->format('d M Y H:i');
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pages.task.pdf_report', compact(
+            'user',
+            'tasks',
+            'totalTasks',
+            'doneTasks',
+            'pendingTasks',
+            'globalRate',
+            'generatedAt'
+        ))->setPaper('a4', 'portrait');
+
+        $filename = 'My_Tasks_' . Str::slug($user->name) . '_' . now()->format('Ymd') . '.pdf';
+
+        return $pdf->download($filename);
     }
 
     public function destroy(Task $task)

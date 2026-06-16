@@ -91,6 +91,7 @@ Route::middleware('auth')->group(function () {
         Route::middleware('role:pm,developer')->group(function () {
             Route::get('task/log', [TaskController::class, 'log'])->name('task.log');
             Route::get('task/create', [TaskController::class, 'create'])->name('task.create');
+            Route::get('task/export/my-tasks-pdf', [TaskController::class, 'exportMyTasksPdf'])->name('task.export.my-tasks-pdf');
         });
 
         Route::get('task/{task}', [TaskController::class, 'show'])->name('task.show');
