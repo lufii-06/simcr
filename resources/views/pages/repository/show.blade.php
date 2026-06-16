@@ -1030,5 +1030,23 @@
                 });
             });
         });
+
+        function copyToClipboard(elementId) {
+            var el = document.getElementById(elementId);
+            if (!el) return;
+            var text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.innerText;
+            navigator.clipboard.writeText(text).then(function () {
+                $.notify({ icon: 'fas fa-check', message: 'Copied to clipboard!' }, { type: 'success', time: 1500 });
+            }).catch(function () {
+                // Fallback for older browsers
+                var tmp = document.createElement('textarea');
+                tmp.value = text;
+                document.body.appendChild(tmp);
+                tmp.select();
+                document.execCommand('copy');
+                document.body.removeChild(tmp);
+                $.notify({ icon: 'fas fa-check', message: 'Copied to clipboard!' }, { type: 'success', time: 1500 });
+            });
+        }
     </script>
 @endpush
