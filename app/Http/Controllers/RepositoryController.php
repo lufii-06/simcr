@@ -209,13 +209,13 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return back()->with('error', 'Repository physical folder not found.');
         }
 
         $branches = $this->showGetBranches($repoPath, $repository);
 
-        if (!in_array($fromBranch, $branches)) {
+        if (! in_array($fromBranch, $branches)) {
             return back()->with('error', 'Source branch does not exist.');
         }
 
@@ -229,7 +229,7 @@ class RepositoryController extends Controller
         if ($res['success']) {
             return redirect()->route('repository.show', [
                 'repository' => $repository->name,
-                'branch' => $newBranch
+                'branch' => $newBranch,
             ])->with('success', "Branch '{$newBranch}' created successfully from '{$fromBranch}'.");
         }
 
@@ -262,7 +262,7 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return back()->with('error', 'Repository physical folder not found.');
         }
 
@@ -272,10 +272,10 @@ class RepositoryController extends Controller
         }
 
         $branches = $this->showGetBranches($repoPath, $repository);
-        if (!in_array($target, $branches)) {
+        if (! in_array($target, $branches)) {
             $revParseCmd = 'rev-parse --verify '.escapeshellarg($target);
             $revRes = $this->runGitCommand($repoPath, $revParseCmd);
-            if (!$revRes['success']) {
+            if (! $revRes['success']) {
                 return back()->with('error', 'Target branch or commit does not exist.');
             }
         }
@@ -291,7 +291,7 @@ class RepositoryController extends Controller
         if ($res['success']) {
             return redirect()->route('repository.show', [
                 'repository' => $repository->name,
-                'tab' => 'tags'
+                'tab' => 'tags',
             ])->with('success', "Tag '{$tagName}' created successfully pointing to '{$target}'.");
         }
 
@@ -324,12 +324,12 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return back()->with('error', 'Repository physical folder not found.');
         }
 
         $branches = $this->showGetBranches($repoPath, $repository);
-        if (!in_array($sourceBranch, $branches) || !in_array($targetBranch, $branches)) {
+        if (! in_array($sourceBranch, $branches) || ! in_array($targetBranch, $branches)) {
             return back()->with('error', 'One or both of the specified branches do not exist.');
         }
 
@@ -362,13 +362,14 @@ class RepositoryController extends Controller
                 if ($result !== 0) {
                     // Conflict occurred! Abort merge and direct user to local
                     exec('git -C '.escapeshellarg($tempPath).' merge --abort');
+
                     return back()->with('error', "Conflict detected! Gagal menggabungkan cabang '{$sourceBranch}' ke '{$targetBranch}' secara otomatis. Silakan lakukan merge secara manual di repositori lokal Anda, selesaikan konflik, lalu push kembali.");
                 }
 
                 // Push back to bare repository
                 exec('git -C '.escapeshellarg($tempPath).' push origin '.escapeshellarg($targetBranch), $output, $result);
                 if ($result !== 0) {
-                    throw new \Exception("Failed to push merged changes back to the repository.");
+                    throw new \Exception('Failed to push merged changes back to the repository.');
                 }
 
                 $message = "Branch '{$sourceBranch}' successfully merged into '{$targetBranch}'.";
@@ -387,13 +388,14 @@ class RepositoryController extends Controller
                 if ($result !== 0) {
                     // Conflict occurred! Abort rebase and direct user to local
                     exec('git -C '.escapeshellarg($tempPath).' rebase --abort');
+
                     return back()->with('error', "Conflict detected! Gagal melakukan rebase cabang '{$sourceBranch}' di atas '{$targetBranch}' secara otomatis. Silakan lakukan rebase secara manual di repositori lokal Anda, selesaikan konflik, lalu push kembali.");
                 }
 
                 // Push back to bare repository (must force push because rebase rewrites commits history)
                 exec('git -C '.escapeshellarg($tempPath).' push -f origin '.escapeshellarg($sourceBranch), $output, $result);
                 if ($result !== 0) {
-                    throw new \Exception("Failed to push rebased changes back to the repository.");
+                    throw new \Exception('Failed to push rebased changes back to the repository.');
                 }
 
                 $message = "Branch '{$sourceBranch}' successfully rebased onto '{$targetBranch}'.";
@@ -402,12 +404,13 @@ class RepositoryController extends Controller
 
             return redirect()->route('repository.show', [
                 'repository' => $repository->name,
-                'branch' => $redirectBranch
+                'branch' => $redirectBranch,
             ])->with('success', $message);
 
         } catch (\Exception $e) {
-            \Log::error("Git operation failed: " . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan saat memproses aksi Git: ' . $e->getMessage());
+            \Log::error('Git operation failed: '.$e->getMessage());
+
+            return back()->with('error', 'Terjadi kesalahan saat memproses aksi Git: '.$e->getMessage());
         } finally {
             if (\File::exists($tempPath)) {
                 \File::deleteDirectory($tempPath);
@@ -437,12 +440,12 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return back()->with('error', 'Repository physical folder not found.');
         }
 
         $branches = $this->showGetBranches($repoPath, $repository);
-        if (!in_array($branchName, $branches)) {
+        if (! in_array($branchName, $branches)) {
             return back()->with('error', 'Branch does not exist.');
         }
 
@@ -474,12 +477,12 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return back()->with('error', 'Repository physical folder not found.');
         }
 
         $tags = $this->showGetTags($repoPath);
-        if (!in_array($tagName, $tags)) {
+        if (! in_array($tagName, $tags)) {
             return back()->with('error', 'Tag does not exist.');
         }
 
@@ -507,7 +510,7 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return response()->json(['error' => 'Repository physical folder not found.'], 404);
         }
 
@@ -515,7 +518,7 @@ class RepositoryController extends Controller
         $cmd = 'show '.escapeshellarg($hash);
         $res = $this->runGitCommand($repoPath, $cmd);
 
-        if (!$res['success']) {
+        if (! $res['success']) {
             return response()->json(['error' => 'Failed to retrieve commit details.'], 500);
         }
 
@@ -532,12 +535,14 @@ class RepositoryController extends Controller
             if (strpos($line, 'Author: ') === 0) {
                 $author = substr($line, 8);
                 $inMessage = false;
+
                 continue;
             }
             // Find Date
             if (strpos($line, 'Date: ') === 0) {
                 $date = substr($line, 6);
                 $inMessage = true;
+
                 continue;
             }
             // Parse Commit Message
@@ -546,7 +551,8 @@ class RepositoryController extends Controller
                     $inMessage = false;
                 } else {
                     // Lines in git commit message output are usually indented by 4 spaces
-                    $message .= (strpos($line, '    ') === 0 ? substr($line, 4) : $line) . "\n";
+                    $message .= (strpos($line, '    ') === 0 ? substr($line, 4) : $line)."\n";
+
                     continue;
                 }
             }
@@ -562,8 +568,9 @@ class RepositoryController extends Controller
                 }
                 $currentFile = [
                     'filename' => $filename,
-                    'lines' => []
+                    'lines' => [],
                 ];
+
                 continue;
             }
 
@@ -583,7 +590,7 @@ class RepositoryController extends Controller
 
                 $currentFile['lines'][] = [
                     'type' => $type,
-                    'content' => $line
+                    'content' => $line,
                 ];
             }
         }
@@ -596,7 +603,7 @@ class RepositoryController extends Controller
             'author' => trim($author),
             'date' => trim($date),
             'message' => trim($message),
-            'diffs' => $diffs
+            'diffs' => $diffs,
         ]);
     }
 
@@ -616,19 +623,19 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return response()->json(['error' => 'Repository physical folder not found.'], 404);
         }
 
         // Get ahead count (commits in source but not in target)
         $cmdAhead = 'rev-list --count '.escapeshellarg($target).'..'.escapeshellarg($source);
         $resAhead = $this->runGitCommand($repoPath, $cmdAhead);
-        $aheadCount = $resAhead['success'] ? (int)trim(implode('', $resAhead['output'])) : 0;
+        $aheadCount = $resAhead['success'] ? (int) trim(implode('', $resAhead['output'])) : 0;
 
         // Get behind count (commits in target but not in source)
         $cmdBehind = 'rev-list --count '.escapeshellarg($source).'..'.escapeshellarg($target);
         $resBehind = $this->runGitCommand($repoPath, $cmdBehind);
-        $behindCount = $resBehind['success'] ? (int)trim(implode('', $resBehind['output'])) : 0;
+        $behindCount = $resBehind['success'] ? (int) trim(implode('', $resBehind['output'])) : 0;
 
         // Get commits in source but not in target
         $cmdCommits = 'log '.escapeshellarg($target).'..'.escapeshellarg($source).' --pretty=format:"%h|%s|%an|%ad" --date=short';
@@ -651,7 +658,7 @@ class RepositoryController extends Controller
         // Get code diff
         $cmdDiff = 'diff '.escapeshellarg($target).'..'.escapeshellarg($source);
         $resDiff = $this->runGitCommand($repoPath, $cmdDiff);
-        
+
         $diffs = [];
         if ($resDiff['success']) {
             $lines = $resDiff['output'];
@@ -667,8 +674,9 @@ class RepositoryController extends Controller
                     }
                     $currentFile = [
                         'filename' => $filename,
-                        'lines' => []
+                        'lines' => [],
                     ];
+
                     continue;
                 }
 
@@ -688,7 +696,7 @@ class RepositoryController extends Controller
 
                     $currentFile['lines'][] = [
                         'type' => $type,
-                        'content' => $line
+                        'content' => $line,
                     ];
                 }
             }
@@ -703,7 +711,7 @@ class RepositoryController extends Controller
             'ahead_count' => $aheadCount,
             'behind_count' => $behindCount,
             'commits' => $commits,
-            'diffs' => $diffs
+            'diffs' => $diffs,
         ]);
     }
 
@@ -1240,23 +1248,6 @@ class RepositoryController extends Controller
             return response('Repository physical folder not found', 404);
         }
 
-        // Validate commit messages for receive-pack (git push) before processing
-        if ($service === 'git-receive-pack') {
-            $input = $request->getContent();
-            $username = $request->getUser();
-            $pushingUser = User::where('email', $username)->first();
-
-            $violation = $this->validatePushCommitMessages($input, $repoPath, $repository, $pushingUser);
-            if ($violation) {
-                // Return a pkt-line encoded error response that git client will display
-                $errorMsg = "ERR " . $violation;
-                $pktLen = strlen($errorMsg) + 4;
-                $pktLine = sprintf('%04x', $pktLen) . $errorMsg . "0000";
-                return response($pktLine, 200)
-                    ->header('Content-Type', 'application/x-git-receive-pack-result');
-            }
-        }
-
         // Run git service in stateless-rpc mode, piping request raw body to git's stdin
         $gitService = str_replace('git-', '', $service);
         $gitCmd = "git {$gitService} --stateless-rpc ".escapeshellarg($repoPath);
@@ -1268,29 +1259,66 @@ class RepositoryController extends Controller
             2 => ['pipe', 'w'], // stderr
         ];
 
+        $input = $request->getContent();
         $process = proc_open($gitCmd, $descriptorSpec, $pipes);
 
         if (is_resource($process)) {
-            // Write request raw content to stdin (already read above for validation if receive-pack)
-            $input = $input ?? $request->getContent();
             fwrite($pipes[0], $input);
             fclose($pipes[0]);
 
-            // Read output from stdout
             $output = stream_get_contents($pipes[1]);
             fclose($pipes[1]);
 
-            // Read error from stderr
             $errorOutput = stream_get_contents($pipes[2]);
             fclose($pipes[2]);
 
             proc_close($process);
 
             if ($service === 'git-receive-pack') {
+                // Parse the ref updates that were in the push
+                $updates = [];
+                if (preg_match_all('/([0-9a-f]{40})\s+([0-9a-f]{40})\s+(refs\/[^\s\0\n]+)/', $input, $refMatches, PREG_SET_ORDER)) {
+                    foreach ($refMatches as $m) {
+                        $updates[] = ['old' => $m[1], 'new' => $m[2], 'ref' => $m[3]];
+                    }
+                }
+
+                // Resolve pushing user from Basic Auth
+                $username = $request->getUser();
+                $pushingUser = $username ? User::where('email', $username)->first() : null;
+
+                // Validate commit messages NOW that objects are written to the repo
+                $violation = $this->validatePushCommitMessages($updates, $repoPath, $repository, $pushingUser);
+
+                if ($violation) {
+                    // Rollback: revert all updated refs back to their old values
+                    foreach ($updates as $upd) {
+                        if ($upd['new'] === '0000000000000000000000000000000000000000') {
+                            continue; // was a deletion, skip
+                        }
+                        if ($upd['old'] === '0000000000000000000000000000000000000000') {
+                            // New branch was created — delete it
+                            $this->runGitCommand($repoPath, 'update-ref -d '.escapeshellarg($upd['ref']));
+                        } else {
+                            // Existing branch was updated — revert to old hash
+                            $this->runGitCommand($repoPath, 'update-ref '.escapeshellarg($upd['ref']).' '.escapeshellarg($upd['old']));
+                        }
+                    }
+
+                    // Build a pkt-line error response so git client prints the error
+                    $errorMsg = 'ERR '.$violation;
+                    $pktLen = strlen($errorMsg) + 4;
+                    $pktLine = sprintf('%04x', $pktLen).$errorMsg.'0000';
+
+                    return response($pktLine, 200)
+                        ->header('Content-Type', 'application/x-git-receive-pack-result');
+                }
+
+                // Valid — run side effects (auto-toggle checklists)
                 try {
                     $this->processPushedCommits($input, $repoPath, $repository);
                 } catch (\Exception $e) {
-                    \Log::error("Failed to process pushed commits: " . $e->getMessage());
+                    \Log::error('Failed to process pushed commits: '.$e->getMessage());
                 }
             }
 
@@ -1306,29 +1334,15 @@ class RepositoryController extends Controller
 
     /**
      * Validate all commit messages in a push against the SIMCR commit standard.
+     * Called AFTER git has written objects to the repo so git log can read them.
      * Format (with checklist): [feat|fix] : message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]
      * Format (without checklist): [feat|fix] : message [TASK-XXX]
      * Returns an error string if invalid, or null if all commits are valid.
      */
-    private function validatePushCommitMessages(string $input, string $repoPath, Repository $repository, ?User $pushingUser): ?string
+    private function validatePushCommitMessages(array $updates, string $repoPath, Repository $repository, ?User $pushingUser): ?string
     {
-        $updates = [];
-        if (preg_match_all('/([0-9a-f]{40})\s+([0-9a-f]{40})\s+(refs\/[^\s\0\n]+)/', $input, $matches, PREG_SET_ORDER)) {
-            foreach ($matches as $match) {
-                $updates[] = [
-                    'old' => $match[1],
-                    'new' => $match[2],
-                    'ref' => $match[3],
-                ];
-            }
-        }
-
-        // Patterns
-        // Full pattern with checklist: [feat|fix] : message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]
-        // Short pattern without checklist: [feat|fix] : message [TASK-XXX]
-        $allowedTypes  = ['feat', 'fix'];
-        $fullPattern   = '/^\[(feat|fix)\]\s*:\s*.+\[(TASK-[A-Z0-9-]+)\]\s*\[(CK-[A-Z0-9-]+)\]\s*\[(FINISH|UNFINISH)\]$/i';
-        $shortPattern  = '/^\[(feat|fix)\]\s*:\s*.+\[(TASK-[A-Z0-9-]+)\]$/i';
+        $fullPattern = '/^\[(feat|fix)\]\s*:\s*.+\[(TASK-[A-Z0-9-]+)\]\s*\[(CK-[A-Z0-9-]+)\]\s*\[(FINISH|UNFINISH)\]$/i';
+        $shortPattern = '/^\[(feat|fix)\]\s*:\s*.+\[(TASK-[A-Z0-9-]+)\]$/i';
 
         foreach ($updates as $update) {
             if ($update['new'] === '0000000000000000000000000000000000000000') {
@@ -1336,20 +1350,25 @@ class RepositoryController extends Controller
             }
 
             if ($update['old'] === '0000000000000000000000000000000000000000') {
-                $gitLogCmd = 'log ' . escapeshellarg($update['new']) . ' --not --all --exclude=' . escapeshellarg($update['ref']) . ' --format=' . escapeshellarg('%H|%ae|%s[COMMIT_DELIMITER]');
+                // First push to a new branch: list all commits reachable from new but not from any other refs
+                $gitLogCmd = 'log '.escapeshellarg($update['new']).' --not --branches --tags --format='.escapeshellarg('%H|%ae|%s[COMMIT_DELIMITER]');
             } else {
-                $gitLogCmd = 'log ' . escapeshellarg($update['old'] . '..' . $update['new']) . ' --format=' . escapeshellarg('%H|%ae|%s[COMMIT_DELIMITER]');
+                $gitLogCmd = 'log '.escapeshellarg($update['old'].'..'.$update['new']).' --format='.escapeshellarg('%H|%ae|%s[COMMIT_DELIMITER]');
             }
 
             $res = $this->runGitCommand($repoPath, $gitLogCmd);
+
             if (! $res['success'] || empty($res['output'])) {
+                \Log::warning('[GitValidate] git log returned empty or failed — validation skipped for this ref', ['ref' => $update['ref']]);
+
                 continue;
             }
 
             $rawCommits = implode("\n", $res['output']);
-            $commits    = explode('[COMMIT_DELIMITER]', $rawCommits);
+            $commits = explode('[COMMIT_DELIMITER]', $rawCommits);
 
             foreach ($commits as $commitRaw) {
+               
                 $commitRaw = trim($commitRaw);
                 if (empty($commitRaw)) {
                     continue;
@@ -1360,49 +1379,50 @@ class RepositoryController extends Controller
                     continue;
                 }
 
-                $hash    = trim($parts[0]);
+                $hash = trim($parts[0]);
                 $message = trim($parts[2]);
 
-                // Check format: must match either full or short pattern
-                $isFullMatch  = preg_match($fullPattern, $message, $fullMatches);
+                $isFullMatch = preg_match($fullPattern, $message, $fullMatches);
                 $isShortMatch = preg_match($shortPattern, $message, $shortMatches);
-
+                 \Log::debug('[GitValidate] git log result', [
+                    'message' => $message,
+                ]);
                 if (! $isFullMatch && ! $isShortMatch) {
-                    return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Invalid commit message format.\n"
-                        . "Message: \"" . $message . "\"\n"
-                        . "Required: [feat|fix] : your message [TASK-XXX]\n"
-                        . "With checklist: [feat|fix] : your message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]";
+                    return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Invalid commit message format.\n"
+                        .'Message: "'.$message."\"\n"
+                        ."Required format: [feat|fix] : your message [TASK-XXX]\n"
+                        .'With checklist : [feat|fix] : your message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]';
                 }
 
-                // Extract TASK code and validate in DB
+                // Validate TASK code in DB
                 $taskCode = strtoupper($isFullMatch ? $fullMatches[2] : $shortMatches[2]);
-                $task     = \App\Models\Task::where('code', $taskCode)->first();
+                $task = \App\Models\Task::where('code', $taskCode)->first();
 
                 if (! $task) {
-                    return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Task code [{$taskCode}] does not exist in the system.";
+                    return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Task [{$taskCode}] does not exist in the system.";
                 }
 
                 if ($task->project_id !== $repository->project_id) {
-                    return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Task [{$taskCode}] does not belong to this repository's project.";
+                    return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Task [{$taskCode}] does not belong to this repository's project.";
                 }
 
                 if ($pushingUser && $task->assigned_to !== null && $task->assigned_to !== $pushingUser->id) {
                     if ($pushingUser->role === 'developer') {
-                        return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Task [{$taskCode}] is not assigned to you.";
+                        return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Task [{$taskCode}] is not assigned to you.";
                     }
                 }
 
-                // If full match (has checklist), validate CK code
+                // Validate CK code if present
                 if ($isFullMatch) {
-                    $ckCode  = strtoupper($fullMatches[3]);
+                    $ckCode = strtoupper($fullMatches[3]);
                     $checklist = \App\Models\TaskChecklist::where('code', $ckCode)->first();
 
                     if (! $checklist) {
-                        return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Checklist code [{$ckCode}] does not exist in the system.";
+                        return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Checklist [{$ckCode}] does not exist in the system.";
                     }
 
                     if ($checklist->task_id !== $task->id) {
-                        return "[SIMCR] Commit " . substr($hash, 0, 7) . " rejected: Checklist [{$ckCode}] does not belong to task [{$taskCode}].";
+                        return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Checklist [{$ckCode}] does not belong to task [{$taskCode}].";
                     }
                 }
             }
@@ -1419,7 +1439,7 @@ class RepositoryController extends Controller
                 $updates[] = [
                     'old' => $match[1],
                     'new' => $match[2],
-                    'ref' => $match[3]
+                    'ref' => $match[3],
                 ];
             }
         }
@@ -1431,16 +1451,16 @@ class RepositoryController extends Controller
 
             if ($update['old'] === '0000000000000000000000000000000000000000') {
                 // New branch: get all commits on the new ref that aren't on any other refs
-                $gitLogCmd = "log " . escapeshellarg($update['new']) . " --not --all --exclude=" . escapeshellarg($update['ref']) . " --format=" . escapeshellarg("%H|%ae|%B[COMMIT_DELIMITER]");
+                $gitLogCmd = 'log '.escapeshellarg($update['new']).' --not --all --exclude='.escapeshellarg($update['ref']).' --format='.escapeshellarg('%H|%ae|%B[COMMIT_DELIMITER]');
             } else {
                 // Existing branch: get commits between old and new
-                $gitLogCmd = "log " . escapeshellarg($update['old'] . '..' . $update['new']) . " --format=" . escapeshellarg("%H|%ae|%B[COMMIT_DELIMITER]");
+                $gitLogCmd = 'log '.escapeshellarg($update['old'].'..'.$update['new']).' --format='.escapeshellarg('%H|%ae|%B[COMMIT_DELIMITER]');
             }
 
             $res = $this->runGitCommand($repoPath, $gitLogCmd);
-            if ($res['success'] && !empty($res['output'])) {
+            if ($res['success'] && ! empty($res['output'])) {
                 $rawCommits = implode("\n", $res['output']);
-                $commits = explode("[COMMIT_DELIMITER]", $rawCommits);
+                $commits = explode('[COMMIT_DELIMITER]', $rawCommits);
 
                 foreach ($commits as $commitRaw) {
                     $commitRaw = trim($commitRaw);
@@ -1473,9 +1493,9 @@ class RepositoryController extends Controller
         }
 
         if (preg_match($fullPattern, $message, $m)) {
-            $taskCode    = strtoupper(trim($m[3]));
-            $ckCode      = strtoupper(trim($m[4]));
-            $status      = strtoupper(trim($m[5]));
+            $taskCode = strtoupper(trim($m[3]));
+            $ckCode = strtoupper(trim($m[4]));
+            $status = strtoupper(trim($m[5]));
             $isCompleted = ($status === 'FINISH');
 
             $checklist = \App\Models\TaskChecklist::where('code', $ckCode)->first();
@@ -1486,9 +1506,9 @@ class RepositoryController extends Controller
                     \App\Models\TaskLog::create([
                         'task_id' => $checklist->task_id,
                         'user_id' => $user?->id,
-                        'action'  => 'checklist_toggled',
-                        'details' => '[Auto-Commit] ' . ($isCompleted ? 'Checked' : 'Unchecked')
-                            . " item: {$checklist->item_text} via commit: \"{$message}\"",
+                        'action' => 'checklist_toggled',
+                        'details' => '[Auto-Commit] '.($isCompleted ? 'Checked' : 'Unchecked')
+                            ." item: {$checklist->item_text} via commit: \"{$message}\"",
                     ]);
                 }
             }
@@ -1503,7 +1523,7 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return back()->with('error', 'Repository physical folder not found.');
         }
 
@@ -1536,12 +1556,12 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return back()->with('error', 'Repository physical folder not found.');
         }
 
         $branches = $this->showGetBranches($repoPath, $repository);
-        if (!in_array($source, $branches) || !in_array($target, $branches)) {
+        if (! in_array($source, $branches) || ! in_array($target, $branches)) {
             return back()->withInput()->with('error', 'One or both branches do not exist in the repository.');
         }
 
@@ -1573,7 +1593,7 @@ class RepositoryController extends Controller
 
         return redirect()->route('repository.show', [
             'repository' => $repository->name,
-            'tab' => 'pills-pulls'
+            'tab' => 'pills-pulls',
         ])->with('success', 'Merge Request successfully created.');
     }
 
@@ -1631,7 +1651,7 @@ class RepositoryController extends Controller
                         }
                         $currentFile = [
                             'filename' => $filename,
-                            'lines' => []
+                            'lines' => [],
                         ];
                     } elseif ($currentFile) {
                         $type = 'normal';
@@ -1645,7 +1665,7 @@ class RepositoryController extends Controller
 
                         $currentFile['lines'][] = [
                             'type' => $type,
-                            'content' => $line
+                            'content' => $line,
                         ];
                     }
                 }
@@ -1680,7 +1700,7 @@ class RepositoryController extends Controller
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
-        if (!file_exists($repoPath)) {
+        if (! file_exists($repoPath)) {
             return back()->with('error', 'Repository physical folder not found.');
         }
 
@@ -1712,13 +1732,14 @@ class RepositoryController extends Controller
             if ($result !== 0) {
                 // Conflict detected!
                 exec('git -C '.escapeshellarg($tempPath).' merge --abort');
+
                 return back()->with('error', "Conflict detected! Gagal menggabungkan cabang '{$pullRequest->source_branch}' ke '{$pullRequest->target_branch}' secara otomatis. Selesaikan konflik di lokal repositori Anda, selesaikan, lalu push kembali.");
             }
 
             // Push back to bare repository
             exec('git -C '.escapeshellarg($tempPath).' push origin '.escapeshellarg($pullRequest->target_branch), $output, $result);
             if ($result !== 0) {
-                throw new \Exception("Failed to push merged changes back to the repository.");
+                throw new \Exception('Failed to push merged changes back to the repository.');
             }
 
             // Successfully merged! Update status
@@ -1734,8 +1755,9 @@ class RepositoryController extends Controller
                 ->with('success', "Merge Request #{$pullRequest->id} successfully merged!");
 
         } catch (\Exception $e) {
-            \Log::error("Git merge MR failed: " . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan saat memproses merge: ' . $e->getMessage());
+            \Log::error('Git merge MR failed: '.$e->getMessage());
+
+            return back()->with('error', 'Terjadi kesalahan saat memproses merge: '.$e->getMessage());
         } finally {
             if (\File::exists($tempPath)) {
                 \File::deleteDirectory($tempPath);
