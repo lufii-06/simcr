@@ -3,11 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Repository;
+use App\Models\Task;
+use App\Models\TaskChecklist;
 use App\Models\User;
 use Fruitcake\LaravelDebugbar\Facades\Debugbar;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class RepositoryController extends Controller
 {
@@ -408,7 +411,7 @@ class RepositoryController extends Controller
             ])->with('success', $message);
 
         } catch (\Exception $e) {
-            \Log::error('Git operation failed: '.$e->getMessage());
+            Log::error('Git operation failed: '.$e->getMessage());
 
             return back()->with('error', 'Terjadi kesalahan saat memproses aksi Git: '.$e->getMessage());
         } finally {
@@ -1260,7 +1263,25 @@ class RepositoryController extends Controller
         ];
 
         $input = $request->getContent();
-        $process = proc_open($gitCmd, $descriptorSpec, $pipes);
+        $env = null;
+
+        if ($service === 'git-receive-pack') {
+            // Resolve pushing user from Basic Auth
+            $username = $request->getUser();
+            $pushingUser = $username ? User::where('email', $username)->first() : null;
+
+            // Ensure the pre-receive validation hook exists and is up to date
+            $this->ensurePreReceiveHook($repoPath);
+
+            // Pass key contexts to the git process environment so the pre-receive hook can access them
+            $env = array_merge($_ENV, getenv(), [
+                'SIMCR_USER_EMAIL' => $pushingUser ? $pushingUser->email : '',
+                'SIMCR_REPO_NAME' => $repositoryName,
+                'SIMCR_PATH' => base_path(),
+            ]);
+        }
+
+        $process = proc_open($gitCmd, $descriptorSpec, $pipes, null, $env);
 
         if (is_resource($process)) {
             fwrite($pipes[0], $input);
@@ -1275,50 +1296,17 @@ class RepositoryController extends Controller
             proc_close($process);
 
             if ($service === 'git-receive-pack') {
-                // Parse the ref updates that were in the push
-                $updates = [];
-                if (preg_match_all('/([0-9a-f]{40})\s+([0-9a-f]{40})\s+(refs\/[^\s\0\n]+)/', $input, $refMatches, PREG_SET_ORDER)) {
-                    foreach ($refMatches as $m) {
-                        $updates[] = ['old' => $m[1], 'new' => $m[2], 'ref' => $m[3]];
-                    }
-                }
 
-                // Resolve pushing user from Basic Auth
-                $username = $request->getUser();
-                $pushingUser = $username ? User::where('email', $username)->first() : null;
-
-                // Validate commit messages NOW that objects are written to the repo
-                $violation = $this->validatePushCommitMessages($updates, $repoPath, $repository, $pushingUser);
-
-                if ($violation) {
-                    // Rollback: revert all updated refs back to their old values
-                    foreach ($updates as $upd) {
-                        if ($upd['new'] === '0000000000000000000000000000000000000000') {
-                            continue; // was a deletion, skip
+                // Run side-effects only if the push succeeded (pre-receive hook passed and output says 'ok refs/heads/')
+                if (strpos($output, 'ok refs/') !== false) {
+                    try {
+                        $repository = Repository::where('name', $repositoryName)->first();
+                        if ($repository) {
+                            $this->processPushedCommits($input, $repoPath, $repository);
                         }
-                        if ($upd['old'] === '0000000000000000000000000000000000000000') {
-                            // New branch was created — delete it
-                            $this->runGitCommand($repoPath, 'update-ref -d '.escapeshellarg($upd['ref']));
-                        } else {
-                            // Existing branch was updated — revert to old hash
-                            $this->runGitCommand($repoPath, 'update-ref '.escapeshellarg($upd['ref']).' '.escapeshellarg($upd['old']));
-                        }
+                    } catch (\Exception $e) {
+                        Log::error('Failed to process pushed commits: '.$e->getMessage());
                     }
-
-                    // Build a pkt-line error response so git client prints the error
-                    $errorMsg = 'ERR '.$violation;
-                    $pktLen = strlen($errorMsg) + 4;
-                    $pktLine = sprintf('%04x', $pktLen).$errorMsg.'0000';
-
-                    return response($pktLine, 200)
-                        ->header('Content-Type', 'application/x-git-receive-pack-result');
-                }
-
-                // Valid — run side effects (auto-toggle checklists)
-                try {
-                    $this->processPushedCommits($input, $repoPath, $repository);
-                } catch (\Exception $e) {
-                    \Log::error('Failed to process pushed commits: '.$e->getMessage());
                 }
             }
 
@@ -1333,16 +1321,41 @@ class RepositoryController extends Controller
     }
 
     /**
+     * Ensure the bare repository contains our pre-receive hook to intercept push requests.
+     */
+    private function ensurePreReceiveHook(string $repoPath): void
+    {
+        $hooksDir = $repoPath.'/hooks';
+        if (! file_exists($hooksDir)) {
+            mkdir($hooksDir, 0755, true);
+        }
+
+        $hookFile = $hooksDir.'/pre-receive';
+
+        // The hook calls the Laravel Artisan command directly.
+        // It inherits stdin containing the ref updates and forwards it.
+        $hookContent = "#!/bin/sh\n"
+            ."php \"\$SIMCR_PATH/artisan\" git:validate-push \"\$SIMCR_REPO_NAME\" \"\$SIMCR_USER_EMAIL\"\n";
+
+        if (! file_exists($hookFile) || file_get_contents($hookFile) !== $hookContent) {
+            file_put_contents($hookFile, $hookContent);
+            if (DIRECTORY_SEPARATOR !== '\\') {
+                chmod($hookFile, 0755);
+            }
+        }
+    }
+
+    /**
      * Validate all commit messages in a push against the SIMCR commit standard.
      * Called AFTER git has written objects to the repo so git log can read them.
      * Format (with checklist): [feat|fix] : message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]
      * Format (without checklist): [feat|fix] : message [TASK-XXX]
      * Returns an error string if invalid, or null if all commits are valid.
      */
-    private function validatePushCommitMessages(array $updates, string $repoPath, Repository $repository, ?User $pushingUser): ?string
+    public function validatePushCommitMessages(array $updates, string $repoPath, Repository $repository, ?User $pushingUser): ?string
     {
-        $fullPattern = '/^\[(feat|fix)\]\s*:\s*.+\[(TASK-[A-Z0-9-]+)\]\s*\[(CK-[A-Z0-9-]+)\]\s*\[(FINISH|UNFINISH)\]$/i';
-        $shortPattern = '/^\[(feat|fix)\]\s*:\s*.+\[(TASK-[A-Z0-9-]+)\]$/i';
+        $fullPattern = '/^\[(feat|fix)\]\s*:\s*.+\[(T-[A-Z0-9-]+)\]\s*\[(CHK-[A-Z0-9-]+)\]\s*\[(FINISH|UNFINISH)\]$/i';
+        $shortPattern = '/^\[(feat|fix)\]\s*:\s*.+\[(T-[A-Z0-9-]+)\]$/i';
 
         foreach ($updates as $update) {
             if ($update['new'] === '0000000000000000000000000000000000000000') {
@@ -1351,15 +1364,15 @@ class RepositoryController extends Controller
 
             if ($update['old'] === '0000000000000000000000000000000000000000') {
                 // First push to a new branch: list all commits reachable from new but not from any other refs
-                $gitLogCmd = 'log '.escapeshellarg($update['new']).' --not --branches --tags --format='.escapeshellarg('%H|%ae|%s[COMMIT_DELIMITER]');
+                $gitLogCmd = 'log '.escapeshellarg($update['new']).' --not --branches --tags --format="%H|%ae|%s[COMMIT_DELIMITER]"';
             } else {
-                $gitLogCmd = 'log '.escapeshellarg($update['old'].'..'.$update['new']).' --format='.escapeshellarg('%H|%ae|%s[COMMIT_DELIMITER]');
+                $gitLogCmd = 'log '.escapeshellarg($update['old'].'..'.$update['new']).' --format="%H|%ae|%s[COMMIT_DELIMITER]"';
             }
 
             $res = $this->runGitCommand($repoPath, $gitLogCmd);
 
             if (! $res['success'] || empty($res['output'])) {
-                \Log::warning('[GitValidate] git log returned empty or failed — validation skipped for this ref', ['ref' => $update['ref']]);
+                Log::warning('[GitValidate] git log returned empty or failed — validation skipped for this ref', ['ref' => $update['ref']]);
 
                 continue;
             }
@@ -1368,7 +1381,7 @@ class RepositoryController extends Controller
             $commits = explode('[COMMIT_DELIMITER]', $rawCommits);
 
             foreach ($commits as $commitRaw) {
-               
+
                 $commitRaw = trim($commitRaw);
                 if (empty($commitRaw)) {
                     continue;
@@ -1384,9 +1397,7 @@ class RepositoryController extends Controller
 
                 $isFullMatch = preg_match($fullPattern, $message, $fullMatches);
                 $isShortMatch = preg_match($shortPattern, $message, $shortMatches);
-                 \Log::debug('[GitValidate] git log result', [
-                    'message' => $message,
-                ]);
+
                 if (! $isFullMatch && ! $isShortMatch) {
                     return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Invalid commit message format.\n"
                         .'Message: "'.$message."\"\n"
@@ -1396,7 +1407,7 @@ class RepositoryController extends Controller
 
                 // Validate TASK code in DB
                 $taskCode = strtoupper($isFullMatch ? $fullMatches[2] : $shortMatches[2]);
-                $task = \App\Models\Task::where('code', $taskCode)->first();
+                $task = Task::where('code', $taskCode)->first();
 
                 if (! $task) {
                     return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Task [{$taskCode}] does not exist in the system.";
@@ -1415,7 +1426,7 @@ class RepositoryController extends Controller
                 // Validate CK code if present
                 if ($isFullMatch) {
                     $ckCode = strtoupper($fullMatches[3]);
-                    $checklist = \App\Models\TaskChecklist::where('code', $ckCode)->first();
+                    $checklist = TaskChecklist::where('code', $ckCode)->first();
 
                     if (! $checklist) {
                         return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Checklist [{$ckCode}] does not exist in the system.";
@@ -1451,10 +1462,10 @@ class RepositoryController extends Controller
 
             if ($update['old'] === '0000000000000000000000000000000000000000') {
                 // New branch: get all commits on the new ref that aren't on any other refs
-                $gitLogCmd = 'log '.escapeshellarg($update['new']).' --not --all --exclude='.escapeshellarg($update['ref']).' --format='.escapeshellarg('%H|%ae|%B[COMMIT_DELIMITER]');
+                $gitLogCmd = 'log '.escapeshellarg($update['new']).' --not --all --exclude='.escapeshellarg($update['ref']).' --format="%H|%ae|%B[COMMIT_DELIMITER]"';
             } else {
                 // Existing branch: get commits between old and new
-                $gitLogCmd = 'log '.escapeshellarg($update['old'].'..'.$update['new']).' --format='.escapeshellarg('%H|%ae|%B[COMMIT_DELIMITER]');
+                $gitLogCmd = 'log '.escapeshellarg($update['old'].'..'.$update['new']).' --format="%H|%ae|%B[COMMIT_DELIMITER]"';
             }
 
             $res = $this->runGitCommand($repoPath, $gitLogCmd);
@@ -1755,7 +1766,7 @@ class RepositoryController extends Controller
                 ->with('success', "Merge Request #{$pullRequest->id} successfully merged!");
 
         } catch (\Exception $e) {
-            \Log::error('Git merge MR failed: '.$e->getMessage());
+            Log::error('Git merge MR failed: '.$e->getMessage());
 
             return back()->with('error', 'Terjadi kesalahan saat memproses merge: '.$e->getMessage());
         } finally {
