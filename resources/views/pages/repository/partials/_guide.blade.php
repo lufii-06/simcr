@@ -128,19 +128,19 @@
                     <div class="card-body">
                         <p class="small text-muted">Gunakan format ini untuk commit umum yang hanya berhubungan dengan sebuah task, tanpa menyelesaikan checklist item tertentu.</p>
                         <div class="position-relative">
-                            <pre class="bg-dark text-light p-3 rounded" id="guide-commit-short"><code>[feat|fix] : pesan commit Anda [TASK-XXX]</code></pre>
+                            <pre class="bg-dark text-light p-3 rounded" id="guide-commit-short"><code>pesan commit Anda [feat|fix] [T-XXX]</code></pre>
                             <button class="btn btn-xs btn-secondary position-absolute" style="top: 10px; right: 10px;"
                                 onclick="copyToClipboard('guide-commit-short')">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
                         <h6 class="fw-bold small mt-3">Contoh:</h6>
-                        <pre class="bg-dark text-light p-2 rounded small"><code>git commit -m "[feat] : setup struktur folder project [TASK-001]"
-git commit -m "[fix] : perbaiki bug pada halaman login [TASK-003]"</code></pre>
+                        <pre class="bg-dark text-light p-2 rounded small"><code>git commit -m "setup struktur folder project [feat] [T-001]"
+git commit -m "perbaiki bug pada halaman login [fix] [T-003]"</code></pre>
                         <h6 class="fw-bold small mt-3">Aturan:</h6>
                         <ul class="small ps-3">
-                            <li>Type hanya boleh: <code>feat</code> atau <code>fix</code></li>
-                            <li><code>[TASK-XXX]</code> harus berupa kode task yang ada dan ter-assign ke Anda</li>
+                            <li>Type hanya boleh: <code>[feat]</code> atau <code>[fix]</code></li>
+                            <li><code>[T-XXX]</code> harus berupa kode task yang ada dan ter-assign ke Anda</li>
                             <li>Pesan commit tidak boleh kosong</li>
                         </ul>
                     </div>
@@ -162,21 +162,21 @@ git commit -m "[fix] : perbaiki bug pada halaman login [TASK-003]"</code></pre>
                     <div class="card-body">
                         <p class="small text-muted">Gunakan format ini jika commit Anda menyelesaikan atau mengerjakan sebuah checklist item. Status checklist akan otomatis diperbarui di sistem.</p>
                         <div class="position-relative">
-                            <pre class="bg-dark text-light p-3 rounded" id="guide-commit-full"><code>[feat|fix] : pesan commit Anda [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]</code></pre>
+                            <pre class="bg-dark text-light p-3 rounded" id="guide-commit-full"><code>pesan commit Anda [feat|fix] [T-XXX] [CHK-XXX] [FINISH|UNFINISH]</code></pre>
                             <button class="btn btn-xs btn-secondary position-absolute" style="top: 10px; right: 10px;"
                                 onclick="copyToClipboard('guide-commit-full')">
                                 <i class="fas fa-copy"></i>
                             </button>
                         </div>
                         <h6 class="fw-bold small mt-3">Contoh:</h6>
-                        <pre class="bg-dark text-light p-2 rounded small"><code>git commit -m "[feat] : implementasi form login [TASK-001] [CK-003] [FINISH]"
-git commit -m "[fix] : perbaiki validasi email (WIP) [TASK-001] [CK-003] [UNFINISH]"</code></pre>
+                        <pre class="bg-dark text-light p-2 rounded small"><code>git commit -m "implementasi form login [feat] [T-001] [CHK-003] [FINISH]"
+git commit -m "perbaiki validasi email (WIP) [fix] [T-001] [CHK-003] [UNFINISH]"</code></pre>
                         <h6 class="fw-bold small mt-3">Aturan:</h6>
                         <ul class="small ps-3">
-                            <li><code>[CK-XXX]</code> harus berupa kode checklist item yang benar-benar ada di task tersebut</li>
+                            <li><code>[CHK-XXX]</code> harus berupa kode checklist item yang benar-benar ada di task tersebut</li>
                             <li><code>[FINISH]</code> → checklist item akan ditandai <b>selesai</b> secara otomatis</li>
                             <li><code>[UNFINISH]</code> → checklist item akan ditandai <b>belum selesai</b></li>
-                            <li>Jika <code>[CK-XXX]</code> disertakan, maka <code>[FINISH|UNFINISH]</code> <b>wajib ada</b></li>
+                            <li>Jika <code>[CHK-XXX]</code> disertakan, maka <code>[FINISH|UNFINISH]</code> <b>wajib ada</b></li>
                         </ul>
                     </div>
                 </div>

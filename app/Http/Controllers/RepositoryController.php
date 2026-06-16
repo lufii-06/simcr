@@ -1354,8 +1354,8 @@ class RepositoryController extends Controller
      */
     public function validatePushCommitMessages(array $updates, string $repoPath, Repository $repository, ?User $pushingUser): ?string
     {
-        $fullPattern = '/^\[(feat|fix)\]\s*:\s*.+\[(T-[A-Z0-9-]+)\]\s*\[(CHK-[A-Z0-9-]+)\]\s*\[(FINISH|UNFINISH)\]$/i';
-        $shortPattern = '/^\[(feat|fix)\]\s*:\s*.+\[(T-[A-Z0-9-]+)\]$/i';
+        $fullPattern = '/^(.+?)\s+\[(feat|fix)\]\s+\[(T-[A-Z0-9-]+)\]\s+\[(CHK-[A-Z0-9-]+)\]\s+\[(FINISH|UNFINISH)\]$/i';
+        $shortPattern = '/^(.+?)\s+\[(feat|fix)\]\s+\[(T-[A-Z0-9-]+)\]$/i';
 
         foreach ($updates as $update) {
             if ($update['new'] === '0000000000000000000000000000000000000000') {
@@ -1401,12 +1401,12 @@ class RepositoryController extends Controller
                 if (! $isFullMatch && ! $isShortMatch) {
                     return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Invalid commit message format.\n"
                         .'Message: "'.$message."\"\n"
-                        ."Required format: [feat|fix] : your message [TASK-XXX]\n"
-                        .'With checklist : [feat|fix] : your message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]';
+                        ."Required format: your message [feat|fix] [T-XXX]\n"
+                        .'With checklist : your message [feat|fix] [T-XXX] [CHK-XXX] [FINISH|UNFINISH]';
                 }
 
                 // Validate TASK code in DB
-                $taskCode = strtoupper($isFullMatch ? $fullMatches[2] : $shortMatches[2]);
+                $taskCode = strtoupper($isFullMatch ? $fullMatches[3] : $shortMatches[3]);
                 $task = Task::where('code', $taskCode)->first();
 
                 if (! $task) {
@@ -1425,7 +1425,7 @@ class RepositoryController extends Controller
 
                 // Validate CK code if present
                 if ($isFullMatch) {
-                    $ckCode = strtoupper($fullMatches[3]);
+                    $ckCode = strtoupper($fullMatches[4]);
                     $checklist = TaskChecklist::where('code', $ckCode)->first();
 
                     if (! $checklist) {
@@ -1495,8 +1495,8 @@ class RepositoryController extends Controller
 
     private function processCommitMessage(string $message, string $authorEmail, Repository $repository)
     {
-        // Full format: [feat|fix] : message [TASK-XXX] [CK-XXX] [FINISH|UNFINISH]
-        $fullPattern = '/^\[(feat|fix)\]\s*:\s*(.+)\[(TASK-[A-Z0-9-]+)\]\s*\[(CK-[A-Z0-9-]+)\]\s*\[(FINISH|UNFINISH)\]$/i';
+        // Full format: your message [feat|fix] [T-XXX] [CHK-XXX] [FINISH|UNFINISH]
+        $fullPattern = '/^(.+?)\s+\[(feat|fix)\]\s+\[(T-[A-Z0-9-]+)\]\s+\[(CHK-[A-Z0-9-]+)\]\s+\[(FINISH|UNFINISH)\]$/i';
 
         $user = User::where('email', $authorEmail)->first();
         if (! $user) {
