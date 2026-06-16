@@ -1354,8 +1354,8 @@ class RepositoryController extends Controller
      */
     public function validatePushCommitMessages(array $updates, string $repoPath, Repository $repository, ?User $pushingUser): ?string
     {
-        $fullPattern = '/^(.+?)\s+\[(feat|fix)\]\s+\[(T-[A-Z0-9-]+)\]\s+\[(CHK-[A-Z0-9-]+)\]\s+\[(FINISH|UNFINISH)\]$/i';
-        $shortPattern = '/^(.+?)\s+\[(feat|fix)\]\s+\[(T-[A-Z0-9-]+)\]$/i';
+        $fullPattern = '/^(.+?)\s+\[(FEAT|FIX)\]\s+\[(T-[A-Z0-9-]+)\]\s+\[(CHK-[A-Z0-9-]+)\]\s+\[(FINISH|UNFINISH)\]$/';
+        $shortPattern = '/^(.+?)\s+\[(FEAT|FIX)\]\s+\[(T-[A-Z0-9-]+)\]$/';
 
         foreach ($updates as $update) {
             if ($update['new'] === '0000000000000000000000000000000000000000') {
@@ -1401,8 +1401,8 @@ class RepositoryController extends Controller
                 if (! $isFullMatch && ! $isShortMatch) {
                     return '[SIMCR] Commit '.substr($hash, 0, 7)." rejected: Invalid commit message format.\n"
                         .'Message: "'.$message."\"\n"
-                        ."Required format: your message [feat|fix] [T-XXX]\n"
-                        .'With checklist : your message [feat|fix] [T-XXX] [CHK-XXX] [FINISH|UNFINISH]';
+                        ."Required format: your message [FEAT|FIX] [T-XXX]\n"
+                        .'With checklist : your message [FEAT|FIX] [T-XXX] [CHK-XXX] [FINISH|UNFINISH]';
                 }
 
                 // Validate TASK code in DB
@@ -1495,8 +1495,8 @@ class RepositoryController extends Controller
 
     private function processCommitMessage(string $message, string $authorEmail, Repository $repository)
     {
-        // Full format: your message [feat|fix] [T-XXX] [CHK-XXX] [FINISH|UNFINISH]
-        $fullPattern = '/^(.+?)\s+\[(feat|fix)\]\s+\[(T-[A-Z0-9-]+)\]\s+\[(CHK-[A-Z0-9-]+)\]\s+\[(FINISH|UNFINISH)\]$/i';
+        // Full format: your message [FEAT|FIX] [T-XXX] [CHK-XXX] [FINISH|UNFINISH]
+        $fullPattern = '/^(.+?)\s+\[(FEAT|FIX)\]\s+\[(T-[A-Z0-9-]+)\]\s+\[(CHK-[A-Z0-9-]+)\]\s+\[(FINISH|UNFINISH)\]$/';
 
         $user = User::where('email', $authorEmail)->first();
         if (! $user) {
