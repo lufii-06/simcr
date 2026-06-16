@@ -277,19 +277,39 @@
                     }
 
                     let infoHtml = `
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p><strong>Project:</strong> ${task.project.name}</p>
-                                <p><strong>Title:</strong> ${task.title}</p>
-                                <p><strong>Status:</strong> <span class="badge ${badgeClass} modal-task-status-${task.id}">${task.status.name}</span></p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>Created By:</strong> ${task.creator.name}</p>
-                                <p><strong>Assignee:</strong> ${task.assignee.name}</p>
-                            </div>
-                            <div class="col-md-12">
-                                <p><strong>Description:</strong><br>${task.description || 'No description'}</p>
-                            </div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-striped align-middle mb-0">
+                                <tbody>
+                                    <tr>
+                                        <th style="width: 25%; background-color: #f8f9fa;">Project</th>
+                                        <td>${task.project.name}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="background-color: #f8f9fa;">Task ID</th>
+                                        <td><code>${task.code}</code></td>
+                                    </tr>
+                                    <tr>
+                                        <th style="background-color: #f8f9fa;">Title</th>
+                                        <td>${task.title}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="background-color: #f8f9fa;">Status</th>
+                                        <td><span class="badge ${badgeClass} modal-task-status-${task.id}">${task.status.name}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th style="background-color: #f8f9fa;">Created By</th>
+                                        <td>${task.creator.name}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="background-color: #f8f9fa;">Assignee</th>
+                                        <td>${task.assignee.name}</td>
+                                    </tr>
+                                    <tr>
+                                        <th style="background-color: #f8f9fa;">Description</th>
+                                        <td style="white-space: pre-line;">${task.description || '<span class="text-muted">No description</span>'}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     `;
                     $('#task-info').html(infoHtml);
