@@ -169,8 +169,8 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="pills-pulls-tab" data-bs-toggle="pill" onclick="showTab('pills-pulls')" href="#pills-pulls"
-                                role="tab" aria-controls="pills-pulls" aria-selected="false">
+                            <a class="nav-link" id="pills-merges-tab" data-bs-toggle="pill" onclick="showTab('pills-merges')" href="#pills-merges"
+                                role="tab" aria-controls="pills-merges" aria-selected="false">
                                 <i class="fas fa-code-branch me-1"></i> Merge Requests
                             </a>
                         </li>

@@ -1,4 +1,4 @@
-<div class="tab-pane fade" id="pills-pulls" role="tabpanel" aria-labelledby="pills-pulls-tab">
+<div class="tab-pane fade" id="pills-merges" role="tabpanel" aria-labelledby="pills-merges-tab">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0 text-dark">
             <i class="fas fa-code-branch me-2 text-primary"></i> Merge Requests
@@ -23,38 +23,38 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($pullRequests as $pr)
+                @forelse ($mergeRequests as $mr)
                     <tr>
                         <td>
-                            <a href="{{ route('repository.merge-requests.show', [$repository->name, $pr->id]) }}" class="fw-bold">
-                                #{{ $pr->id }}
+                            <a href="{{ route('repository.merge-requests.show', [$repository->name, $mr->id]) }}" class="fw-bold">
+                                #{{ $mr->id }}
                             </a>
                         </td>
                         <td>
-                            <a href="{{ route('repository.merge-requests.show', [$repository->name, $pr->id]) }}" class="fw-bold text-dark text-decoration-none">
-                                {{ $pr->title }}
+                            <a href="{{ route('repository.merge-requests.show', [$repository->name, $mr->id]) }}" class="fw-bold text-dark text-decoration-none">
+                                {{ $mr->title }}
                             </a>
-                            @if ($pr->description)
+                            @if ($mr->description)
                                 <div class="text-muted small text-truncate" style="max-width: 300px;">
-                                    {{ $pr->description }}
+                                    {{ $mr->description }}
                                 </div>
                             @endif
                         </td>
                         <td>
-                            <code class="text-danger bg-light px-1 py-0.5 rounded">{{ $pr->source_branch }}</code>
+                            <code class="text-danger bg-light px-1 py-0.5 rounded">{{ $mr->source_branch }}</code>
                             <i class="fas fa-arrow-right mx-2 text-muted text-xs"></i>
-                            <code class="text-primary bg-light px-1 py-0.5 rounded">{{ $pr->target_branch }}</code>
+                            <code class="text-primary bg-light px-1 py-0.5 rounded">{{ $mr->target_branch }}</code>
                         </td>
                         <td>
-                            <span class="text-dark small">{{ $pr->user->name ?? 'System' }}</span>
+                            <span class="text-dark small">{{ $mr->user->name ?? 'System' }}</span>
                         </td>
                         <td class="text-nowrap small text-muted">
-                            {{ $pr->created_at->format('d M Y H:i') }}
+                            {{ $mr->created_at->format('d M Y H:i') }}
                         </td>
                         <td class="text-center">
-                            @if ($pr->status === 'open')
+                            @if ($mr->status === 'open')
                                 <span class="badge badge-success px-3 py-1">Open</span>
-                            @elseif ($pr->status === 'merged')
+                            @elseif ($mr->status === 'merged')
                                 <span class="badge px-3 py-1 text-white" style="background-color: #6f42c1 !important;">Merged</span>
                             @else
                                 <span class="badge badge-danger px-3 py-1">Closed</span>

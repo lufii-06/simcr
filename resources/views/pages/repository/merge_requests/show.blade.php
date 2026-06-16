@@ -1,6 +1,6 @@
 @extends('dashboard')
 
-@section('title', 'Merge Request #' . $pullRequest->id)
+@section('title', 'Merge Request #' . $mergeRequest->id)
 
 @section('content')
 <style>
@@ -34,23 +34,23 @@
             <div class="d-flex align-items-start justify-content-between flex-wrap">
                 <div>
                     <h2 class="fw-bold mb-1 text-dark">
-                        {{ $pullRequest->title }} <span class="text-muted fw-light">#{{ $pullRequest->id }}</span>
+                        {{ $mergeRequest->title }} <span class="text-muted fw-light">#{{ $mergeRequest->id }}</span>
                     </h2>
                     <div class="d-flex align-items-center flex-wrap gap-2 text-muted small mt-2">
-                        @if ($pullRequest->status === 'open')
+                        @if ($mergeRequest->status === 'open')
                             <span class="badge badge-success px-3 py-1.5"><i class="fas fa-dot-circle me-1"></i> Open</span>
-                        @elseif ($pullRequest->status === 'merged')
+                        @elseif ($mergeRequest->status === 'merged')
                             <span class="badge px-3 py-1.5 text-white" style="background-color: #6f42c1 !important;"><i class="fas fa-code-merge me-1"></i> Merged</span>
                         @else
                             <span class="badge badge-danger px-3 py-1.5"><i class="fas fa-times-circle me-1"></i> Closed</span>
                         @endif
-                        <span><strong>{{ $pullRequest->user->name ?? 'System' }}</strong> wants to merge commits from <code class="text-danger bg-light px-1.5 py-0.5 rounded">{{ $pullRequest->source_branch }}</code> into <code class="text-primary bg-light px-1.5 py-0.5 rounded">{{ $pullRequest->target_branch }}</code></span>
+                        <span><strong>{{ $mergeRequest->user->name ?? 'System' }}</strong> wants to merge commits from <code class="text-danger bg-light px-1.5 py-0.5 rounded">{{ $mergeRequest->source_branch }}</code> into <code class="text-primary bg-light px-1.5 py-0.5 rounded">{{ $mergeRequest->target_branch }}</code></span>
                         <span class="mx-1">•</span>
-                        <span>Opened {{ $pullRequest->created_at->diffForHumans() }}</span>
+                        <span>Opened {{ $mergeRequest->created_at->diffForHumans() }}</span>
                     </div>
                 </div>
                 <div>
-                    <a href="{{ route('repository.show', ['repository' => $repository->name, 'tab' => 'pulls']) }}" class="btn btn-outline-secondary btn-sm btn-round mt-2 mt-sm-0">
+                    <a href="{{ route('repository.show', ['repository' => $repository->name, 'tab' => 'merges']) }}" class="btn btn-outline-secondary btn-sm btn-round mt-2 mt-sm-0">
                         <i class="fas fa-arrow-left me-1"></i> Back to Merge Requests
                     </a>
                 </div>
@@ -59,7 +59,7 @@
     </div>
 
     <!-- PR Merge Actions Area -->
-    @if ($pullRequest->status === 'open')
+    @if ($mergeRequest->status === 'open')
         <div class="card border mb-4 bg-light">
             <div class="card-body">
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
@@ -76,15 +76,15 @@
                     </div>
                     <div class="d-flex gap-2">
                         @if (auth()->user()->role !== 'client' && auth()->user()->role !== 'developer')
-                            <form action="{{ route('repository.merge-requests.merge', [$repository->name, $pullRequest->id]) }}" method="POST" id="form-merge-pr">
+                            <form action="{{ route('repository.merge-requests.merge', [$repository->name, $mergeRequest->id]) }}" method="POST" id="form-merge-pr">
                                 @csrf
                                 <button type="submit" class="btn btn-success" id="btn-merge-pr">
                                     <i class="fas fa-code-merge me-1"></i> Merge Request
                                 </button>
                             </form>
                         @endif
-                        @if (auth()->id() === $pullRequest->user_id || auth()->user()->role === 'pm' || auth()->user()->role === 'owner' || auth()->user()->role === 'admin')
-                            <form action="{{ route('repository.merge-requests.close', [$repository->name, $pullRequest->id]) }}" method="POST" id="form-close-pr">
+                        @if (auth()->id() === $mergeRequest->user_id || auth()->user()->role === 'pm' || auth()->user()->role === 'owner' || auth()->user()->role === 'admin')
+                            <form action="{{ route('repository.merge-requests.close', [$repository->name, $mergeRequest->id]) }}" method="POST" id="form-close-pr">
                                 @csrf
                                 <button type="submit" class="btn btn-danger" id="btn-close-pr">
                                     <i class="fas fa-ban me-1"></i> Close Merge Request
@@ -95,7 +95,7 @@
                 </div>
             </div>
         </div>
-    @elseif ($pullRequest->status === 'merged')
+    @elseif ($mergeRequest->status === 'merged')
         <div class="card border mb-4 bg-purple-light" style="background-color: rgba(111, 66, 193, 0.08);">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -106,7 +106,7 @@
                     </div>
                     <div>
                         <h5 class="fw-bold mb-0 text-dark">Merge Request Merged</h5>
-                        <p class="text-muted small mb-0">Changes were successfully merged into <code>{{ $pullRequest->target_branch }}</code> branch.</p>
+                        <p class="text-muted small mb-0">Changes were successfully merged into <code>{{ $mergeRequest->target_branch }}</code> branch.</p>
                     </div>
                 </div>
             </div>
@@ -156,8 +156,8 @@
                     <h5 class="fw-bold mb-0 text-dark">Description</h5>
                 </div>
                 <div class="card-body">
-                    @if ($pullRequest->description)
-                        <div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">{{ $pullRequest->description }}</div>
+                    @if ($mergeRequest->description)
+                        <div style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">{{ $mergeRequest->description }}</div>
                     @else
                         <p class="text-muted mb-0 italic">No description provided.</p>
                     @endif
@@ -231,7 +231,7 @@
             var form = $('#form-merge-pr');
             swal({
                 title: "Konfirmasi Penggabungan",
-                text: "Apakah Anda yakin ingin memproses merge Merge Request #{{ $pullRequest->id }} ke dalam cabang target '{{ $pullRequest->target_branch }}'?",
+                text: "Apakah Anda yakin ingin memproses merge Merge Request #{{ $mergeRequest->id }} ke dalam cabang target '{{ $mergeRequest->target_branch }}'?",
                 icon: "warning",
                 buttons: {
                     cancel: {
@@ -263,7 +263,7 @@
             var form = $('#form-close-pr');
             swal({
                 title: "Konfirmasi Penutupan",
-                text: "Apakah Anda yakin ingin menutup Merge Request #{{ $pullRequest->id }} tanpa menggabungkannya?",
+                text: "Apakah Anda yakin ingin menutup Merge Request #{{ $mergeRequest->id }} tanpa menggabungkannya?",
                 icon: "warning",
                 buttons: {
                     cancel: {

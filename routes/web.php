@@ -123,9 +123,9 @@ Route::middleware('auth')->group(function () {
             Route::get('repository/{repository}/compare', [RepositoryController::class, 'compareBranches'])->name('repository.compare');
             Route::get('repository/{repository}/merge-requests/create', [RepositoryController::class, 'mergeRequestsCreate'])->name('repository.merge-requests.create');
             Route::post('repository/{repository}/merge-requests', [RepositoryController::class, 'mergeRequestsStore'])->name('repository.merge-requests.store');
-            Route::get('repository/{repository}/merge-requests/{pullRequest}', [RepositoryController::class, 'mergeRequestsShow'])->name('repository.merge-requests.show');
-            Route::post('repository/{repository}/merge-requests/{pullRequest}/merge', [RepositoryController::class, 'mergeRequestsMerge'])->name('repository.merge-requests.merge');
-            Route::post('repository/{repository}/merge-requests/{pullRequest}/close', [RepositoryController::class, 'mergeRequestsClose'])->name('repository.merge-requests.close');
+            Route::get('repository/{repository}/merge-requests/{mergeRequest}', [RepositoryController::class, 'mergeRequestsShow'])->name('repository.merge-requests.show');
+            Route::post('repository/{repository}/merge-requests/{mergeRequest}/merge', [RepositoryController::class, 'mergeRequestsMerge'])->name('repository.merge-requests.merge');
+            Route::post('repository/{repository}/merge-requests/{mergeRequest}/close', [RepositoryController::class, 'mergeRequestsClose'])->name('repository.merge-requests.close');
         });
     });
 

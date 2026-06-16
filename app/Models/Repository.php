@@ -33,9 +33,9 @@ class Repository extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function pullRequests()
+    public function mergeRequests()
     {
-        return $this->hasMany(PullRequest::class);
+        return $this->hasMany(MergeRequest::class);
     }
 
     public function getRouteKeyName()
