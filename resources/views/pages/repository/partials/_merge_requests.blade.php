@@ -53,7 +53,9 @@
                         </td>
                         <td class="text-center">
                             @if ($mr->status === 'open')
-                                <span class="badge badge-success px-3 py-1">Open</span>
+                                <a href="{{ route('repository.merge-requests.show', [$repository->name, $mr->id]) }}" class="fw-bold text-dark text-decoration-none">
+                                    <span class="badge badge-success px-3 py-1">Open</span>
+                                </a>
                             @elseif ($mr->status === 'merged')
                                 <span class="badge px-3 py-1 text-white" style="background-color: #6f42c1 !important;">Merged</span>
                             @else
