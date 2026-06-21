@@ -1719,38 +1719,100 @@ class RepositoryController extends Controller
         try {
             \File::makeDirectory($tempPath, 0755, true);
 
+            // Set environment variables for Git hooks
+            putenv("SIMCR_PATH=" . base_path());
+            putenv("SIMCR_REPO_NAME=" . $repository->name);
+            putenv("SIMCR_USER_EMAIL=" . $user->email);
+
             // Clone bare repository to temporary directory
             $output = [];
             $result = 0;
-            exec('git clone '.escapeshellarg($repoPath).' '.escapeshellarg($tempPath), $output, $result);
+            exec('git clone '.escapeshellarg($repoPath).' '.escapeshellarg($tempPath).' 2>&1', $output, $result);
             if ($result !== 0) {
-                throw new \Exception('Failed to clone repository.');
+                throw new \Exception("Failed to clone repository: \n".implode("\n", $output));
             }
 
             // Configure temporary Git user (attributing to merging user)
-            exec('git -C '.escapeshellarg($tempPath).' config user.name '.escapeshellarg($user->name));
-            exec('git -C '.escapeshellarg($tempPath).' config user.email '.escapeshellarg($user->email));
+            exec('git -C '.escapeshellarg($tempPath).' config user.name '.escapeshellarg($user->name).' 2>&1', $output, $result);
+            exec('git -C '.escapeshellarg($tempPath).' config user.email '.escapeshellarg($user->email).' 2>&1', $output, $result);
 
             // Checkout target branch
-            exec('git -C '.escapeshellarg($tempPath).' checkout '.escapeshellarg($mergeRequest->target_branch), $output, $result);
+            $output = [];
+            $result = 0;
+            exec('git -C '.escapeshellarg($tempPath).' checkout '.escapeshellarg($mergeRequest->target_branch).' 2>&1', $output, $result);
             if ($result !== 0) {
-                throw new \Exception("Failed to checkout target branch '{$mergeRequest->target_branch}'.");
+                throw new \Exception("Failed to checkout target branch '{$mergeRequest->target_branch}': \n".implode("\n", $output));
             }
 
             // Merge source branch into target
-            $mergeMsg = "Merge request #{$mergeRequest->id} from {$mergeRequest->source_branch}\n\n{$mergeRequest->title}";
-            exec('git -C '.escapeshellarg($tempPath).' merge '.escapeshellarg($mergeRequest->source_branch).' -m '.escapeshellarg($mergeMsg), $output, $result);
+            $output = [];
+            $result = 0;
+            $titleSingleLine = str_replace(["\r", "\n"], ' ', $mergeRequest->title);
+            $mergeMsg = "Merge request #{$mergeRequest->id} from {$mergeRequest->source_branch}: {$titleSingleLine}";
+            // Use 'origin/' prefix for the source branch to reference the remote tracking branch in the cloned repo
+            exec('git -C '.escapeshellarg($tempPath).' merge '.escapeshellarg('origin/'.$mergeRequest->source_branch).' -m '.escapeshellarg($mergeMsg).' 2>&1', $output, $result);
             if ($result !== 0) {
-                // Conflict detected!
-                exec('git -C '.escapeshellarg($tempPath).' merge --abort');
+                $gitError = implode("\n", $output);
+                // Get conflicted files
+                $conflictedFilesOutput = [];
+                exec('git -C '.escapeshellarg($tempPath).' diff --name-only --diff-filter=U', $conflictedFilesOutput);
 
-                return back()->with('error', "Conflict detected! Gagal menggabungkan cabang '{$mergeRequest->source_branch}' ke '{$mergeRequest->target_branch}' secara otomatis. Selesaikan konflik di lokal repositori Anda, selesaikan, lalu push kembali.");
+                if (empty($conflictedFilesOutput)) {
+                    // Fallback using git status --porcelain
+                    $statusOutput = [];
+                    exec('git -C '.escapeshellarg($tempPath).' status --porcelain', $statusOutput);
+                    foreach ($statusOutput as $line) {
+                        if (preg_match('/^(UU|AA|AU|UA|DD|DU|UD)\s+(.+)$/', trim($line), $matches)) {
+                            $conflictedFilesOutput[] = $matches[2];
+                        }
+                    }
+                }
+
+                $conflicts = [];
+                foreach ($conflictedFilesOutput as $file) {
+                    $normalizedFile = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $file);
+                    $filePath = $tempPath.DIRECTORY_SEPARATOR.$normalizedFile;
+                    $blocks = [];
+                    if (file_exists($filePath)) {
+                        $content = file_get_contents($filePath);
+                        preg_match_all('/<<<<<<<[\s\S]*?>>>>>>>.*/', $content, $matches);
+                        if (! empty($matches[0])) {
+                            $blocks = $matches[0];
+                        }
+                    }
+                    $conflicts[$file] = $blocks;
+                }
+
+                // Conflict detected! Abort merge to clean up temp dir
+                exec('git -C '.escapeshellarg($tempPath).' merge --abort 2>&1');
+
+                // Filter conflicts to see if we actually found any blocks
+                $hasBlocks = false;
+                foreach ($conflicts as $file => $blocks) {
+                    if (! empty($blocks)) {
+                        $hasBlocks = true;
+                        break;
+                    }
+                }
+
+                $errorMessage = "Conflict detected! Gagal menggabungkan cabang '{$mergeRequest->source_branch}' ke '{$mergeRequest->target_branch}' secara otomatis.";
+                if (! $hasBlocks) {
+                    $errorMessage .= "\n\nDetail Git Error:\n".$gitError;
+                } else {
+                    $errorMessage .= "\n\nSelesaikan konflik di lokal repositori Anda, commit, lalu push kembali.";
+                }
+
+                return back()
+                    ->with('error', $errorMessage)
+                    ->with('conflicts', $conflicts);
             }
 
             // Push back to bare repository
-            exec('git -C '.escapeshellarg($tempPath).' push origin '.escapeshellarg($mergeRequest->target_branch), $output, $result);
+            $output = [];
+            $result = 0;
+            exec('git -C '.escapeshellarg($tempPath).' push origin '.escapeshellarg($mergeRequest->target_branch).' 2>&1', $output, $result);
             if ($result !== 0) {
-                throw new \Exception('Failed to push merged changes back to the repository.');
+                throw new \Exception("Failed to push merged changes back to the repository: \n".implode("\n", $output));
             }
 
             // Successfully merged! Update status

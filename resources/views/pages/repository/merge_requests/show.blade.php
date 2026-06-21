@@ -13,7 +13,6 @@
 </style>
 
 <div class="page-inner">
-
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
             {{ session('success') }}
@@ -22,9 +21,39 @@
     @endif
 
     @if (session('error'))
-        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-            {{ session('error') }}
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert" style="white-space: pre-wrap;">
+            <i class="fas fa-exclamation-triangle me-1"></i> {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if (session('conflicts'))
+        <div class="card border border-danger mb-4 shadow-sm">
+            <div class="card-header bg-danger text-white py-2.5">
+                <h6 class="fw-bold mb-0 d-flex align-items-center">
+                    <i class="fas fa-code me-2"></i> Detail Konflik File & Kode
+                </h6>
+            </div>
+            <div class="card-body bg-light">
+                <p class="small text-muted mb-3">Sistem mendeteksi konflik pada baris kode berikut. Anda harus menyelesaikannya secara manual di lokal repositori Anda sebelum melakukan push kembali:</p>
+                @foreach (session('conflicts') as $file => $blocks)
+                    <div class="mb-3 p-3 bg-white border rounded">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="far fa-file-code text-danger me-2 fa-lg"></i>
+                            <strong class="text-dark small">{{ $file }}</strong>
+                        </div>
+                        @if (!empty($blocks))
+                            @foreach ($blocks as $block)
+                                <pre class="bg-dark text-warning p-3 rounded mb-2 small border-0" style="font-family: 'Fira Code', 'JetBrains Mono', Consolas, monospace; font-size: 12.5px; line-height: 1.6; white-space: pre-wrap; color: #ffc107 !important;">{{ $block }}</pre>
+                            @endforeach
+                        @else
+                            <div class="text-muted small p-2 bg-light border rounded italic">
+                                <i class="fas fa-info-circle me-1"></i> Konflik pada properti file, perubahan biner, atau renaming file.
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
         </div>
     @endif
 
