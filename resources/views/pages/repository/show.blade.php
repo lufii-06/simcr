@@ -589,18 +589,41 @@
         function copyFileContent() {
             const codeBlock = document.getElementById('file-code-block');
             const textToCopy = codeBlock.textContent || codeBlock.innerText;
+            const btn = $('#btn-copy-code');
+            const originalHtml = btn.html();
 
-            navigator.clipboard.writeText(textToCopy).then(function() {
-                // Change copy button UI temporarily to show success
-                const btn = $('#btn-copy-code');
-                const originalHtml = btn.html();
+            function showSuccess() {
                 btn.html('<i class="fas fa-check me-1.5 text-success"></i><strong>Copied!</strong>').addClass('text-success');
                 setTimeout(() => {
                     btn.html(originalHtml).removeClass('text-success');
                 }, 2000);
-            }).catch(function(err) {
-                console.error('Could not copy text: ', err);
-            });
+            }
+
+            function fallbackCopy(text) {
+                var tmp = document.createElement('textarea');
+                tmp.value = text;
+                tmp.style.position = 'fixed';
+                tmp.style.top = '0';
+                tmp.style.left = '0';
+                tmp.style.opacity = '0';
+                document.body.appendChild(tmp);
+                tmp.select();
+                try {
+                    document.execCommand('copy');
+                    showSuccess();
+                } catch (err) {
+                    console.error('Could not copy text: ', err);
+                }
+                document.body.removeChild(tmp);
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(textToCopy).then(showSuccess).catch(function(err) {
+                    fallbackCopy(textToCopy);
+                });
+            } else {
+                fallbackCopy(textToCopy);
+            }
         }
 
         function showTab(tabId) {
@@ -1035,18 +1058,36 @@
             var el = document.getElementById(elementId);
             if (!el) return;
             var text = el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' ? el.value : el.innerText;
-            navigator.clipboard.writeText(text).then(function () {
+
+            function showSuccess() {
                 $.notify({ icon: 'fas fa-check', message: 'Copied to clipboard!' }, { type: 'success', time: 1500 });
-            }).catch(function () {
-                // Fallback for older browsers
+            }
+
+            function fallbackCopy(text) {
                 var tmp = document.createElement('textarea');
                 tmp.value = text;
+                tmp.style.position = 'fixed';
+                tmp.style.top = '0';
+                tmp.style.left = '0';
+                tmp.style.opacity = '0';
                 document.body.appendChild(tmp);
                 tmp.select();
-                document.execCommand('copy');
+                try {
+                    document.execCommand('copy');
+                    showSuccess();
+                } catch (err) {
+                    console.error('Could not copy text: ', err);
+                }
                 document.body.removeChild(tmp);
-                $.notify({ icon: 'fas fa-check', message: 'Copied to clipboard!' }, { type: 'success', time: 1500 });
-            });
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(showSuccess).catch(function () {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
         }
     </script>
 @endpush

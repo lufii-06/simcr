@@ -239,7 +239,7 @@
         });
 
         function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(function() {
+            function showSuccess() {
                 $.notify({
                     icon: 'fa fa-check',
                     title: 'Copied!',
@@ -252,7 +252,33 @@
                     },
                     time: 1000,
                 });
-            });
+            }
+
+            function fallbackCopy(textToCopy) {
+                var tmp = document.createElement('textarea');
+                tmp.value = textToCopy;
+                tmp.style.position = 'fixed';
+                tmp.style.top = '0';
+                tmp.style.left = '0';
+                tmp.style.opacity = '0';
+                document.body.appendChild(tmp);
+                tmp.select();
+                try {
+                    document.execCommand('copy');
+                    showSuccess();
+                } catch (err) {
+                    console.error('Could not copy text: ', err);
+                }
+                document.body.removeChild(tmp);
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(showSuccess).catch(function() {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
         }
     </script>
 @endpush
