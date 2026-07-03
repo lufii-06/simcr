@@ -78,13 +78,9 @@ Route::middleware('auth')->group(function () {
         Route::middleware('role:pm')->group(function () {
             Route::get('project/create', [ProjectController::class, 'create'])->name('project.create');
             Route::post('project', [ProjectController::class, 'store'])->name('project.store');
-            Route::get('project/{project}/edit', [ProjectController::class, 'edit'])->name('project.edit');
-            Route::put('project/{project}', [ProjectController::class, 'update'])->name('project.update');
-            Route::get('project/{project}', [ProjectController::class, 'show'])->name('project.show');
-            Route::delete('project/{project}', [ProjectController::class, 'destroy'])->name('project.destroy');
         });
 
-        Route::resource('project', ProjectController::class)->only(['index', 'show']);
+        Route::resource('project', ProjectController::class)->except(['create', 'store']);
 
         // Tasks
         Route::get('task', [TaskController::class, 'index'])->name('task.index');

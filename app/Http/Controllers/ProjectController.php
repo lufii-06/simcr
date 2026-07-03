@@ -23,12 +23,15 @@ class ProjectController extends Controller
         $user = auth()->user();
         $query = Project::with(['client.user', 'status', 'owner']);
 
-        if ($user->role === 'developer') {
-            $query->whereHas('developers', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-        } elseif ($user->role === 'client') {
+        if ($user->role === 'client') {
             $query->where('client_id', $user->client->id ?? 0);
+        } else {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('developers', function ($sub) use ($user) {
+                      $sub->where('user_id', $user->id);
+                  });
+            });
         }
 
         $projects = $query->latest()->get();
@@ -50,12 +53,15 @@ class ProjectController extends Controller
         $user = auth()->user();
         $query = Project::where('name', 'like', "%{$queryText}%");
 
-        if ($user->role === 'developer') {
-            $query->whereHas('developers', function ($q) use ($user) {
-                $q->where('user_id', $user->id);
-            });
-        } elseif ($user->role === 'client') {
+        if ($user->role === 'client') {
             $query->where('client_id', $user->client->id ?? 0);
+        } else {
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('developers', function ($sub) use ($user) {
+                      $sub->where('user_id', $user->id);
+                  });
+            });
         }
 
         $projects = $query->limit(5)->get()->map(function ($p) {
@@ -133,12 +139,20 @@ class ProjectController extends Controller
 
     public function show(Project $project)
     {
+        if (!$this->authorizeProject($project, 'view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $project->load(['client.user', 'status', 'owner', 'developers.user', 'developers.role', 'repository']);
         return response()->json($project);
     }
 
     public function edit(Project $project)
     {
+        if (!$this->authorizeProject($project, 'edit')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $clients = Client::with('user')->get();
         $projectStatuses = ProjectStatus::all();
         $developerStatuses = DeveloperStatus::all();
@@ -150,6 +164,10 @@ class ProjectController extends Controller
 
     public function update(Request $request, Project $project)
     {
+        if (!$this->authorizeProject($project, 'edit')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $request->validate([
             'client_id' => 'required|exists:clients,id',
             'project_status_id' => 'required|exists:project_statuses,id',
@@ -208,6 +226,10 @@ class ProjectController extends Controller
 
     public function destroy(Project $project)
     {
+        if (!$this->authorizeProject($project, 'delete')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         try {
             DB::beginTransaction();
 
@@ -371,6 +393,10 @@ class ProjectController extends Controller
 
     public function analytics(Project $project)
     {
+        if (!$this->authorizeProject($project, 'view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $project->load(['developers.user', 'developers.role', 'owner', 'tasks.status', 'tasks.checklists']);
 
         $teamStats = $project->developers->map(function ($dev) use ($project) {
@@ -412,6 +438,10 @@ class ProjectController extends Controller
 
     public function exportProjectPdf(Project $project)
     {
+        if (!$this->authorizeProject($project, 'view')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
         $doneStatusName = 'Done';
 
@@ -496,5 +526,47 @@ class ProjectController extends Controller
         $filename = 'Project_Report_' . \Illuminate\Support\Str::slug($project->name) . '_' . now()->format('Ymd') . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    private function authorizeProject(Project $project, string $action): bool
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        // Creator/Owner of the project has full access
+        if ($project->user_id === $user->id) {
+            return true;
+        }
+
+        if ($action === 'view') {
+            if ($user->role === 'client') {
+                return $project->client_id === ($user->client->id ?? 0);
+            }
+            
+            // For pm and developer, must be a member
+            return $project->developers()->where('user_id', $user->id)->exists();
+        }
+
+        if ($action === 'edit') {
+            // Must be a member with Project Leader role
+            $leaderStatus = DeveloperStatus::where('name', 'Project Leader')->first();
+            if (!$leaderStatus) {
+                return false;
+            }
+
+            return $project->developers()
+                ->where('user_id', $user->id)
+                ->where('developer_status_id', $leaderStatus->id)
+                ->exists();
+        }
+
+        if ($action === 'delete') {
+            // Only creator can delete (handled above)
+            return false;
+        }
+
+        return false;
     }
 }

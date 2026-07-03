@@ -59,6 +59,15 @@
                                             @endif
                                         </td>
                                         <td>
+                                            @php
+                                                $canEdit = auth()->id() === $project->user_id || 
+                                                           $project->developers()->where('user_id', auth()->id())
+                                                                    ->whereHas('role', function($q) {
+                                                                        $q->where('name', 'Project Leader');
+                                                                    })->exists();
+
+                                                $canDelete = auth()->id() === $project->user_id;
+                                            @endphp
                                             <div class="form-button-action">
                                                 <button type="button" class="btn btn-link btn-info btn-lg btn-detail"
                                                     data-id="{{ $project->getRouteKey() }}" data-bs-toggle="tooltip"
@@ -70,20 +79,24 @@
                                                     title="View Tasks">
                                                     <i class="fa fa-tasks"></i>
                                                 </a>
-                                                <a href="{{ route('project.edit', $project) }}"
-                                                    class="btn btn-link btn-primary btn-lg" data-bs-toggle="tooltip"
-                                                    title="Edit Project">
-                                                    <i class="fa fa-edit"></i>
-                                                </a>
-                                                <form action="{{ route('project.destroy', $project) }}" method="POST"
-                                                    class="d-inline form-delete">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-link btn-danger"
-                                                        data-bs-toggle="tooltip" title="Remove">
-                                                        <i class="fa fa-times"></i>
-                                                    </button>
-                                                </form>
+                                                @if ($canEdit)
+                                                    <a href="{{ route('project.edit', $project) }}"
+                                                        class="btn btn-link btn-primary btn-lg" data-bs-toggle="tooltip"
+                                                        title="Edit Project">
+                                                        <i class="fa fa-edit"></i>
+                                                    </a>
+                                                @endif
+                                                @if ($canDelete)
+                                                    <form action="{{ route('project.destroy', $project) }}" method="POST"
+                                                        class="d-inline form-delete">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-link btn-danger"
+                                                            data-bs-toggle="tooltip" title="Remove">
+                                                            <i class="fa fa-times"></i>
+                                                        </button>
+                                                    </form>
+                                                @endif
                                             </div>
                                         </td>
                                     </tr>
