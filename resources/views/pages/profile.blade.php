@@ -92,11 +92,19 @@
                                             @enderror
                                         </div>
                                     @elseif (($user->role ?? '') == 'developer')
-                                        <div class="form-group">
-                                            <label>Role</label>
-                                            <input type="text" class="form-control"
-                                                value="{{ strtoupper($user->developer?->specialization?->name ?? 'General') }}" disabled>
-                                            <small class="text-muted">Specialization cannot be changed by user.</small>
+                                        <div class="form-group @error('specialization_id') has-error @enderror">
+                                            <label for="specialization_id" class="required">Specialization</label>
+                                            <select class="form-select form-control" id="specialization_id" name="specialization_id" required>
+                                                <option value="" disabled {{ !$user->developer?->specialization_id ? 'selected' : '' }}>Select Specialization</option>
+                                                @foreach ($specializations as $spec)
+                                                    <option value="{{ $spec->id }}" {{ old('specialization_id', $user->developer?->specialization_id) == $spec->id ? 'selected' : '' }}>
+                                                        {{ $spec->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @error('specialization_id')
+                                                <small class="text-danger">{{ $message }}</small>
+                                            @enderror
                                         </div>
                                         <div class="row">
                                             <div class="col-md-6">

@@ -9,10 +9,12 @@
                 <div class="card-header">
                     <div class="d-flex align-items-center">
                         <h4 class="card-title">Project List</h4>
-                        <a href="{{ route('project.create') }}" class="btn btn-primary btn-round ms-auto">
-                            <i class="fa fa-plus"></i>
-                            Add Project
-                        </a>
+                        @if (($user->role ?? '') == 'pm')
+                            <a href="{{ route('project.create') }}" class="btn btn-primary btn-round ms-auto">
+                                <i class="fa fa-plus"></i>
+                                Add Project
+                            </a>
+                        @endif
                     </div>
                 </div>
                 <div class="card-body">
