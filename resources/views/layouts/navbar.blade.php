@@ -312,3 +312,12 @@
         }
     });
 </script>
+
+<style>
+    .dropdown-item.text-danger:active,
+    .dropdown-item.text-danger:focus,
+    .dropdown-item.text-danger:hover {
+        background-color: rgba(242, 89, 97, 0.1) !important;
+        color: #F25961 !important;
+    }
+</style>

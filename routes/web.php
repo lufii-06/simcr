@@ -39,6 +39,7 @@ Route::middleware('auth')->group(function () {
         Route::post('user/{user}/reset-password', [UserController::class, 'resetPassword'])->name('user.reset-password');
         Route::resource('client', ClientController::class);
         Route::resource('developer', DeveloperController::class);
+        Route::post('developer/{developer}/toggle-role', [DeveloperController::class, 'toggleRole'])->name('developer.toggle-role');
         Route::get('developer/{developer}/performance', [DeveloperController::class, 'performance'])->name('developer.performance');
 
         Route::prefix('setting')->group(function () {

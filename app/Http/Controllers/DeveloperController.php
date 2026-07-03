@@ -184,4 +184,26 @@ class DeveloperController extends Controller
             'globalCompletionRate'
         ));
     }
+
+    public function toggleRole(Developer $developer)
+    {
+        $user = $developer->user;
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Associated user account not found.'
+            ], 404);
+        }
+
+        // Toggle the role between 'developer' and 'pm'
+        $newRole = $user->role === 'developer' ? 'pm' : 'developer';
+        $user->role = $newRole;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully changed role of {$user->name} to " . strtoupper($newRole) . ".",
+            'new_role' => $newRole
+        ]);
+    }
 }

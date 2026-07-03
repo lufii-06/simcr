@@ -92,7 +92,18 @@
                 var modal = $('#detailModal');
                 $('#detailModalBody').html(
                     '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div></div>'
+                );
+
+                // Setup or hide the toggle-role button
+                var toggleBtn = $('#btn-toggle-role');
+                if (toggleBtn.length === 0) {
+                    $('#detailModal .modal-footer').prepend(
+                        '<button id="btn-toggle-role" type="button" class="btn btn-warning" style="display: none;"></button>'
                     );
+                    toggleBtn = $('#btn-toggle-role');
+                }
+                toggleBtn.hide();
+
                 modal.modal('show');
 
                 $.get("{{ url('developer') }}/" + id, function(data) {
@@ -108,6 +119,7 @@
                                 <table class="table table-bordered">
                                     <tr><th width="30%">Account Name</th><td>${user ? user.name : 'N/A'}</td></tr>
                                     <tr><th>Email</th><td>${user ? user.email : 'N/A'}</td></tr>
+                                    <tr><th>System Role</th><td><span class="badge ${user && user.role === 'pm' ? 'badge-warning' : 'badge-info'}">${user ? user.role.toUpperCase() : 'N/A'}</span></td></tr>
                                     <tr><th>Specialization</th><td><span class="badge badge-primary">${data.specialization ? data.specialization.name : 'General'}</span></td></tr>
                                     <tr><th>Phone</th><td>${dev.phone || '-'}</td></tr>
                                     <tr><th>Address</th><td>${dev.address || '-'}</td></tr>
@@ -118,6 +130,71 @@
                         </div>
                     `;
                     $('#detailModalBody').html(html);
+
+                    // Configure Toggle Role Button dynamically
+                    if (user && user.role === 'developer') {
+                        toggleBtn.html('<i class="fas fa-user-shield me-1"></i> Ubah Menjadi PM')
+                            .removeClass('btn-info')
+                            .addClass('btn-warning')
+                            .data('id', id)
+                            .data('role', 'developer')
+                            .show();
+                    } else if (user && user.role === 'pm') {
+                        toggleBtn.html('<i class="fas fa-user-cog me-1"></i> Kembalikan ke Developer')
+                            .removeClass('btn-warning')
+                            .addClass('btn-info')
+                            .data('id', id)
+                            .data('role', 'pm')
+                            .show();
+                    }
+                });
+            });
+
+            // Toggle Role Action
+            $(document).on('click', '#btn-toggle-role', function() {
+                var id = $(this).data('id');
+                var currentRole = $(this).data('role');
+                var title = currentRole === 'developer' ? "Ubah ke PM?" : "Kembalikan ke Developer?";
+                var text = currentRole === 'developer'
+                    ? "Akun ini akan diubah role-nya menjadi Project Manager (PM)."
+                    : "Akun ini akan dikembalikan role-nya menjadi Developer.";
+
+                swal({
+                    title: title,
+                    text: text,
+                    icon: "warning",
+                    buttons: {
+                        cancel: {
+                            text: "Batal",
+                            value: null,
+                            visible: true,
+                            className: "btn btn-secondary",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Ya, Ubah!",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-warning",
+                            closeModal: true
+                        }
+                    },
+                }).then((willChange) => {
+                    if (willChange) {
+                        $.post("{{ url('developer') }}/" + id + "/toggle-role", {
+                            _token: "{{ csrf_token() }}"
+                        }, function(response) {
+                            if (response.success) {
+                                swal("Berhasil!", response.message, "success").then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                swal("Gagal!", response.message || "Terjadi kesalahan.", "error");
+                            }
+                        }).fail(function() {
+                            swal("Gagal!", "Gagal menghubungi server.", "error");
+                        });
+                    }
                 });
             });
 
