@@ -40,7 +40,7 @@ class ProjectController extends Controller
             return view('pages.project.analytics_list', compact('projects'));
         }
 
-        return view('pages.project.index', compact('projects'));
+        return view('pages.project.index', compact('projects','user'));
     }
 
     public function search(Request $request)
@@ -156,7 +156,7 @@ class ProjectController extends Controller
         $clients = Client::with('user')->get();
         $projectStatuses = ProjectStatus::all();
         $developerStatuses = DeveloperStatus::all();
-        $users = User::where('id', '!=', auth()->id())->get();
+        $users = User::get();
         $project->load('developers');
 
         return view('pages.project.form', compact('project', 'clients', 'projectStatuses', 'developerStatuses', 'users'));

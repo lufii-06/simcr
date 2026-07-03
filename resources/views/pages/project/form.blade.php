@@ -118,7 +118,7 @@
                                             <div class="col-md-5">
                                                 <label class="form-label mb-1 required">Select User</label>
                                                 <select class="form-select user-select selectpicker" data-live-search="true"
-                                                    name="developer_ids[]" required disabled>
+                                                    name="developer_ids[]" disabled>
                                                     @foreach ($users as $user)
                                                         @if ($user->role !== 'client' && $user->role !== 'owner')
                                                             <option value="{{ $user->id }}">{{ $user->name }}
@@ -131,7 +131,7 @@
                                             <div class="col-md-5">
                                                 <label class="form-label mb-1 required">Project Role</label>
                                                 <select class="form-select status-select selectpicker"
-                                                    data-live-search="true" name="developer_statuses[]" required disabled>
+                                                    data-live-search="true" name="developer_statuses[]" disabled>
                                                     @foreach ($developerStatuses as $status)
                                                         <option value="{{ $status->id }}">{{ $status->name }}</option>
                                                     @endforeach
