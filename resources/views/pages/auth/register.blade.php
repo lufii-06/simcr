@@ -3,91 +3,126 @@
 @section('title', 'Register as Client')
 
 @section('content')
-    <div class="card auth-card register-card">
-        <div class="card-body p-4">
-            <div class="text-center mb-4">
-                <h4 class="fw-bold">Create Client Account</h4>
-                <p class="text-muted">Fill in the details to register your company</p>
-            </div>
-            <form action="{{ route('register.post') }}" method="POST">
-                @csrf
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5 class="fw-bold mb-3 text-primary"><i class="fas fa-user-circle me-2"></i> Account Information
-                        </h5>
-                        <div class="form-group @error('name') has-error @enderror">
-                            <label for="name" class="required">Full Name</label>
-                            <input type="text" class="form-control" id="name" name="name"
-                                value="{{ old('name') }}" placeholder="Enter your full name" required>
-                            @error('name')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-                        <div class="form-group @error('email') has-error @enderror">
-                            <label for="email" class="required">Email Address</label>
-                            <input type="email" class="form-control" id="email" name="email"
-                                value="{{ old('email') }}" placeholder="name@example.com" required>
-                            @error('email')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-                        <div class="form-group @error('password') has-error @enderror">
-                            <label for="password" class="required">Password</label>
-                            <input type="password" class="form-control" id="password" name="password"
-                                placeholder="Create a strong password" required>
-                            @error('password')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-                        <div class="form-group">
-                            <label for="password_confirmation" class="required">Confirm Password</label>
-                            <input type="password" class="form-control" id="password_confirmation"
-                                name="password_confirmation" placeholder="Repeat your password" required>
-                        </div>
+    <div class="auth-form-wrapper register-wrapper">
+
+        {{-- Header --}}
+        <div class="auth-form-header">
+            <div class="form-eyebrow">Get started</div>
+            <h2>Create Client Account</h2>
+            <p>Fill in your account and company details to get started</p>
+        </div>
+
+        {{-- Form --}}
+        <form class="auth-form flex-grow-1" action="{{ route('register.post') }}" method="POST">
+            @csrf
+
+            <div class="row g-4">
+
+                {{-- ---- LEFT COLUMN: Account Info ---- --}}
+                <div class="col-12 col-md-6">
+                    <div class="auth-section-title">
+                        <i class="fas fa-user-circle"></i>
+                        Account Information
                     </div>
-                    <div class="col-md-6 border-start">
-                        <h5 class="fw-bold mb-3 text-primary"><i class="fas fa-building me-2"></i> Company Profile</h5>
-                        <div class="form-group @error('company_name') has-error @enderror">
-                            <label for="company_name" class="required">Company Name</label>
-                            <input type="text" class="form-control" id="company_name" name="company_name"
-                                value="{{ old('company_name') }}" placeholder="Enter company name" required>
-                            @error('company_name')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-                        <div class="form-group @error('main_contact') has-error @enderror">
-                            <label for="main_contact" class="required">Main Contact Person</label>
-                            <input type="text" class="form-control" id="main_contact" name="main_contact"
-                                value="{{ old('main_contact') }}" placeholder="e.g. CEO, Manager" required>
-                            @error('main_contact')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-                        <div class="form-group @error('phone') has-error @enderror">
-                            <label for="phone" class="required">Phone Number</label>
-                            <input type="text" class="form-control" id="phone" name="phone"
-                                value="{{ old('phone') }}" placeholder="e.g. 0812345678" required>
-                            @error('phone')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
-                        <div class="form-group @error('address') has-error @enderror">
-                            <label for="address" class="required">Address</label>
-                            <textarea class="form-control" id="address" name="address" rows="1" placeholder="Enter company full address" required>{{ old('address') }}</textarea>
-                            @error('address')
-                                <small class="text-danger">{{ $message }}</small>
-                            @enderror
-                        </div>
+
+                    {{-- Full Name --}}
+                    <div class="form-group mb-3 @error('name') has-error @enderror">
+                        <label for="name" class="required fw-semibold small mb-1">Full Name</label>
+                        <input type="text" class="form-control form-control-lg" id="name" name="name"
+                            value="{{ old('name') }}" placeholder="Enter your full name" required>
+                        @error('name')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+
+                    {{-- Email --}}
+                    <div class="form-group mb-3 @error('email') has-error @enderror">
+                        <label for="email" class="required fw-semibold small mb-1">Email Address</label>
+                        <input type="email" class="form-control form-control-lg" id="email" name="email"
+                            value="{{ old('email') }}" placeholder="name@example.com" required>
+                        @error('email')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+
+                    {{-- Password --}}
+                    <div class="form-group mb-3 @error('password') has-error @enderror">
+                        <label for="password" class="required fw-semibold small mb-1">Password</label>
+                        <input type="password" class="form-control form-control-lg" id="password" name="password"
+                            placeholder="Create a strong password" required>
+                        @error('password')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+
+                    {{-- Confirm Password --}}
+                    <div class="form-group mb-3">
+                        <label for="password_confirmation" class="required fw-semibold small mb-1">Confirm Password</label>
+                        <input type="password" class="form-control form-control-lg" id="password_confirmation"
+                            name="password_confirmation" placeholder="Repeat your password" required>
                     </div>
                 </div>
-                <div class="form-group mt-3">
-                    <button type="submit" class="btn btn-primary w-100 fw-bold py-3">Register Now</button>
+
+                {{-- ---- RIGHT COLUMN: Company Profile ---- --}}
+                <div class="col-12 col-md-6">
+                    <div class="auth-section-title">
+                        <i class="fas fa-building"></i>
+                        Company Profile
+                    </div>
+
+                    {{-- Company Name --}}
+                    <div class="form-group mb-3 @error('company_name') has-error @enderror">
+                        <label for="company_name" class="required fw-semibold small mb-1">Company Name</label>
+                        <input type="text" class="form-control form-control-lg" id="company_name" name="company_name"
+                            value="{{ old('company_name') }}" placeholder="Enter company name" required>
+                        @error('company_name')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+
+                    {{-- Main Contact --}}
+                    <div class="form-group mb-3 @error('main_contact') has-error @enderror">
+                        <label for="main_contact" class="required fw-semibold small mb-1">Main Contact Person</label>
+                        <input type="text" class="form-control form-control-lg" id="main_contact" name="main_contact"
+                            value="{{ old('main_contact') }}" placeholder="e.g. CEO, Manager" required>
+                        @error('main_contact')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+
+                    {{-- Phone --}}
+                    <div class="form-group mb-3 @error('phone') has-error @enderror">
+                        <label for="phone" class="required fw-semibold small mb-1">Phone Number</label>
+                        <input type="text" class="form-control form-control-lg" id="phone" name="phone"
+                            value="{{ old('phone') }}" placeholder="e.g. 0812345678" required>
+                        @error('phone')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+
+                    {{-- Address --}}
+                    <div class="form-group mb-3 @error('address') has-error @enderror">
+                        <label for="address" class="required fw-semibold small mb-1">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3"
+                            placeholder="Enter company full address" required>{{ old('address') }}</textarea>
+                        @error('address')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
                 </div>
-            </form>
-            <div class="text-center mt-4">
-                <p class="mb-0 text-muted">Already have an account? <a href="{{ route('login') }}"
-                        class="text-primary fw-bold">Login here</a></p>
             </div>
+
+            {{-- Submit --}}
+            <div class="mt-4">
+                <button type="submit" class="btn-auth-submit">
+                    Create Account
+                </button>
+            </div>
+        </form>
+
+        {{-- Alt link --}}
+        <div class="auth-alt-link mt-3">
+            Already have an account? <a href="{{ route('login') }}">Sign in here</a>
         </div>
     </div>
 @endsection

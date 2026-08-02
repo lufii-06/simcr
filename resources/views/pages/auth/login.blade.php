@@ -3,50 +3,59 @@
 @section('title', 'Login')
 
 @section('content')
-    <div class="card auth-card">
-        <div class="card-body p-4">
-            <div class="text-center mb-4">
-                <h4 class="fw-bold">Login to Your Account</h4>
-                <p class="text-muted">Enter your details to login</p>
+    <div class="auth-form-wrapper">
+
+        {{-- Header --}}
+        <div class="auth-form-header">
+            <div class="form-eyebrow">Welcome back</div>
+            <h2>Sign in to SIMCR</h2>
+            <p>Enter your credentials to access your account</p>
+        </div>
+
+        {{-- Form --}}
+        <form class="auth-form" action="{{ route('login.post') }}" method="POST">
+            @csrf
+
+            {{-- Email --}}
+            <div class="form-group mb-3 @error('email') has-error @enderror">
+                <label for="email" class="required fw-semibold small mb-1">Email Address</label>
+                <input type="email" class="form-control form-control-lg" id="email" name="email"
+                    value="{{ old('email') }}" placeholder="name@example.com" required autofocus>
+                @error('email')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
             </div>
-            <form action="{{ route('login.post') }}" method="POST">
-                @csrf
-                <div class="form-group @error('email') has-error @enderror">
-                    <label for="email" class="required">Email Address</label>
-                    <input type="email" class="form-control" id="email" name="email" value="{{ old('email') }}"
-                        placeholder="name@example.com" required autofocus>
-                    @error('email')
-                        <small class="text-danger">{{ $message }}</small>
-                    @enderror
+
+            {{-- Password --}}
+            <div class="form-group mb-3 @error('password') has-error @enderror">
+                <label for="password" class="required fw-semibold small mb-1">Password</label>
+                <div class="input-icon-wrap">
+                    <input type="password" class="form-control form-control-lg" id="password" name="password"
+                        placeholder="Enter your password" required>
+                    <button type="button" class="input-toggle-btn" id="togglePassword" tabindex="-1" aria-label="Toggle password visibility">
+                        <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                    </button>
                 </div>
-                <div class="form-group @error('password') has-error @enderror">
-                    <div class="d-flex justify-content-between">
-                        <label for="password" class="required">Password</label>
-                    </div>
-                    <div class="position-relative">
-                        <input type="password" class="form-control" id="password" name="password"
-                            placeholder="Enter password" style="padding-right: 40px;" required>
-                        <i class="fas fa-eye" id="togglePassword"
-                            style="cursor: pointer; position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #888;"></i>
-                    </div>
-                    @error('password')
-                        <small class="text-danger">{{ $message }}</small>
-                    @enderror
-                </div>
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" name="remember" id="remember">
-                    <label class="form-check-label" for="remember">
-                        Remember Me
-                    </label>
-                </div>
-                <div class="form-group">
-                    <button type="submit" class="btn btn-primary w-100 fw-bold py-3">Login</button>
-                </div>
-            </form>
-            <div class="text-center mt-4">
-                <p class="mb-0 text-muted">Don't have an account? <a href="{{ route('register') }}"
-                        class="text-primary fw-bold">Register as Client</a></p>
+                @error('password')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
             </div>
+
+            {{-- Remember Me --}}
+            <div class="auth-remember mb-3">
+                <input class="form-check-input" type="checkbox" name="remember" id="remember">
+                <label class="form-check-label small" for="remember">Remember Me</label>
+            </div>
+
+            {{-- Submit --}}
+            <button type="submit" class="btn-auth-submit">
+                Sign In
+            </button>
+        </form>
+
+        {{-- Alt link --}}
+        <div class="auth-alt-link mt-4">
+            Don't have an account? <a href="{{ route('register') }}">Register as Client</a>
         </div>
     </div>
 @endsection
@@ -54,20 +63,21 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const togglePassword = document.querySelector('#togglePassword');
-            const password = document.querySelector('#password');
+            const toggleBtn  = document.querySelector('#togglePassword');
+            const toggleIcon = document.querySelector('#togglePasswordIcon');
+            const password   = document.querySelector('#password');
 
-            if (togglePassword && password) {
-                togglePassword.addEventListener('click', function(e) {
+            if (toggleBtn && password) {
+                toggleBtn.addEventListener('click', function() {
                     const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
                     password.setAttribute('type', type);
 
                     if (type === 'text') {
-                        this.classList.remove('fa-eye');
-                        this.classList.add('fa-eye-slash');
+                        toggleIcon.classList.remove('fa-eye');
+                        toggleIcon.classList.add('fa-eye-slash');
                     } else {
-                        this.classList.remove('fa-eye-slash');
-                        this.classList.add('fa-eye');
+                        toggleIcon.classList.remove('fa-eye-slash');
+                        toggleIcon.classList.add('fa-eye');
                     }
                 });
             }
