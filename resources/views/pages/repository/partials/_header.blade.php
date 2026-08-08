@@ -35,7 +35,7 @@
                                 <label class="small fw-bold text-muted mb-1">SSH Clone URL</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control form-control-sm bg-light" id="ssh-url"
-                                        value="{{ "git clone ".env('REPO_ROOT_URL', 'git@[IP_ADDRESS]') }}:repositories/{{ $repository->name ?? 'unknown' }}.git"
+                                        value="{{ "git clone ".config('services.repository.root_url', 'git@[IP_ADDRESS]') }}:repositories/{{ $repository->name ?? 'unknown' }}.git"
                                         readonly>
                                     <div class="input-group-append">
                                         <button class="btn btn-primary btn-sm" type="button"

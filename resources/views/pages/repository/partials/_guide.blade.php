@@ -22,7 +22,7 @@
 
                         <div class="position-relative">
                             <pre class="bg-dark text-light p-3 rounded"
-                                id="guide-ssh"><code>git clone {{ env('REPO_ROOT_URL', 'git@localhost') }}:repositories/{{ $repository->name }}.git</code></pre>
+                                id="guide-ssh"><code>git clone {{ config('services.repository.root_url', 'git@localhost') }}:repositories/{{ $repository->name }}.git</code></pre>
                             <button class="btn btn-xs btn-primary position-absolute" style="top: 10px; right: 10px;"
                                 onclick="copyToClipboard('guide-ssh')">
                                 <i class="fas fa-copy"></i>

@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'repository' => [
+        'base_path' => env('REPO_BASE_PATH', '../repositories'),
+        'root_url' => env('REPO_ROOT_URL', 'git@localhost'),
+    ],
+
 ];

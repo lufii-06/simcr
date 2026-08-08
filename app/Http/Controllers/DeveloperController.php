@@ -90,7 +90,7 @@ class DeveloperController extends Controller
             return back()->with('error', 'Developer does not have an associated user account.');
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $doneStatusName = 'Done';
 
         // Get all projects this developer is assigned to

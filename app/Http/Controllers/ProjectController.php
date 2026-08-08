@@ -253,7 +253,7 @@ class ProjectController extends Controller
      */
     private function getRepoBasePath(): string
     {
-        $path = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $path = base_path(config('services.repository.base_path', '../repositories'));
         if (! File::exists($path)) {
             File::makeDirectory($path, 0755, true);
         }
@@ -322,7 +322,7 @@ class ProjectController extends Controller
         }
 
         // Save to database
-        $rootUrl = env('REPO_ROOT_URL', 'git@localhost');
+        $rootUrl = config('services.repository.root_url', 'git@localhost');
         $fullUrl = $rootUrl.':repositories/'.$repoName.'.git';
 
         Repository::create([
@@ -363,7 +363,7 @@ class ProjectController extends Controller
         }
 
         // Sync with database
-        $rootUrl = env('REPO_ROOT_URL', 'git@localhost');
+        $rootUrl = config('services.repository.root_url', 'git@localhost');
         $fullUrl = $rootUrl.':repositories/'.$newRepoName.'.git';
 
         $repository->update([
@@ -442,7 +442,7 @@ class ProjectController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $doneStatusName = 'Done';
 
         $project->load([

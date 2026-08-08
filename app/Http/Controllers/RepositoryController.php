@@ -99,7 +99,7 @@ class RepositoryController extends Controller
         $path = $request->input('path');
         $branch = $request->input('branch', $repository->default_branch);
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -128,7 +128,7 @@ class RepositoryController extends Controller
         $path = $request->input('path');
         $branch = $request->input('branch', $repository->default_branch);
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -159,7 +159,7 @@ class RepositoryController extends Controller
             abort(400, 'Invalid format');
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -209,7 +209,7 @@ class RepositoryController extends Controller
             return back()->with('error', 'Invalid branch name. Use alphanumeric characters, dashes, underscores, dots, or slashes.');
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -262,7 +262,7 @@ class RepositoryController extends Controller
             return back()->with('error', 'Invalid tag name. Use alphanumeric characters, dashes, underscores, dots, or slashes.');
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -324,7 +324,7 @@ class RepositoryController extends Controller
             return back()->with('error', 'Source and target branch cannot be the same.');
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -440,7 +440,7 @@ class RepositoryController extends Controller
             return back()->with('error', 'Cannot delete the default branch.');
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -477,7 +477,7 @@ class RepositoryController extends Controller
 
         $tagName = trim($request->input('tag_name'));
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -510,7 +510,7 @@ class RepositoryController extends Controller
 
         $hash = $request->input('hash');
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -623,7 +623,7 @@ class RepositoryController extends Controller
         $source = trim($request->input('source'));
         $target = trim($request->input('target'));
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -728,7 +728,7 @@ class RepositoryController extends Controller
         $selectedBranch = $request->input('branch', $repository->default_branch ?? 'main');
         $path = $request->input('path', '');
         $error = null;
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         // Initialize default values for null safety
@@ -1197,7 +1197,7 @@ class RepositoryController extends Controller
             return response('Unsupported service', 400);
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repositoryName.'.git';
 
         if (! file_exists($repoPath)) {
@@ -1244,7 +1244,7 @@ class RepositoryController extends Controller
             ]);
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repositoryName.'.git';
 
         if (! file_exists($repoPath)) {
@@ -1531,7 +1531,7 @@ class RepositoryController extends Controller
         $user = auth()->user();
         $this->showAuthorize($repository, $user);
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -1564,7 +1564,7 @@ class RepositoryController extends Controller
             return back()->withInput()->with('error', 'Source branch and target branch cannot be the same.');
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {
@@ -1619,7 +1619,7 @@ class RepositoryController extends Controller
 
         $mergeRequest->load('user');
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         $commits = [];
@@ -1708,7 +1708,7 @@ class RepositoryController extends Controller
             return back()->with('error', 'This Merge Request is not open.');
         }
 
-        $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+        $basePath = base_path(config('services.repository.base_path', '../repositories'));
         $repoPath = $basePath.'/'.$repository->name.'.git';
 
         if (! file_exists($repoPath)) {

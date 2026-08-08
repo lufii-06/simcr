@@ -34,7 +34,7 @@ Artisan::command('git:validate-push {repositoryName} {userEmail?}', function (st
 
     $pushingUser = $userEmail ? User::where('email', $userEmail)->first() : null;
 
-    $basePath = base_path(env('REPO_BASE_PATH', '../repositories'));
+    $basePath = base_path(config('services.repository.base_path', '../repositories'));
     $repoPath = $basePath.'/'.$repositoryName.'.git';
 
     // 4. Run validation using RepositoryController
