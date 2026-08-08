@@ -31,6 +31,7 @@
                     </div>
                     <div class="col-md-7 border-start">
                         <div class="row">
+                            {{-- Hidden SSH Clone Option
                             <div class="col-md-6">
                                 <label class="small fw-bold text-muted mb-1">SSH Clone URL</label>
                                 <div class="input-group">
@@ -45,15 +46,17 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="small fw-bold text-muted mb-1">HTTP Clone URL</label>
+                            --}}
+
+                            <div class="col-md-12">
+                                <label class="small fw-bold text-muted mb-1">Clone URL (HTTP)</label>
                                 <div class="input-group">
                                     <input type="text" class="form-control form-control-sm bg-light" id="http-url"
                                         value="{{ "git clone ".$httpUrl }}" readonly>
                                     <div class="input-group-append">
-                                        <button class="btn btn-secondary btn-sm" type="button"
+                                        <button class="btn btn-primary btn-sm" type="button"
                                             onclick="copyToClipboard('http-url')">
-                                            <i class="fas fa-copy"></i>
+                                            <i class="fas fa-copy me-1"></i> Copy
                                         </button>
                                     </div>
                                 </div>

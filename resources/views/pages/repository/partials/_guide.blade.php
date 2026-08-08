@@ -3,6 +3,7 @@
         <h5 class="fw-bold mb-3">How to Clone this Repository</h5>
 
         <div class="accordion accordion-secondary">
+            {{-- Hidden SSH Clone Guide Option
             <div class="card">
                 <div class="card-header" id="headingOne" data-bs-toggle="collapse" data-bs-target="#collapseOne"
                     aria-expanded="true" aria-controls="collapseOne">
@@ -41,18 +42,20 @@
                     </div>
                 </div>
             </div>
+            --}}
+
             <div class="card">
-                <div class="card-header collapsed" id="headingTwo" data-bs-toggle="collapse"
-                    data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                <div class="card-header" id="headingTwo" data-bs-toggle="collapse"
+                    data-bs-target="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
                     <div class="span-icon">
                         <div class="fas fa-link"></div>
                     </div>
                     <div class="span-title">
-                        Option 2: Using HTTP
+                        Cloning via HTTP
                     </div>
                     <div class="span-mode"></div>
                 </div>
-                <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo">
+                <div id="collapseTwo" class="collapse show" aria-labelledby="headingTwo">
                     <div class="card-body">
                         @if ($repository->is_public)
                             <p class="text-success small"><i class="fas fa-check-circle"></i> This
