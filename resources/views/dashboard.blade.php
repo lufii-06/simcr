@@ -79,6 +79,7 @@
         </div>
     </div>
 
+    @include('layouts.command-palette')
     @stack('modals')
     @include('layouts.js')
     <style>

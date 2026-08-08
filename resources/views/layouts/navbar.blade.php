@@ -21,37 +21,55 @@
  <!-- Navbar Header -->
  <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
      <div class="container-fluid">
-         <nav class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 d-none d-lg-flex"
-             style="position: relative;">
-             <div class="input-group">
-                 <div class="input-group-prepend">
-                     <button type="button" class="btn btn-search pe-1">
-                         <i class="fa fa-search search-icon"></i>
-                     </button>
-                 </div>
-                 <input type="text" id="globalProjectSearch" placeholder="Search Project..." class="form-control"
-                     autocomplete="off" />
-             </div>
-             <ul id="globalProjectSearchResults" class="dropdown-menu w-100 mt-2 p-0 shadow-sm"
-                 style="position: absolute; top: 100%; left: 0; display: none;">
-                 <!-- Results go here -->
-             </ul>
-         </nav>
+          <div class="d-none d-lg-flex align-items-center">
+              <!-- Original Global Project Search -->
+              <nav class="navbar navbar-header-left navbar-expand-lg navbar-form nav-search p-0 me-3"
+                  style="position: relative;">
+                  <div class="input-group">
+                      <div class="input-group-prepend">
+                          <button type="button" class="btn btn-search pe-1">
+                              <i class="fa fa-search search-icon"></i>
+                          </button>
+                      </div>
+                      <input type="text" id="globalProjectSearch" placeholder="Search Project..." class="form-control"
+                          autocomplete="off" />
+                  </div>
+                  <ul id="globalProjectSearchResults" class="dropdown-menu w-100 mt-2 p-0 shadow-sm"
+                      style="position: absolute; top: 100%; left: 0; display: none;">
+                      <!-- Results go here -->
+                  </ul>
+              </nav>
 
-         <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
-             <li class="nav-item topbar-icon dropdown hidden-caret d-flex d-lg-none">
-                 <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
-                     aria-expanded="false" aria-haspopup="true">
-                     <i class="fa fa-search"></i>
-                 </a>
-                 <ul class="dropdown-menu dropdown-search animated fadeIn">
-                     <form class="navbar-left navbar-form nav-search">
-                         <div class="input-group">
-                             <input type="text" placeholder="Search ..." class="form-control" />
-                         </div>
-                     </form>
-                 </ul>
-             </li>
+              <!-- Command Palette Ctrl+K Trigger -->
+              <button type="button" class="btn-cmd-trigger d-flex align-items-center" onclick="openCommandPalette()" style="min-width: 200px; text-align: left;">
+                  <i class="fas fa-terminal me-2 text-muted"></i>
+                  <span class="text-muted me-auto" style="font-size: 0.85rem;">Quick Menu...</span>
+                  <kbd class="cmd-kbd-badge">Ctrl K</kbd>
+              </button>
+          </div>
+
+          <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
+              <!-- Mobile Search Dropdown (Project Search) -->
+              <li class="nav-item topbar-icon dropdown hidden-caret d-flex d-lg-none">
+                  <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button"
+                      aria-expanded="false" aria-haspopup="true">
+                      <i class="fa fa-search"></i>
+                  </a>
+                  <ul class="dropdown-menu dropdown-search animated fadeIn">
+                      <form class="navbar-left navbar-form nav-search">
+                          <div class="input-group">
+                              <input type="text" placeholder="Search Project..." class="form-control" />
+                          </div>
+                      </form>
+                  </ul>
+              </li>
+
+              <!-- Mobile Command Palette Trigger -->
+              <li class="nav-item topbar-icon d-flex d-lg-none">
+                  <a class="nav-link" href="javascript:void(0)" onclick="openCommandPalette()" role="button" title="Quick Menu (Ctrl + K)">
+                      <i class="fas fa-terminal"></i>
+                  </a>
+              </li>
 
              <li class="nav-item topbar-icon dropdown hidden-caret">
                  <a class="nav-link dropdown-toggle" href="#" id="notifDropdown" role="button"
