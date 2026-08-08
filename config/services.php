@@ -37,7 +37,7 @@ return [
 
     'repository' => [
         'base_path' => env('REPO_BASE_PATH', '../repositories'),
-        'root_url' => env('REPO_ROOT_URL', 'git@localhost'),
+        'root_url' => env('REPO_ROOT_URL', 'git@' . (parse_url(env('APP_URL', 'http://localhost'), PHP_URL_HOST) ?: 'localhost')),
     ],
 
 ];
